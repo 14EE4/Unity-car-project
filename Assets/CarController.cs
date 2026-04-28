@@ -15,6 +15,7 @@ public class CarController : MonoBehaviour
     public float driveDrag = 1.2f;
     public float brakeDrag = 3.0f;
     public float debugLogInterval = 0.25f;
+    public bool detailedWheelDebug = true;
 
     private float currentSteer = 0f; 
     private float debugLogTimer = 0f;
@@ -63,7 +64,7 @@ public class CarController : MonoBehaviour
         if (debugLogTimer >= debugLogInterval)
         {
             debugLogTimer = 0f;
-            Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3} | Motor: {4:F1} | BrakeTorque: {5:F1} | Slope: {6:F1} deg", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle()));
+            Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3} | Motor: {4:F1} | BrakeTorque: {5:F1} | Slope: {6:F1} deg{7}", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()));
         }
     }
 
@@ -193,5 +194,31 @@ public class CarController : MonoBehaviour
         }
 
         return 0f;
+    }
+
+    private string GetWheelDebugSuffix()
+    {
+        if (!detailedWheelDebug)
+        {
+            return string.Empty;
+        }
+
+        return string.Format(
+            " | FL rpm:{0:F0} slip:{1} | FR rpm:{2:F0} slip:{3} | BL rpm:{4:F0} slip:{5} | BR rpm:{6:F0} slip:{7}",
+            frontLeft.rpm, GetWheelSlipText(frontLeft),
+            frontRight.rpm, GetWheelSlipText(frontRight),
+            backLeft.rpm, GetWheelSlipText(backLeft),
+            backRight.rpm, GetWheelSlipText(backRight));
+    }
+
+    private string GetWheelSlipText(WheelCollider wheel)
+    {
+        WheelHit hit;
+        if (wheel.GetGroundHit(out hit))
+        {
+            return string.Format("F{0:F2}/S{1:F2}", hit.forwardSlip, hit.sidewaysSlip);
+        }
+
+        return "air";
     }
 }
