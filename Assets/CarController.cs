@@ -72,15 +72,15 @@ public class CarController : MonoBehaviour
     {
         if (throttleInput > 0f)
         {
-            carRigidbody.drag = throttleDrag;
+            carRigidbody.linearDamping = throttleDrag;
         }
         else if (brakeInput > 0f)
         {
-            carRigidbody.drag = brakeDrag;
+            carRigidbody.linearDamping = brakeDrag;
         }
         else
         {
-            carRigidbody.drag = currentGear == 0 ? neutralDrag : driveDrag;
+            carRigidbody.linearDamping = currentGear == 0 ? neutralDrag : driveDrag;
         }
 
         // 3. 가속 및 브레이크 로직
