@@ -8,12 +8,12 @@ public class CarController : MonoBehaviour
     public float maxTorque = 1500f;   
     public float maxSteerAngle = 30f; 
     public float brakeTorque = 3000f; 
-    public float rollingResistanceBrake = 20f;
-    public float engineBrakeTorque = 120f;
-    public float throttleDrag = 0.05f;
-    public float neutralDrag = 0.15f;
-    public float driveDrag = 1.2f;
-    public float brakeDrag = 3.0f;
+    public float rollingResistanceBrake = 10f;
+    public float engineBrakeTorque = 60f;
+    public float throttleDrag = 0.03f;
+    public float neutralDrag = 0.08f;
+    public float driveDrag = 0.6f;
+    public float brakeDrag = 1.8f;
     public float debugLogInterval = 0.25f;
     public bool detailedWheelDebug = true;
 
