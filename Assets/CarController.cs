@@ -10,6 +10,10 @@ public class CarController : MonoBehaviour
     public float brakeTorque = 3000f; 
     public float rollingResistanceBrake = 20f;
     public float engineBrakeTorque = 120f;
+    public float throttleDrag = 0.05f;
+    public float neutralDrag = 0.15f;
+    public float driveDrag = 1.2f;
+    public float brakeDrag = 3.0f;
     public float debugLogInterval = 0.25f;
 
     private float currentSteer = 0f; 
@@ -65,6 +69,19 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (throttleInput > 0f)
+        {
+            carRigidbody.drag = throttleDrag;
+        }
+        else if (brakeInput > 0f)
+        {
+            carRigidbody.drag = brakeDrag;
+        }
+        else
+        {
+            carRigidbody.drag = currentGear == 0 ? neutralDrag : driveDrag;
+        }
+
         // 3. 가속 및 브레이크 로직
         float motor = 0f;
         float brake = 0f;
