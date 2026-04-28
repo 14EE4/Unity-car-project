@@ -8,8 +8,13 @@ public class CarController : MonoBehaviour
     public float maxTorque = 1500f;   
     public float maxSteerAngle = 30f; 
     public float brakeTorque = 3000f; 
+    public float rollingResistanceBrake = 20f;
+    public float engineBrakeTorque = 120f;
+    public float debugLogInterval = 0.25f;
 
     private float currentSteer = 0f; 
+    private float debugLogTimer = 0f;
+    private Rigidbody carRigidbody;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 1;
@@ -21,7 +26,8 @@ public class CarController : MonoBehaviour
         // 마우스 커서를 게임 화면 중앙에 고정 (정교한 조작을 위해 필수)
         Cursor.lockState = CursorLockMode.Locked;
         // 차체 바닥(중앙보다 조금 아래)으로 무게 중심 강제 고정
-        GetComponent<Rigidbody>().centerOfMass = new Vector3(0, -0.5f, 0);
+        carRigidbody = GetComponent<Rigidbody>();
+        carRigidbody.centerOfMass = new Vector3(0, -0.5f, 0);
     }
 
     void Update()
@@ -41,13 +47,21 @@ public class CarController : MonoBehaviour
         if (throttleInput > 0f) 
         {
             motor = maxTorque * throttleInput * GetCurrentGearRatio();
-            brake = 0f;
         }
-        else 
+        else if (brakeInput <= 0f)
         {
-            // 페달을 뗐을 때 굴러가는 현상을 줄이기 위한 미세 브레이크
-            motor = 0f;
-            brake = 100f; // 미세하게 브레이크를 걸어서 굴러가지 않게 함
+            // 엑셀 뗐을 때: 중립은 구름만, 기어 진입 상태는 역방향 모터 토크(엔진 브레이크)
+            if (currentGear == 0)
+            {
+                motor = 0f;
+                brake = rollingResistanceBrake;
+            }
+            else
+            {
+                // 기어가 들어있을 때 엔진 브레이크는 모터 토크로 구현 (음수)
+                motor = -engineBrakeTorque * GetCurrentGearRatio();
+                brake = 0f;
+            }
         }
 
         if (brakeInput > 0f) 
@@ -75,7 +89,15 @@ public class CarController : MonoBehaviour
         {
             ShiftDown();
         }
+
+        debugLogTimer += Time.deltaTime;
+        if (debugLogTimer >= debugLogInterval)
+        {
+            debugLogTimer = 0f;
+            Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3}", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel()));
+        }
     }
+
 
     private float GetCurrentGearRatio()
     {
@@ -112,5 +134,30 @@ public class CarController : MonoBehaviour
         {
             currentGear--;
         }
+    }
+
+    private float GetCurrentSpeedKmh()
+    {
+        if (carRigidbody == null)
+        {
+            return 0f;
+        }
+
+        return carRigidbody.linearVelocity.magnitude * 3.6f;
+    }
+
+    private string GetGearLabel()
+    {
+        if (currentGear < 0)
+        {
+            return "R";
+        }
+
+        if (currentGear == 0)
+        {
+            return "N";
+        }
+
+        return currentGear.ToString();
     }
 }
