@@ -24,6 +24,8 @@ public class CarController : MonoBehaviour
     private float brakeInput = 0f;
     private float appliedMotorTorque = 0f;
     private float appliedBrakeTorque = 0f;
+    private float previousForwardSpeed = 0f;
+    private float longitudinalAcceleration = 0f;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 1;
@@ -37,6 +39,7 @@ public class CarController : MonoBehaviour
         // 차체 바닥(중앙보다 조금 아래)으로 무게 중심 강제 고정
         carRigidbody = GetComponent<Rigidbody>();
         carRigidbody.centerOfMass = new Vector3(0, -0.5f, 0);
+        previousForwardSpeed = GetForwardSpeedMps();
     }
 
     void Update()
@@ -64,7 +67,7 @@ public class CarController : MonoBehaviour
         if (debugLogTimer >= debugLogInterval)
         {
             debugLogTimer = 0f;
-            Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3} | Motor: {4:F1} | BrakeTorque: {5:F1} | Slope: {6:F1} deg{7}", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()));
+            Debug.Log(string.Format("Speed: {0:F1} km/h | Accel: {1:F2} m/s^2 | Throttle: {2} | Brake: {3} | Gear: {4} | Motor: {5:F1} | BrakeTorque: {6:F1} | Slope: {7:F1} deg{8}", GetCurrentSpeedKmh(), longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()));
         }
     }
 
@@ -114,6 +117,8 @@ public class CarController : MonoBehaviour
 
         appliedMotorTorque = motor;
         appliedBrakeTorque = brake;
+        longitudinalAcceleration = (GetForwardSpeedMps() - previousForwardSpeed) / Time.fixedDeltaTime;
+        previousForwardSpeed = GetForwardSpeedMps();
     }
 
 
@@ -162,6 +167,16 @@ public class CarController : MonoBehaviour
         }
 
         return carRigidbody.linearVelocity.magnitude * 3.6f;
+    }
+
+    private float GetForwardSpeedMps()
+    {
+        if (carRigidbody == null)
+        {
+            return 0f;
+        }
+
+        return Vector3.Dot(carRigidbody.linearVelocity, transform.forward);
     }
 
     private string GetGearLabel()
