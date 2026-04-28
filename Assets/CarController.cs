@@ -17,6 +17,8 @@ public class CarController : MonoBehaviour
     private Rigidbody carRigidbody;
     private float throttleInput = 0f;
     private float brakeInput = 0f;
+    private float appliedMotorTorque = 0f;
+    private float appliedBrakeTorque = 0f;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 1;
@@ -57,7 +59,7 @@ public class CarController : MonoBehaviour
         if (debugLogTimer >= debugLogInterval)
         {
             debugLogTimer = 0f;
-            Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3}", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel()));
+            Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3} | Motor: {4:F1} | BrakeTorque: {5:F1} | Slope: {6:F1} deg", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle()));
         }
     }
 
@@ -91,6 +93,9 @@ public class CarController : MonoBehaviour
         // 모든 바퀴에 브레이크 적용
         frontLeft.brakeTorque = frontRight.brakeTorque = brake;
         backLeft.brakeTorque = backRight.brakeTorque = brake;
+
+        appliedMotorTorque = motor;
+        appliedBrakeTorque = brake;
     }
 
 
@@ -154,5 +159,22 @@ public class CarController : MonoBehaviour
         }
 
         return currentGear.ToString();
+    }
+
+    private float GetGroundSlopeAngle()
+    {
+        if (carRigidbody == null)
+        {
+            return 0f;
+        }
+
+        RaycastHit hit;
+        Vector3 origin = carRigidbody.position + Vector3.up * 0.5f;
+        if (Physics.Raycast(origin, Vector3.down, out hit, 2.0f))
+        {
+            return Vector3.Angle(hit.normal, Vector3.up);
+        }
+
+        return 0f;
     }
 }
