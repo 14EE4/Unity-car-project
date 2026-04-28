@@ -50,18 +50,9 @@ public class CarController : MonoBehaviour
         }
         else if (brakeInput <= 0f)
         {
-            // 엑셀 뗐을 때: 중립과 후진은 구름만, 전진 기어는 역방향 모터 토크(엔진 브레이크)
-            if (currentGear <= 0)
-            {
-                motor = 0f;
-                brake = rollingResistanceBrake;
-            }
-            else
-            {
-                // 전진 기어만 엔진 브레이크는 모터 토크로 구현 (음수)
-                motor = -engineBrakeTorque * forwardGearRatios[currentGear - 1];
-                brake = 0f;
-            }
+            // 엑셀과 브레이크 모두 떼면: 모든 기어에서 구름 저항만 적용
+            motor = 0f;
+            brake = rollingResistanceBrake;
         }
 
         if (brakeInput > 0f) 
