@@ -47,18 +47,18 @@ public class CarController : MonoBehaviour
         if (throttleInput > 0f) 
         {
             motor = maxTorque * throttleInput * GetCurrentGearRatio();
+            brake = 0f;
         }
-        else if (brakeInput <= 0f)
+        else if (brakeInput > 0f) 
         {
-            // 엑셀과 브레이크 모두 떼면: 모든 기어에서 구름 저항만 적용
+            motor = 0f;
+            brake = brakeTorque;
+        }
+        else
+        {
+            // 엑셀과 브레이크 모두 떼면: 구름 저항만 적용
             motor = 0f;
             brake = rollingResistanceBrake;
-        }
-
-        if (brakeInput > 0f) 
-        {
-            brake = brakeTorque;
-            motor = 0f;
         }
 
         // 4. 물리 값 적용
