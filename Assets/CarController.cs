@@ -79,9 +79,9 @@ public class CarController : MonoBehaviour
         }
         else
         {
-            // 엑셀과 브레이크 모두 떼면: 구름 저항만 적용
+            // 엑셀과 브레이크 모두 떼면: 중립은 구름 저항, 전진/후진 기어는 엔진 브레이크
             motor = 0f;
-            brake = rollingResistanceBrake;
+            brake = currentGear == 0 ? rollingResistanceBrake : engineBrakeTorque;
         }
 
         // 4. 물리 값 적용
