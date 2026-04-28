@@ -11,9 +11,10 @@ public class CarController : MonoBehaviour
 
     private float currentSteer = 0f; 
 
-    // [추가된 부분] 기어 변속 관련
-    public int currentGear = 1; 
-    private float[] gearRatios = { 0f, 3.5f, 2.5f, 1.8f, 1.3f, 1.1f }; // 기어비
+    // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
+    public int currentGear = 1;
+    private readonly float reverseGearRatio = 2.8f;
+    private readonly float[] forwardGearRatios = { 3.5f, 2.5f, 1.8f, 1.3f, 1.1f };
 
     void Start()
     {
@@ -29,30 +30,30 @@ public class CarController : MonoBehaviour
         currentSteer += Input.GetAxis("Mouse X") * 2f; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
 
-        // 2. 입력 받기 (이 부분에서 motorInput을 선언합니다)
-        float motorInput = Input.GetAxis("Vertical"); 
+        // 2. 입력 분리: W는 가속, S는 브레이크
+        float throttleInput = Input.GetKey(KeyCode.W) ? 1f : 0f;
+        float brakeInput = Input.GetKey(KeyCode.S) ? 1f : 0f;
 
-        // 3. 가속 및 브레이크 로직 (가속 안 할 때 차 밀림 방지)
+        // 3. 가속 및 브레이크 로직
         float motor = 0f;
         float brake = 0f;
 
-        // 가속 페달(W)을 밟을 때
-        if (Mathf.Abs(motorInput) > 0.1f) 
+        if (throttleInput > 0f) 
         {
-            motor = maxTorque * motorInput * gearRatios[currentGear];
+            motor = maxTorque * throttleInput * GetCurrentGearRatio();
             brake = 0f;
         }
         else 
         {
-            // 페달을 뗐을 때 (가만히 있을 때 앞으로 가는 현상 방지)
+            // 페달을 뗐을 때 굴러가는 현상을 줄이기 위한 미세 브레이크
             motor = 0f;
             brake = 100f; // 미세하게 브레이크를 걸어서 굴러가지 않게 함
         }
 
-        // S 키를 눌러 직접 브레이크를 밟을 때
-        if (Input.GetKey(KeyCode.S)) 
+        if (brakeInput > 0f) 
         {
             brake = brakeTorque;
+            motor = 0f;
         }
 
         // 4. 물리 값 적용
@@ -64,8 +65,52 @@ public class CarController : MonoBehaviour
         frontLeft.brakeTorque = frontRight.brakeTorque = brake;
         backLeft.brakeTorque = backRight.brakeTorque = brake;
 
-        // 기어 변속 (숫자 1, 2)
-        if (Input.GetKeyDown(KeyCode.Alpha2) && currentGear < gearRatios.Length - 1) currentGear++;
-        if (Input.GetKeyDown(KeyCode.Alpha1) && currentGear > 1) currentGear--;
+        // 기어 변속: 2는 업시프트, 1은 다운시프트
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            ShiftUp();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            ShiftDown();
+        }
+    }
+
+    private float GetCurrentGearRatio()
+    {
+        if (currentGear < 0)
+        {
+            return -reverseGearRatio;
+        }
+
+        if (currentGear == 0)
+        {
+            return 0f;
+        }
+
+        int forwardGearIndex = currentGear - 1;
+        if (forwardGearIndex < 0 || forwardGearIndex >= forwardGearRatios.Length)
+        {
+            return 0f;
+        }
+
+        return forwardGearRatios[forwardGearIndex];
+    }
+
+    private void ShiftUp()
+    {
+        if (currentGear < forwardGearRatios.Length)
+        {
+            currentGear++;
+        }
+    }
+
+    private void ShiftDown()
+    {
+        if (currentGear > -1)
+        {
+            currentGear--;
+        }
     }
 }
