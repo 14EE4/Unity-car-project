@@ -15,6 +15,8 @@ public class CarController : MonoBehaviour
     private float currentSteer = 0f; 
     private float debugLogTimer = 0f;
     private Rigidbody carRigidbody;
+    private float throttleInput = 0f;
+    private float brakeInput = 0f;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 1;
@@ -37,38 +39,8 @@ public class CarController : MonoBehaviour
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
 
         // 2. 입력 분리: W는 가속, S는 브레이크
-        float throttleInput = Input.GetKey(KeyCode.W) ? 1f : 0f;
-        float brakeInput = Input.GetKey(KeyCode.S) ? 1f : 0f;
-
-        // 3. 가속 및 브레이크 로직
-        float motor = 0f;
-        float brake = 0f;
-
-        if (throttleInput > 0f) 
-        {
-            motor = maxTorque * throttleInput * GetCurrentGearRatio();
-            brake = 0f;
-        }
-        else if (brakeInput > 0f) 
-        {
-            motor = 0f;
-            brake = brakeTorque;
-        }
-        else
-        {
-            // 엑셀과 브레이크 모두 떼면: 구름 저항만 적용
-            motor = 0f;
-            brake = rollingResistanceBrake;
-        }
-
-        // 4. 물리 값 적용
-        frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
-        
-        backLeft.motorTorque = backRight.motorTorque = motor;
-        
-        // 모든 바퀴에 브레이크 적용
-        frontLeft.brakeTorque = frontRight.brakeTorque = brake;
-        backLeft.brakeTorque = backRight.brakeTorque = brake;
+        throttleInput = Input.GetKey(KeyCode.W) ? 1f : 0f;
+        brakeInput = Input.GetKey(KeyCode.S) ? 1f : 0f;
 
         // 기어 변속: 2는 업시프트, 1은 다운시프트
         if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -87,6 +59,38 @@ public class CarController : MonoBehaviour
             debugLogTimer = 0f;
             Debug.Log(string.Format("Speed: {0:F1} km/h | Throttle: {1} | Brake: {2} | Gear: {3}", GetCurrentSpeedKmh(), throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel()));
         }
+    }
+
+    void FixedUpdate()
+    {
+        // 3. 가속 및 브레이크 로직
+        float motor = 0f;
+        float brake = 0f;
+
+        if (throttleInput > 0f)
+        {
+            motor = maxTorque * throttleInput * GetCurrentGearRatio();
+            brake = 0f;
+        }
+        else if (brakeInput > 0f)
+        {
+            motor = 0f;
+            brake = brakeTorque;
+        }
+        else
+        {
+            // 엑셀과 브레이크 모두 떼면: 구름 저항만 적용
+            motor = 0f;
+            brake = rollingResistanceBrake;
+        }
+
+        // 4. 물리 값 적용
+        frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+        backLeft.motorTorque = backRight.motorTorque = motor;
+
+        // 모든 바퀴에 브레이크 적용
+        frontLeft.brakeTorque = frontRight.brakeTorque = brake;
+        backLeft.brakeTorque = backRight.brakeTorque = brake;
     }
 
 
