@@ -116,3 +116,32 @@ Assets/TutorialInfo/
 *.exr
 *.png
 *.jpg
+
+# OS 시스템 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE 및 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.rider/
+
+# 플랫폼별 빌드 및 실행 파일
+/Build/
+/Builds/
+*.exe
+*.dll
+*.apk.meta
+*.aab.meta
+
+# 임시 파일
+*.bak
+*.backup
