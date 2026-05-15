@@ -103,7 +103,7 @@
 
 ## 남은 작업 
 - **단기 (즉시 — 2주)**
-  - 1인칭/3인칭 카메라 전환 구현 및 카메라 보정
+  - 1인칭/3인칭 카메라 전환(c키) 구현 및 카메라 보정
   - ESC 일시정지 메뉴(메인 메뉴 복귀/종료) 기본 동작
   - 타이어 모델 추가
   - 기어 별 최고 속도 토크 실제처럼 조정
@@ -131,3 +131,8 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 
 ## 메모
 현재는 UI와 레이스 진행 기능을 붙이기 전에 주행감과 입력 흐름을 안정화하는 데 집중하고 있습니다.
+
+## 수정 기록
+- 2026-05-15: 1인칭 카메라에서 위치 보간으로 인해 입력과 시점이 미세하게 끊기는 문제가 발견되었습니다. 해결: `Assets/Script/CameraController.cs`에서 1인칭 모드의 위치/회전 보간을 제거하고 즉시 Anchor 위치로 설정하도록 변경했습니다.
+- 2026-05-15: 3인칭(외부) 카메라가 물리 기반 이동 시 따라감이 끊기는 현상 개선을 위해 `Assets/Script/CarController.cs`의 `Start()`에 `carRigidbody.interpolation = RigidbodyInterpolation.Interpolate;`를 추가했습니다. 이로써 물리 업데이트와 카메라 LateUpdate 간의 불연속성이 줄어듭니다.
+- 테스트: Play 모드에서 `C`키로 전환하여 1인칭/3인칭 동작을 확인하고, 차량 주행 시 카메라 끊김이 개선되었는지 검증하세요.

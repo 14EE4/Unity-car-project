@@ -39,6 +39,8 @@ public class CarController : MonoBehaviour
         // 차체 바닥(중앙보다 조금 아래)으로 무게 중심 강제 고정
         carRigidbody = GetComponent<Rigidbody>();
         carRigidbody.centerOfMass = new Vector3(0, -0.5f, 0);
+        // 물리 기반 이동에서 카메라 끊김을 줄이기 위한 보간 설정
+        carRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         previousForwardSpeed = GetForwardSpeedMps();
     }
 

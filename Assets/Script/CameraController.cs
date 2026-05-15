@@ -72,8 +72,10 @@ public class CameraController : MonoBehaviour
 
         if (firstPerson && firstPersonAnchor != null)
         {
+            // 1인칭에서는 즉시 고정(보간 제거)하여 끊김/딜레이 제거
             transform.rotation = rot;
-            transform.position = Vector3.SmoothDamp(transform.position, firstPersonAnchor.position, ref currentVel, smoothTime);
+            transform.position = firstPersonAnchor.position;
+            currentVel = Vector3.zero;
         }
         else
         {
