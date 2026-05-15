@@ -28,7 +28,7 @@ public class CarController : MonoBehaviour
     private float longitudinalAcceleration = 0f;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
-    public int currentGear = 1;
+    public int currentGear = 0;
     private readonly float reverseGearRatio = 2.8f;
     private readonly float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f };
     // 각 기어별 최고 속도 (km/h)
