@@ -107,21 +107,6 @@ public class CameraController : MonoBehaviour
             transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref currentVel, smoothTime);
             transform.rotation = Quaternion.Slerp(transform.rotation, rot, 10f * Time.deltaTime);
         }
-        else
-        {
-            Vector3 desiredPos = target.position + rot * thirdPersonOffset;
-            Vector3 origin = target.position + Vector3.up * 1f;
-            Vector3 dir = desiredPos - origin;
-            float distance = dir.magnitude;
-            RaycastHit hit;
-            if (Physics.SphereCast(origin, collisionRadius, dir.normalized, out hit, distance))
-            {
-                desiredPos = hit.point - dir.normalized * collisionOffset;
-            }
-
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref currentVel, smoothTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 10f * Time.deltaTime);
-        }
     }
 
     public void SetFirstPersonAnchor(Transform anchor)
