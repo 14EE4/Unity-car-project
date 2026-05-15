@@ -45,9 +45,16 @@ public class CameraController : MonoBehaviour
 
         if (firstPerson)
         {
-            // 1인칭: 마우스로 자유롭게 룩
-            yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
-            pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+            // 1인칭: 카메라를 차량 Anchor에 고정하기 위해 마우스 룩을 무시
+            if (firstPersonAnchor != null)
+            {
+                yaw = firstPersonAnchor.eulerAngles.y;
+                pitch = firstPersonAnchor.eulerAngles.x;
+            }
+            else if (target != null)
+            {
+                yaw = target.eulerAngles.y;
+            }
         }
         else
         {
@@ -72,10 +79,33 @@ public class CameraController : MonoBehaviour
 
         if (firstPerson && firstPersonAnchor != null)
         {
-            // 1인칭에서는 즉시 고정(보간 제거)하여 끊김/딜레이 제거
-            transform.rotation = rot;
-            transform.position = firstPersonAnchor.position;
+            // 1인칭에서는 Anchor의 자식으로 만들어 위치/회전을 정확히 고정
+            if (transform.parent != firstPersonAnchor)
+            {
+                transform.SetParent(firstPersonAnchor);
+                transform.localPosition = Vector3.zero;
+                transform.localRotation = Quaternion.identity;
+            }
             currentVel = Vector3.zero;
+        }
+        else
+        {
+            // 1인칭에서 벗어나면 부모 해제
+            if (transform.parent == firstPersonAnchor)
+                transform.SetParent(null);
+
+            Vector3 desiredPos = target.position + rot * thirdPersonOffset;
+            Vector3 origin = target.position + Vector3.up * 1f;
+            Vector3 dir = desiredPos - origin;
+            float distance = dir.magnitude;
+            RaycastHit hit;
+            if (Physics.SphereCast(origin, collisionRadius, dir.normalized, out hit, distance))
+            {
+                desiredPos = hit.point - dir.normalized * collisionOffset;
+            }
+
+            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref currentVel, smoothTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 10f * Time.deltaTime);
         }
         else
         {
