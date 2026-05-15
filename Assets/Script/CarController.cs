@@ -91,9 +91,6 @@ public class CarController : MonoBehaviour
         }
 
         // 3. 가속 및 브레이크 로직
-        float motor = 0f;
-        float brake = 0f;
-
         if (throttleInput > 0f)
         {
             // 기어별 최고 속도 제한 적용: 속도 도달 시 토크 감소
