@@ -5,7 +5,7 @@ public class CarController : MonoBehaviour
     public WheelCollider frontLeft, frontRight;
     public WheelCollider backLeft, backRight;
 
-    public float maxTorque = 1500f;   
+    public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 30f; 
     public float brakeTorque = 3000f; 
     public float rollingResistanceBrake = 10f;
@@ -30,7 +30,9 @@ public class CarController : MonoBehaviour
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 1;
     private readonly float reverseGearRatio = 2.8f;
-    private readonly float[] forwardGearRatios = { 3.5f, 2.5f, 1.8f, 1.3f, 1.1f };
+    private readonly float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f };
+    // 각 기어별 최고 속도 (km/h)
+    private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
 
     void Start()
     {
@@ -94,31 +96,38 @@ public class CarController : MonoBehaviour
 
         if (throttleInput > 0f)
         {
-            motor = maxTorque * throttleInput * GetCurrentGearRatio();
-            brake = 0f;
+            // 기어별 최고 속도 제한 적용: 속도 도달 시 토크 감소
+            float currentSpeedKmh = GetCurrentSpeedKmh();
+            float gearMaxSpeed = GetGearMaxSpeed();
+            float speedRatio = Mathf.Clamp01(1f - (currentSpeedKmh / (gearMaxSpeed + 1f)));
+            float motor = maxTorque * throttleInput * GetCurrentGearRatio() * speedRatio;
+            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            backLeft.motorTorque = backRight.motorTorque = motor;
+            frontLeft.brakeTorque = frontRight.brakeTorque = 0f;
+            backLeft.brakeTorque = backRight.brakeTorque = 0f;
+            appliedMotorTorque = motor;
+            appliedBrakeTorque = 0f;
         }
         else if (brakeInput > 0f)
         {
-            motor = 0f;
-            brake = brakeTorque;
+            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            backLeft.motorTorque = backRight.motorTorque = 0f;
+            frontLeft.brakeTorque = frontRight.brakeTorque = brakeTorque;
+            backLeft.brakeTorque = backRight.brakeTorque = brakeTorque;
+            appliedMotorTorque = 0f;
+            appliedBrakeTorque = brakeTorque;
         }
         else
         {
             // 엑셀과 브레이크 모두 떼면: 중립은 구름 저항, 전진/후진 기어는 엔진 브레이크
-            motor = 0f;
-            brake = currentGear == 0 ? rollingResistanceBrake : engineBrakeTorque;
+            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            backLeft.motorTorque = backRight.motorTorque = 0f;
+            float brakeTq = currentGear == 0 ? rollingResistanceBrake : engineBrakeTorque;
+            frontLeft.brakeTorque = frontRight.brakeTorque = brakeTq;
+            backLeft.brakeTorque = backRight.brakeTorque = brakeTq;
+            appliedMotorTorque = 0f;
+            appliedBrakeTorque = brakeTq;
         }
-
-        // 4. 물리 값 적용
-        frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
-        backLeft.motorTorque = backRight.motorTorque = motor;
-
-        // 모든 바퀴에 브레이크 적용
-        frontLeft.brakeTorque = frontRight.brakeTorque = brake;
-        backLeft.brakeTorque = backRight.brakeTorque = brake;
-
-        appliedMotorTorque = motor;
-        appliedBrakeTorque = brake;
         longitudinalAcceleration = (GetForwardSpeedMps() - previousForwardSpeed) / Time.fixedDeltaTime;
         previousForwardSpeed = GetForwardSpeedMps();
     }
@@ -226,6 +235,27 @@ public class CarController : MonoBehaviour
             frontRight.rpm, GetWheelSlipText(frontRight),
             backLeft.rpm, GetWheelSlipText(backLeft),
             backRight.rpm, GetWheelSlipText(backRight));
+    }
+
+    private float GetGearMaxSpeed()
+    {
+        if (currentGear < 0)
+        {
+            return 40f; // 후진 최고 속도
+        }
+
+        if (currentGear == 0)
+        {
+            return 0f; // 중립
+        }
+
+        int forwardGearIndex = currentGear - 1;
+        if (forwardGearIndex < 0 || forwardGearIndex >= gearMaxSpeeds.Length)
+        {
+            return 0f;
+        }
+
+        return gearMaxSpeeds[forwardGearIndex];
     }
 
     private string GetWheelSlipText(WheelCollider wheel)
