@@ -14,6 +14,10 @@ public class CameraController : MonoBehaviour
     public float collisionRadius = 0.2f;
     public float collisionOffset = 0.2f;
 
+    // 새 옵션: 3인칭에서 yaw(수평 회전)를 차량에 고정할지 여부
+    public bool lockThirdPersonYaw = true;
+    public bool lockThirdPersonPitch = false;
+
     float yaw = 0f;
     float pitch = 10f;
     bool firstPerson;
@@ -28,15 +32,35 @@ public class CameraController : MonoBehaviour
         {
             Debug.LogWarning("CameraController: target not assigned.");
         }
-    }
+        // 프리팹 자식에 카메라가 붙어있다면 런타임에 분리 (권장)
+        transform.SetParent(null);
+
+        if (target != null)
+            yaw = target.eulerAngles.y;
 
     void Update()
     {
         if (Input.GetKeyDown(toggleKey))
             firstPerson = !firstPerson;
 
-        yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
-        pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+        if (firstPerson)
+        {
+            // 1인칭: 마우스로 자유롭게 룩
+            yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
+            pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+        }
+        else
+        {
+            // 3인칭: 옵션에 따라 yaw를 차량에 고정하거나 마우스로 회전 허용
+            if (target != null && lockThirdPersonYaw)
+                yaw = target.eulerAngles.y;
+            else
+                yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
+
+            if (!lockThirdPersonPitch)
+                pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+        }
+
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
     }
 
@@ -44,7 +68,7 @@ public class CameraController : MonoBehaviour
     {
         if (target == null) return;
 
-        Quaternion rot = Quaternion.Euler(pitch, yaw + target.eulerAngles.y, 0f);
+        Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
 
         if (firstPerson && firstPersonAnchor != null)
         {
