@@ -37,7 +37,7 @@ public class CameraController : MonoBehaviour
 
         if (target != null)
             yaw = target.eulerAngles.y;
-
+        }
     void Update()
     {
         if (Input.GetKeyDown(toggleKey))
