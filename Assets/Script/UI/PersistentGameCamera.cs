@@ -30,8 +30,22 @@ public class PersistentGameCamera : MonoBehaviour
             return;
         }
 
+        // If configured to persist across scenes, ensure we don't create duplicates.
         if (dontDestroyOnLoad)
+        {
+            var others = FindObjectsOfType<PersistentGameCamera>();
+            foreach (var o in others)
+            {
+                if (o != this && o.dontDestroyOnLoad)
+                {
+                    Debug.Log("PersistentGameCamera: another persistent instance exists; destroying this one.");
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
             DontDestroyOnLoad(gameObject);
+        }
 
         CreateOrUpdateRenderTexture();
     }

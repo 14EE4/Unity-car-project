@@ -1264,7 +1264,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1357813167}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1357813170
 Camera:
   m_ObjectHideFlags: 0
@@ -1344,6 +1344,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuSceneName: MainMenu
+  forceActive: 0
   setAsBackgroundCamera: 1
   backgroundColor: {r: 0.08, g: 0.09, b: 0.12, a: 1}
   backgroundDepth: -100
