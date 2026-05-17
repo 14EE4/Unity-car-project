@@ -84,30 +84,53 @@ public class MainMenuController : MonoBehaviour
     public void ShowKeyGuide()
     {
         Debug.Log($"[MainMenuController] ShowKeyGuide invoked. keyGuidePanel assigned={keyGuidePanel != null}");
+        
+        // Check if stored reference is valid
         CanvasGroup cg = keyGuidePanel;
+        if (cg != null && cg.gameObject == null)
+        {
+            // Reference is stale (object was destroyed), reset it
+            Debug.Log("[MainMenuController] keyGuidePanel reference is stale, resetting");
+            cg = null;
+            keyGuidePanel = null;
+        }
+        
+        // Try to find existing KeyGuidePanel in current scene
         if (cg == null)
         {
             var go = GameObject.Find("KeyGuidePanel");
-            if (go != null) cg = go.GetComponent<CanvasGroup>();
+            if (go != null)
+            {
+                cg = go.GetComponent<CanvasGroup>();
+                Debug.Log($"[MainMenuController] Found existing KeyGuidePanel");
+            }
         }
 
+        // Create new one if not found
         if (cg == null)
         {
+            Debug.Log("[MainMenuController] Creating new KeyGuidePanel");
             cg = CreateRuntimeKeyGuide();
             if (cg != null)
             {
-                if (keyGuidePanel == null) keyGuidePanel = cg;
+                keyGuidePanel = cg;
                 Debug.Log($"[MainMenuController] Created runtime KeyGuidePanel, parent={cg.gameObject.transform.parent?.name}");
+            }
+            else
+            {
+                Debug.LogError("[MainMenuController] Failed to create KeyGuidePanel - no Canvas found in active scene!");
+                return;
             }
         }
 
         if (cg != null)
         {
-            // Ensure the panel is parented to a canvas in the active scene so it isn't lost when scenes change
+            // Ensure the panel is parented to a canvas in the active scene
             var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var parentCanvas = cg.GetComponentInParent<Canvas>();
             if (parentCanvas == null || parentCanvas.gameObject.scene != activeScene)
             {
+                Debug.Log("[MainMenuController] Reparenting KeyGuidePanel to active scene Canvas");
                 var canvases = Object.FindObjectsOfType<Canvas>();
                 foreach (var c in canvases)
                 {
@@ -119,6 +142,14 @@ public class MainMenuController : MonoBehaviour
                 }
             }
 
+            // Ensure overlay exists and is properly positioned
+            var overlay = cg.gameObject.transform.parent as RectTransform;
+            if (overlay != null && overlay.gameObject.name == "KeyGuideOverlay")
+            {
+                if (!overlay.gameObject.activeInHierarchy) overlay.gameObject.SetActive(true);
+            }
+
+            // Show the panel
             if (!cg.gameObject.activeInHierarchy) cg.gameObject.SetActive(true);
             cg.alpha = 1f;
             cg.interactable = true;
@@ -134,6 +165,7 @@ public class MainMenuController : MonoBehaviour
         Canvas canvas = null;
         var allCanvases = Object.FindObjectsOfType<Canvas>();
         var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        
         foreach (var c in allCanvases)
         {
             if (c.gameObject.scene == activeScene)
@@ -142,13 +174,31 @@ public class MainMenuController : MonoBehaviour
                 break;
             }
         }
+        
+        // Fallback: if no canvas found, log warning but continue
+        if (canvas == null)
+        {
+            Debug.LogWarning("[MainMenuController] No Canvas found in active scene! This may cause issues.");
+            // As last resort, try to find any canvas
+            if (allCanvases.Length > 0)
+            {
+                canvas = allCanvases[0];
+                Debug.LogWarning($"[MainMenuController] Using Canvas from different scene: {canvas.gameObject.scene.name}");
+            }
+        }
+        
         var pm = Object.FindFirstObjectByType<PauseMenuController>();
         Transform parent = null;
+        
         // Prefer attaching to the root Canvas in the active scene so the panel appears above other UI
         if (canvas != null) parent = canvas.transform;
         else if (pm != null && pm.pausePanel != null) parent = pm.pausePanel.transform;
 
-        if (parent == null) return null;
+        if (parent == null)
+        {
+            Debug.LogError("[MainMenuController] Could not find valid parent transform for KeyGuidePanel");
+            return null;
+        }
 
         // Create a full-screen overlay to dim background
         var overlayGO = new GameObject("KeyGuideOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -286,8 +336,13 @@ public class MainMenuController : MonoBehaviour
             cg.interactable = false;
             cg.blocksRaycasts = false;
         }
+        
         var overlay = GameObject.Find("KeyGuideOverlay");
         if (overlay != null) GameObject.Destroy(overlay);
+        
+        // Reset reference to force recreation on next call
+        keyGuidePanel = null;
+        Debug.Log("[MainMenuController] Closed KeyGuidePanel and reset reference");
     }
 
     public void QuitGame()

@@ -152,7 +152,7 @@
 - 문제
  - 일시정지 - 버튼 - 키 가이드 동작 안함
  - 인게임 - 메뉴 이동 시 메뉴 씬의 0, 1, -10 위치에 있는 카메라가 버튼을 가림
-  - 스크립트 삭제하여 일단 안나오게함
+  -> 스크립트 삭제하여 일단 안나오게함 - 해결
 - **중기 (2주 — 4주)**
   - 로딩 창
   - UI 구현: 조향 표시 바, 랩 타임 표시  
@@ -193,3 +193,22 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
   - 기어별 최고 속도 제한: 1단 50km/h, 2단 85km/h, 3단 130km/h, 4단 160km/h, 5단 200km/h
   - 최고 속도 도달 시 토크를 점진적으로 감소시켜 자연스러운 가속 곡선 구현
 - 테스트: Play 모드에서 각 기어별 최고 속도 동작을 확인하고, 1단에서의 가속이 적절한지 검증하세요.
+- 2026-05-17: **메인 메뉴 키 가이드 패널 - 씬 전환 후 표시 안 되는 문제 해결**
+  - **문제**: 게임 시작 후 메인 메뉴로 돌아온 후 키 가이드 버튼을 클릭해도 패널이 나타나지 않음
+  - **원인**: 
+    - 게임 진입 시 Main 씬 로드 → MainMenu 씬 언로드 → keyGuidePanel 참조 파괴
+    - 메인 메뉴로 복귀 시 새로운 MainMenuController 생성 → 참조 초기화 안 됨
+    - ShowKeyGuide() 호출 시 stale 참조 또는 Canvas 미탐지로 생성 실패
+  - **해결 방법**:
+    1. `MainMenuController.ShowKeyGuide()` 강화
+       - Stale 참조 감지 및 자동 초기화
+       - Canvas 찾기 실패 시 로그 및 생성 재시도
+       - Overlay도 함께 활성화 확인
+    2. `MainMenuController.CreateRuntimeKeyGuide()` 개선
+       - Canvas 미탐지 시 fallback 로직 추가
+       - 다양한 씬 상황에서도 작동하도록 강화
+    3. `CloseKeyGuide()` 최적화
+       - 참조 명시적 초기화 추가 (다음 호출 시 강제 재생성)
+    4. `PauseMenuController` 동기화
+       - 동일한 개선사항 적용
+  - **결과**: 게임 진입/복귀 후에도 키 가이드가 정상 표시됨

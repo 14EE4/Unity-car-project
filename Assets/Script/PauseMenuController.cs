@@ -77,17 +77,30 @@ public class PauseMenuController : MonoBehaviour
 
         if (cg == null)
         {
+            Debug.Log("[PauseMenuController] Creating runtime KeyGuidePanel");
             cg = CreateRuntimeKeyGuide();
         }
 
         if (cg != null)
         {
+            // Ensure overlay exists and is properly positioned
+            var overlay = cg.gameObject.transform.parent as RectTransform;
+            if (overlay != null && overlay.gameObject.name == "KeyGuideOverlay")
+            {
+                if (!overlay.gameObject.activeInHierarchy) overlay.gameObject.SetActive(true);
+            }
+
             // Ensure GameObject is active and visible
             if (!cg.gameObject.activeInHierarchy) cg.gameObject.SetActive(true);
             cg.alpha = 1f;
             cg.interactable = true;
             cg.blocksRaycasts = true;
+            Debug.Log($"[PauseMenuController] Showing KeyGuidePanel");
             cg.transform.SetAsLastSibling();
+        }
+        else
+        {
+            Debug.LogError("[PauseMenuController] Failed to show or create KeyGuidePanel");
         }
     }
 
