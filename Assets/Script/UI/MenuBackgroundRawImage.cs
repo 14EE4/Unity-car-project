@@ -7,22 +7,15 @@ public class MenuBackgroundRawImage : MonoBehaviour
 {
     RawImage rawImage;
 
-    [Header("Static background (optional)")]
+    [Header("Static background image (drag and drop here)")]
     public Texture2D backgroundTexture;
-    public Sprite backgroundSprite;
-
-    void Awake()
-    {
-        rawImage = GetComponent<RawImage>();
-        ApplyStaticBackground();
-    }
 
     void OnEnable()
     {
         if (rawImage == null)
             rawImage = GetComponent<RawImage>();
 
-        ApplyStaticBackground();
+        ApplyBackground();
     }
 
     void OnValidate()
@@ -30,10 +23,10 @@ public class MenuBackgroundRawImage : MonoBehaviour
         if (rawImage == null)
             rawImage = GetComponent<RawImage>();
 
-        ApplyStaticBackground();
+        ApplyBackground();
     }
 
-    void ApplyStaticBackground()
+    void ApplyBackground()
     {
         if (rawImage == null) return;
 
@@ -41,23 +34,16 @@ public class MenuBackgroundRawImage : MonoBehaviour
         EnsureFullscreen();
         transform.SetAsFirstSibling();
 
-        if (backgroundSprite != null)
-        {
-            rawImage.texture = backgroundSprite.texture;
-            rawImage.enabled = true;
-            return;
-        }
-
         if (backgroundTexture != null)
         {
             rawImage.texture = backgroundTexture;
             rawImage.enabled = true;
-            return;
         }
-
-        // No static background assigned -> disable the RawImage to avoid showing empty quad
-        rawImage.texture = null;
-        rawImage.enabled = false;
+        else
+        {
+            rawImage.texture = null;
+            rawImage.enabled = false;
+        }
     }
 
     void EnsureFullscreen()

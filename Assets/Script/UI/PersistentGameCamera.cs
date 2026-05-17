@@ -22,6 +22,10 @@ public class PersistentGameCamera : MonoBehaviour
 
     void Awake()
     {
+        // Disable this script to use static image backgrounds instead of RenderTexture
+        enabled = false;
+        return;
+        
         cam = GetComponent<Camera>();
         if (cam == null)
         {
