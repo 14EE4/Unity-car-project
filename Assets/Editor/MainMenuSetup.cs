@@ -65,7 +65,7 @@ public static class MainMenuSetup
         txt.text = "닫기";
         txt.alignment = TextAnchor.MiddleCenter;
         txt.color = Color.black;
-        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         var txtRect = textGO.GetComponent<RectTransform>();
         txtRect.anchorMin = Vector2.zero;
         txtRect.anchorMax = Vector2.one;
@@ -128,7 +128,7 @@ public static class MainMenuSetup
         titleText.text = "KEY GUIDE";
         titleText.alignment = TextAnchor.UpperCenter;
         titleText.color = Color.white;
-        titleText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         titleText.fontSize = 28;
         var titleRect = titleGO.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0.5f, 1f);
@@ -143,7 +143,7 @@ public static class MainMenuSetup
         bodyText.text = "W: Accelerate\nS: Brake / Reverse\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
         bodyText.alignment = TextAnchor.MiddleCenter;
         bodyText.color = new Color(1f, 1f, 1f, 0.95f);
-        bodyText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        bodyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         bodyText.fontSize = 22;
         var bodyRect = bodyGO.GetComponent<RectTransform>();
         bodyRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -169,7 +169,7 @@ public static class MainMenuSetup
         closeText.text = "닫기";
         closeText.alignment = TextAnchor.MiddleCenter;
         closeText.color = Color.black;
-        closeText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         var closeTextRect = closeTextGO.GetComponent<RectTransform>();
         closeTextRect.anchorMin = Vector2.zero;
         closeTextRect.anchorMax = Vector2.one;
