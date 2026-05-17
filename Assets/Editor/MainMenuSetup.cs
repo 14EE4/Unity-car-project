@@ -200,4 +200,30 @@ public static class MainMenuSetup
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
         Debug.Log("Key guide panel created under Canvas and wired to MainMenuController.CloseKeyGuide().");
     }
+
+    [MenuItem("Tools/Setup/Create Menu Camera")]
+    public static void CreateMenuCamera()
+    {
+        // Create camera GameObject in MainMenu scene
+        var cameraGO = new GameObject("MenuCamera", typeof(Camera), typeof(MainMenuCameraController));
+        var cam = cameraGO.GetComponent<Camera>();
+        
+        // Position camera to look at center of screen (where Canvas is)
+        cameraGO.transform.position = new Vector3(0f, 0f, -10f);
+        cameraGO.transform.rotation = Quaternion.identity;
+        
+        // Configure as UI camera
+        cam.orthographic = true;
+        cam.orthographicSize = 5f;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.08f, 0.09f, 0.12f, 1f);
+        cam.depth = -100f;
+        cam.cullingMask = LayerMask.GetMask("UI");
+        
+        // Add AudioListener to prevent duplicate warnings
+        cameraGO.AddComponent<AudioListener>();
+        
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("Menu camera created and configured in MainMenu scene.");
+    }
 }

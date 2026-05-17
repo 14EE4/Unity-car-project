@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CameraController : MonoBehaviour
 {
@@ -20,6 +21,10 @@ public class CameraController : MonoBehaviour
     // 새 옵션: 1인칭에서 마우스 룩 허용 여부 (기본: 비허용 => Anchor 고정)
     public bool allowFirstPersonMouseLook = true;
 
+    [Header("Initial Camera Position (stored from Main scene)")]
+    public Vector3 initialPosition = new Vector3(-0.814f, 0.961f, -30.139f);
+    public Vector3 initialRotation = new Vector3(0f, 45f, 0f);
+
     float yaw = 0f;
     float pitch = 10f;
     bool firstPerson;
@@ -36,6 +41,9 @@ public class CameraController : MonoBehaviour
         }
         // 프리팹 자식에 카메라가 붙어있다면 런타임에 분리 (권장)
         transform.SetParent(null);
+
+        // Reset camera to initial position when Main scene loads
+        ResetCameraToInitial();
 
         // Ensure a firstPersonAnchor exists under the target so 1st-person can attach
         if (firstPersonAnchor == null && target != null)
@@ -54,6 +62,16 @@ public class CameraController : MonoBehaviour
         if (target != null)
             yaw = target.eulerAngles.y;
         }
+
+    void ResetCameraToInitial()
+    {
+        transform.position = initialPosition;
+        transform.eulerAngles = initialRotation;
+        
+        // Set initial pitch/yaw from rotation
+        pitch = initialRotation.x;
+        yaw = initialRotation.y;
+    }
     void Update()
     {
         if (Input.GetKeyDown(toggleKey))

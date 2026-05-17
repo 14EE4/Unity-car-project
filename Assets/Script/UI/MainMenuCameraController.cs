@@ -35,8 +35,7 @@ public class MainMenuCameraController : MonoBehaviour
 
     void Start()
     {
-        // Disabled to use static menu backgrounds - don't manage camera activation
-        return;
+        // Menu camera management is now active to display the menu properly
         UpdateCameraState();
     }
 
