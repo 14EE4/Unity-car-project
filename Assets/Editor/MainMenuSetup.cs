@@ -110,7 +110,7 @@ public static class MainMenuSetup
         var panelGO = new GameObject("KeyGuidePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
         panelGO.transform.SetParent(canvas.transform, false);
         var panelImage = panelGO.GetComponent<Image>();
-        panelImage.color = new Color(0f, 0f, 0f, 0.72f);
+        panelImage.color = new Color(0f, 0f, 0f, 0.84f);
         var panelRect = panelGO.GetComponent<RectTransform>();
         panelRect.anchorMin = Vector2.zero;
         panelRect.anchorMax = Vector2.one;
@@ -130,6 +130,10 @@ public static class MainMenuSetup
         titleText.color = Color.white;
         titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         titleText.fontSize = 28;
+        titleText.fontStyle = FontStyle.Bold;
+        var titleOutline = titleGO.AddComponent<Outline>();
+        titleOutline.effectColor = new Color(0f, 0f, 0f, 0.95f);
+        titleOutline.effectDistance = new Vector2(1.5f, -1.5f);
         var titleRect = titleGO.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0.5f, 1f);
         titleRect.anchorMax = new Vector2(0.5f, 1f);
@@ -142,9 +146,13 @@ public static class MainMenuSetup
         var bodyText = bodyGO.GetComponent<Text>();
         bodyText.text = "W: Accelerate\nS: Brake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu";
         bodyText.alignment = TextAnchor.MiddleCenter;
-        bodyText.color = new Color(1f, 1f, 1f, 0.95f);
+        bodyText.color = Color.white;
         bodyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         bodyText.fontSize = 22;
+        bodyText.fontStyle = FontStyle.Bold;
+        var bodyOutline = bodyGO.AddComponent<Outline>();
+        bodyOutline.effectColor = new Color(0f, 0f, 0f, 0.95f);
+        bodyOutline.effectDistance = new Vector2(1.25f, -1.25f);
         var bodyRect = bodyGO.GetComponent<RectTransform>();
         bodyRect.anchorMin = new Vector2(0.5f, 0.5f);
         bodyRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -170,6 +178,7 @@ public static class MainMenuSetup
         closeText.alignment = TextAnchor.MiddleCenter;
         closeText.color = Color.black;
         closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        closeText.fontStyle = FontStyle.Bold;
         var closeTextRect = closeTextGO.GetComponent<RectTransform>();
         closeTextRect.anchorMin = Vector2.zero;
         closeTextRect.anchorMax = Vector2.one;
