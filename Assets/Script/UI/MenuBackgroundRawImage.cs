@@ -6,71 +6,39 @@ public class MenuBackgroundRawImage : MonoBehaviour
 {
     RawImage rawImage;
 
+    [Header("Static background (optional)")]
+    public Texture2D backgroundTexture;
+    public Sprite backgroundSprite;
+
     void Awake()
     {
         rawImage = GetComponent<RawImage>();
+        rawImage.color = Color.white;
+        EnsureFullscreen();
+        transform.SetAsFirstSibling();
+        AssignStaticBackground();
+        Debug.Log("MenuBackgroundRawImage: Awake - static background assigned");
+    }
+
+    void AssignStaticBackground()
+    {
+        if (backgroundSprite != null)
+        {
+            rawImage.texture = backgroundSprite.texture;
+            rawImage.enabled = true;
+            return;
+        }
+
+        if (backgroundTexture != null)
+        {
+            rawImage.texture = backgroundTexture;
+            rawImage.enabled = true;
+            return;
+        }
+
+        // No static background assigned -> disable the RawImage to avoid showing empty quad
+        rawImage.texture = null;
         rawImage.enabled = false;
-        rawImage.color = Color.white;
-        EnsureFullscreen();
-        transform.SetAsFirstSibling();
-        Debug.Log("MenuBackgroundRawImage: Awake - rawImage found");
-    }
-
-    void OnEnable()
-    {
-        rawImage.color = Color.white;
-        EnsureFullscreen();
-        transform.SetAsFirstSibling();
-        Debug.Log($"MenuBackgroundRawImage: OnEnable - BackgroundTexture is {(PersistentGameCamera.BackgroundTexture!=null ? "present" : "null")}");
-        // Ensure this RawImage's Canvas renders behind other UI by forcing overrideSorting and a low sortingOrder
-        var parentCanvas = GetComponentInParent<Canvas>();
-        if (parentCanvas != null)
-        {
-            parentCanvas.overrideSorting = true;
-            parentCanvas.sortingOrder = -100;
-            Debug.Log($"MenuBackgroundRawImage: set parent canvas sortingOrder={parentCanvas.sortingOrder}");
-        }
-        if (PersistentGameCamera.BackgroundTexture != null)
-        {
-            rawImage.texture = PersistentGameCamera.BackgroundTexture;
-            rawImage.enabled = true;
-            Debug.Log($"MenuBackgroundRawImage: OnEnable - assigned texture {PersistentGameCamera.BackgroundTexture.width}x{PersistentGameCamera.BackgroundTexture.height}");
-        }
-        else
-        {
-            PersistentGameCamera.OnTextureReady += OnTextureReady;
-            Debug.Log("MenuBackgroundRawImage: OnEnable - subscribed to OnTextureReady");
-        }
-    }
-
-    void OnDisable()
-    {
-        PersistentGameCamera.OnTextureReady -= OnTextureReady;
-        Debug.Log("MenuBackgroundRawImage: OnDisable - unsubscribed");
-    }
-
-    void OnTextureReady(RenderTexture rt)
-    {
-        EnsureFullscreen();
-        transform.SetAsFirstSibling();
-        var parentCanvas = GetComponentInParent<Canvas>();
-        if (parentCanvas != null)
-        {
-            parentCanvas.overrideSorting = true;
-            parentCanvas.sortingOrder = -100;
-        }
-        if (rt != null)
-        {
-            rawImage.texture = rt;
-            rawImage.enabled = true;
-            Debug.Log($"MenuBackgroundRawImage: OnTextureReady - texture ready {rt.width}x{rt.height}");
-        }
-        else
-        {
-            rawImage.texture = null;
-            rawImage.enabled = false;
-            Debug.Log("MenuBackgroundRawImage: OnTextureReady - texture null, disabled");
-        }
     }
 
     void EnsureFullscreen()
