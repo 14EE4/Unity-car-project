@@ -10,7 +10,7 @@ public class CarController : MonoBehaviour
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 30f; 
-    public float steerSensitivity = 2f;
+    public float steerSensitivity = 1f;
     public float brakeTorque = 3000f; 
     public float rollingResistanceBrake = 10f;
     public float engineBrakeTorque = 60f;

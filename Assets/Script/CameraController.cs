@@ -5,7 +5,7 @@ public class CameraController : MonoBehaviour
     public Transform target; // 차량 루트
     public Transform firstPersonAnchor; // 1인칭 카메라 위치
     public Vector3 thirdPersonOffset = new Vector3(0f, 2f, -4f);
-    public float mouseSensitivity = 3f;
+    public float mouseSensitivity = 1f;
     public float smoothTime = 0.08f;
     public bool startFirstPerson = false;
     public KeyCode toggleKey = KeyCode.C;
