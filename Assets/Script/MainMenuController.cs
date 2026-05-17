@@ -19,6 +19,7 @@ public class MainMenuController : MonoBehaviour
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
+            settingsPanel.gameObject.SetActive(false);
         }
 
         if (keyGuidePanel != null)
@@ -45,6 +46,8 @@ public class MainMenuController : MonoBehaviour
     {
         if (settingsPanel != null)
         {
+            if (!settingsPanel.gameObject.activeSelf)
+                settingsPanel.gameObject.SetActive(true);
             settingsPanel.alpha = 1f;
             settingsPanel.interactable = true;
             settingsPanel.blocksRaycasts = true;
@@ -195,6 +198,7 @@ public class MainMenuController : MonoBehaviour
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
+            settingsPanel.gameObject.SetActive(false);
         }
     }
 

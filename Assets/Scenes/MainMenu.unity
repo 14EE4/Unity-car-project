@@ -1828,6 +1828,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee803941a2dc11749bb4bdc194334bb5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  backgroundTexture: {fileID: 2800000, guid: c41e2d61b4956a14db19c30e94e57d33, type: 3}
+  backgroundSprite: {fileID: 0}
 --- !u!114 &1437405230
 MonoBehaviour:
   m_ObjectHideFlags: 0
