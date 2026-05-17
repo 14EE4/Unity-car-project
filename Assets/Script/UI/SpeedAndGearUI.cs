@@ -19,6 +19,9 @@ public class SpeedAndGearUI : MonoBehaviour
     public float speedMultiplier = 3.6f; // m/s -> km/h
     public string speedFormat = "0"; // string format for speed
     public string gearFormat = "G{0}"; // e.g. G1, G2
+    public string speedPrefix = "Speed: ";
+    public string speedSuffix = " km/h";
+    public string gearPrefix = "Gear: ";
 
     void Update()
     {
@@ -31,7 +34,7 @@ public class SpeedAndGearUI : MonoBehaviour
 
         if (targetRigidbody != null)
         {
-            speed = targetRigidbody.velocity.magnitude * speedMultiplier;
+            speed = targetRigidbody.linearVelocity.magnitude * speedMultiplier;
         }
         else if (vehicleScript != null)
         {
@@ -64,8 +67,8 @@ public class SpeedAndGearUI : MonoBehaviour
             }
         }
 
-        if (speedText != null) speedText.text = Mathf.RoundToInt(speed).ToString(speedFormat);
-        if (gearText != null) gearText.text = FormatGear(gear);
+        if (speedText != null) speedText.text = string.Format("{0}{1}{2}", speedPrefix, Mathf.RoundToInt(speed).ToString(speedFormat), speedSuffix);
+        if (gearText != null) gearText.text = string.Format("{0}{1}", gearPrefix, FormatGear(gear));
     }
 
     float ToFloat(object o)
@@ -94,7 +97,7 @@ public class SpeedAndGearUI : MonoBehaviour
     // Optional: allow other scripts to push values directly
     public void SetSpeed(float s)
     {
-        if (speedText != null) speedText.text = Mathf.RoundToInt(s).ToString(speedFormat);
+        if (speedText != null) speedText.text = string.Format("{0}{1}{2}", speedPrefix, Mathf.RoundToInt(s).ToString(speedFormat), speedSuffix);
     }
 
     public void SetGear(int g)

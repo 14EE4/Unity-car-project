@@ -58,6 +58,16 @@ public class CarController : MonoBehaviour
             TogglePause();
         }
 
+        // Ensure cursor stays hidden/locked during gameplay when not paused
+        if (!isPaused)
+        {
+            if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
         // 1. 조향 (마우스 X축 누적)
         currentSteer += Input.GetAxis("Mouse X") * 2f; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
@@ -101,6 +111,24 @@ public class CarController : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             Time.timeScale = 1f;
+        }
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        // when returning focus, ensure cursor state matches pause state
+        if (hasFocus)
+        {
+            if (isPaused)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
     }
 
