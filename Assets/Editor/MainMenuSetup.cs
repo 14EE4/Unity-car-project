@@ -42,9 +42,9 @@ public static class MainMenuSetup
         panelRect.offsetMax = Vector2.zero;
 
         var cg = panelGO.GetComponent<CanvasGroup>();
-        cg.alpha = 0f;
-        cg.interactable = false;
-        cg.blocksRaycasts = false;
+        cg.alpha = 1f;
+        cg.interactable = true;
+        cg.blocksRaycasts = true;
 
         // Close button
         var closeBtnGO = new GameObject("CloseSettingsButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
