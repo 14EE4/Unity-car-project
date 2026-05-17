@@ -45,8 +45,9 @@ public class PauseMenuController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         isPaused = true;
-        // Optionally show the key guide when pausing
-        if (showKeyGuideOnPause) ShowKeyGuide();
+        // Optionally show the key guide when pausing, but only if tutorial not completed
+        if (showKeyGuideOnPause)
+            ShowKeyGuide();
     }
 
     public void Resume()
@@ -67,12 +68,7 @@ public class PauseMenuController : MonoBehaviour
     // Helper to show the key guide (delegates to MainMenuController if present)
     public void ShowKeyGuide()
     {
-        // If the tutorial has been completed before, do not show the key guide again
-        if (UnityEngine.PlayerPrefs.GetInt("TutorialCompleted", 0) == 1)
-        {
-            Debug.Log("[PauseMenuController] Tutorial already completed; skipping KeyGuide");
-            return;
-        }
+
         var mm = Object.FindFirstObjectByType<MainMenuController>();
         Debug.Log($"[PauseMenuController] ShowKeyGuide invoked. MainMenuController present={mm != null}");
         if (mm != null)
