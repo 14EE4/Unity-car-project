@@ -53,7 +53,11 @@ public class MainMenuController : MonoBehaviour
         {
             // create a runtime key guide so pause/menu buttons can find it
             var cg = CreateRuntimeKeyGuide();
-            if (cg != null) keyGuidePanel = cg;
+            if (cg != null)
+            {
+                keyGuidePanel = cg;
+                Debug.Log($"[MainMenuController] Runtime KeyGuidePanel created in Start (parent={cg.gameObject.transform.parent?.name})");
+            }
         }
     }
 
@@ -79,6 +83,7 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowKeyGuide()
     {
+        Debug.Log($"[MainMenuController] ShowKeyGuide invoked. keyGuidePanel assigned={keyGuidePanel != null}");
         CanvasGroup cg = keyGuidePanel;
         if (cg == null)
         {
@@ -89,7 +94,11 @@ public class MainMenuController : MonoBehaviour
         if (cg == null)
         {
             cg = CreateRuntimeKeyGuide();
-            if (cg != null && keyGuidePanel == null) keyGuidePanel = cg;
+            if (cg != null)
+            {
+                if (keyGuidePanel == null) keyGuidePanel = cg;
+                Debug.Log($"[MainMenuController] Created runtime KeyGuidePanel, parent={cg.gameObject.transform.parent?.name}");
+            }
         }
 
         if (cg != null)
@@ -114,6 +123,7 @@ public class MainMenuController : MonoBehaviour
             cg.alpha = 1f;
             cg.interactable = true;
             cg.blocksRaycasts = true;
+            Debug.Log($"[MainMenuController] Showing KeyGuidePanel (parent={cg.gameObject.transform.parent?.name})");
             cg.transform.SetAsLastSibling();
         }
     }
