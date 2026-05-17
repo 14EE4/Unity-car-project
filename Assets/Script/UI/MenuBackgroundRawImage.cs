@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+[ExecuteAlways]
 [RequireComponent(typeof(RawImage))]
 public class MenuBackgroundRawImage : MonoBehaviour
 {
@@ -13,15 +14,33 @@ public class MenuBackgroundRawImage : MonoBehaviour
     void Awake()
     {
         rawImage = GetComponent<RawImage>();
+        ApplyStaticBackground();
+    }
+
+    void OnEnable()
+    {
+        if (rawImage == null)
+            rawImage = GetComponent<RawImage>();
+
+        ApplyStaticBackground();
+    }
+
+    void OnValidate()
+    {
+        if (rawImage == null)
+            rawImage = GetComponent<RawImage>();
+
+        ApplyStaticBackground();
+    }
+
+    void ApplyStaticBackground()
+    {
+        if (rawImage == null) return;
+
         rawImage.color = Color.white;
         EnsureFullscreen();
         transform.SetAsFirstSibling();
-        AssignStaticBackground();
-        Debug.Log("MenuBackgroundRawImage: Awake - static background assigned");
-    }
 
-    void AssignStaticBackground()
-    {
         if (backgroundSprite != null)
         {
             rawImage.texture = backgroundSprite.texture;

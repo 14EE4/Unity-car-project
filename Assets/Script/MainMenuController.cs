@@ -9,6 +9,27 @@ public class MainMenuController : MonoBehaviour
     public CanvasGroup settingsPanel;
     public CanvasGroup keyGuidePanel;
 
+    void OnValidate()
+    {
+        if (Application.isPlaying) return;
+
+        if (settingsPanel != null)
+        {
+            settingsPanel.alpha = 0f;
+            settingsPanel.interactable = false;
+            settingsPanel.blocksRaycasts = false;
+            settingsPanel.gameObject.SetActive(false);
+        }
+
+        if (keyGuidePanel != null)
+        {
+            keyGuidePanel.alpha = 0f;
+            keyGuidePanel.interactable = false;
+            keyGuidePanel.blocksRaycasts = false;
+            keyGuidePanel.gameObject.SetActive(false);
+        }
+    }
+
     void Start()
     {
         Cursor.lockState = CursorLockMode.None;
