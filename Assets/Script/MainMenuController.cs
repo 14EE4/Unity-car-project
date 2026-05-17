@@ -47,13 +47,19 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowKeyGuide()
     {
-        if (keyGuidePanel != null)
+        CanvasGroup cg = keyGuidePanel;
+        if (cg == null)
         {
-            keyGuidePanel.alpha = 1f;
-            keyGuidePanel.interactable = true;
-            keyGuidePanel.blocksRaycasts = true;
-            // Ensure the key guide panel renders above other UI (bring to front)
-            keyGuidePanel.transform.SetAsLastSibling();
+            var go = GameObject.Find("KeyGuidePanel");
+            if (go != null) cg = go.GetComponent<CanvasGroup>();
+        }
+
+        if (cg != null)
+        {
+            cg.alpha = 1f;
+            cg.interactable = true;
+            cg.blocksRaycasts = true;
+            cg.transform.SetAsLastSibling();
         }
     }
 

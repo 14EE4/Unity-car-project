@@ -62,13 +62,20 @@ public class PauseMenuController : MonoBehaviour
     public void ShowKeyGuide()
     {
         var mm = Object.FindFirstObjectByType<MainMenuController>();
-        if (mm != null && mm.keyGuidePanel != null)
+        CanvasGroup cg = null;
+        if (mm != null) cg = mm.keyGuidePanel;
+        if (cg == null)
         {
-            mm.keyGuidePanel.alpha = 1f;
-            mm.keyGuidePanel.interactable = true;
-            mm.keyGuidePanel.blocksRaycasts = true;
-            // Bring key guide to front so it covers pause buttons
-            mm.keyGuidePanel.transform.SetAsLastSibling();
+            var go = GameObject.Find("KeyGuidePanel");
+            if (go != null) cg = go.GetComponent<CanvasGroup>();
+        }
+
+        if (cg != null)
+        {
+            cg.alpha = 1f;
+            cg.interactable = true;
+            cg.blocksRaycasts = true;
+            cg.transform.SetAsLastSibling();
         }
     }
 
