@@ -140,18 +140,29 @@ public class MainMenuController : MonoBehaviour
 
         if (parent == null) return null;
 
+        // Create a full-screen overlay to dim background
+        var overlayGO = new GameObject("KeyGuideOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        overlayGO.transform.SetParent(parent, false);
+        var overlayImg = overlayGO.GetComponent<Image>();
+        overlayImg.color = new Color(0f, 0f, 0f, 0.6f);
+        var overlayRect = overlayGO.GetComponent<RectTransform>();
+        overlayRect.anchorMin = Vector2.zero; overlayRect.anchorMax = Vector2.one; overlayRect.offsetMin = Vector2.zero; overlayRect.offsetMax = Vector2.zero;
+        overlayGO.transform.SetAsLastSibling();
+
+        // Create centered panel on top of overlay
         var panelGO = new GameObject("KeyGuidePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-        panelGO.transform.SetParent(parent, false);
+        panelGO.transform.SetParent(overlayGO.transform, false);
         var img = panelGO.GetComponent<Image>();
         img.color = new Color(0f, 0f, 0f, 0.84f);
         var cg = panelGO.GetComponent<CanvasGroup>();
         cg.alpha = 0f; cg.interactable = false; cg.blocksRaycasts = false;
 
-        // Ensure the panel is on top of the parent canvas hierarchy
-        if (canvas != null)
-            panelGO.transform.SetParent(canvas.transform, false);
-        panelGO.transform.SetAsLastSibling();
+        var panelRect = panelGO.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f); panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.sizeDelta = new Vector2(720f, 420f);
 
+        // Title
         var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         titleGO.transform.SetParent(panelGO.transform, false);
         var title = titleGO.GetComponent<Text>();
@@ -162,12 +173,12 @@ public class MainMenuController : MonoBehaviour
         title.fontSize = 28;
         title.fontStyle = FontStyle.Bold;
         var tRect = titleGO.GetComponent<RectTransform>();
-        tRect.anchorMin = new Vector2(0.5f, 1f);
-        tRect.anchorMax = new Vector2(0.5f, 1f);
+        tRect.anchorMin = new Vector2(0f, 1f); tRect.anchorMax = new Vector2(1f, 1f);
         tRect.pivot = new Vector2(0.5f, 1f);
-        tRect.sizeDelta = new Vector2(420f, 40f);
-        tRect.anchoredPosition = new Vector2(0f, -24f);
+        tRect.sizeDelta = new Vector2(0f, 48f);
+        tRect.anchoredPosition = new Vector2(0f, -12f);
 
+        // Body
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var body = bodyGO.GetComponent<Text>();
@@ -177,13 +188,14 @@ public class MainMenuController : MonoBehaviour
         body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         body.fontSize = 22;
         body.fontStyle = FontStyle.Bold;
+        body.horizontalOverflow = HorizontalWrapMode.Wrap;
+        body.verticalOverflow = VerticalWrapMode.Truncate;
         var bRect = bodyGO.GetComponent<RectTransform>();
-        bRect.anchorMin = new Vector2(0.5f, 0.5f);
-        bRect.anchorMax = new Vector2(0.5f, 0.5f);
+        bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
         bRect.pivot = new Vector2(0.5f, 0.5f);
-        bRect.sizeDelta = new Vector2(640f, 300f);
-        bRect.anchoredPosition = Vector2.zero;
+        bRect.offsetMin = new Vector2(24f, 60f); bRect.offsetMax = new Vector2(-24f, -24f);
 
+        // Close button
         var closeBtn = new GameObject("CloseKeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         closeBtn.transform.SetParent(panelGO.transform, false);
         var closeImg = closeBtn.GetComponent<Image>();
@@ -192,8 +204,8 @@ public class MainMenuController : MonoBehaviour
         closeRect.anchorMin = new Vector2(1f, 1f);
         closeRect.anchorMax = new Vector2(1f, 1f);
         closeRect.pivot = new Vector2(1f, 1f);
-        closeRect.sizeDelta = new Vector2(160f, 44f);
-        closeRect.anchoredPosition = new Vector2(-80f, -30f);
+        closeRect.sizeDelta = new Vector2(120f, 40f);
+        closeRect.anchoredPosition = new Vector2(-12f, -12f);
 
         var closeTextGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         closeTextGO.transform.SetParent(closeBtn.transform, false);
@@ -238,6 +250,8 @@ public class MainMenuController : MonoBehaviour
             cg.interactable = false;
             cg.blocksRaycasts = false;
         }
+        var overlay = GameObject.Find("KeyGuideOverlay");
+        if (overlay != null) GameObject.Destroy(overlay);
     }
 
     public void QuitGame()
