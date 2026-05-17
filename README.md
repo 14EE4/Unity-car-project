@@ -7,6 +7,13 @@
 - 숫자키를 이용한 수동 변속
 - WheelCollider 기반 차량 물리
 
+## 에셋이 보라색으로 보이는 문제
+ ### 해결: URP 셰이더로 일괄 변환
+1. 상단 메뉴에서 `Window` ➔ `Rendering` ➔ `Render Pipeline Converter`를 클릭합니다.
+2. 새로 열린 팝업 창 맨 위 드롭다운에서 `Built-in to URP`를 선택합니다.
+3. 변환할 항목들(예: `Material Upgrade`)에 **체크 표시**를 해줍니다.
+4. 우측 하단의 `Initialize Converters`를 누른 뒤, 이어서 활성화되는 **`Convert Assets`** 버튼을 누르면 일괄 변환이 진행됩니다.
+
 ## 현재까지 확인된 문제
 디버깅 과정에서 다음과 같은 이상 동작이 있었습니다.
 - W를 떼도 잠시 가속이 이어지는 것처럼 보임
