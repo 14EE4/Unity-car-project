@@ -34,6 +34,15 @@ public class TutorialUI : MonoBehaviour
             return;
         }
 
+        // If tutorial already completed, don't show it again
+        if (PlayerPrefs.GetInt("TutorialCompleted", 0) == 1)
+        {
+            allTutorialsCompleted = true;
+            tutorialText.alpha = 0f;
+            Debug.Log("[TutorialUI] Tutorial already completed; skipping tutorial display.");
+            return;
+        }
+
         // Do NOT auto-assign: require manual inspector assignment of CarController
         if (vehicleScript == null)
         {

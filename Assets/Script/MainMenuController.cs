@@ -59,6 +59,31 @@ public class MainMenuController : MonoBehaviour
                 Debug.Log($"[MainMenuController] Runtime KeyGuidePanel created in Start (parent={cg.gameObject.transform.parent?.name})");
             }
         }
+
+        // Defensive: find any Button named like KeyGuide or containing Key/Guide text and bind it to ShowKeyGuide
+        var allButtons = Object.FindObjectsOfType<Button>();
+        foreach (var b in allButtons)
+        {
+            if (b == null || b.onClick == null) continue;
+            var nm = b.gameObject.name.ToLower();
+            bool matchesName = nm.Contains("key") || nm.Contains("guide") || nm.Contains("키") || nm.Contains("가이드");
+            if (!matchesName)
+            {
+                // also check child Text component for label
+                var txt = b.GetComponentInChildren<Text>();
+                if (txt != null)
+                {
+                    var t = txt.text.ToLower();
+                    matchesName = t.Contains("key") || t.Contains("guide") || t.Contains("키") || t.Contains("가이드");
+                }
+            }
+
+            if (matchesName)
+            {
+                Debug.Log($"[MainMenuController] Binding runtime onClick for button '{b.gameObject.name}' to ShowKeyGuide()");
+                b.onClick.AddListener(ShowKeyGuide);
+            }
+        }
     }
 
     public void PlayGame()
@@ -126,7 +151,22 @@ public class MainMenuController : MonoBehaviour
             }
         }
 
-        Debug.LogError("[MainMenuController] ShowKeyGuide: Could not find KeyGuidePanel!");
+        // As a fallback, attempt to create a runtime KeyGuide so the button always works
+        Debug.LogWarning("[MainMenuController] KeyGuidePanel missing, attempting runtime creation.");
+        var runtimeCg = CreateRuntimeKeyGuide();
+        if (runtimeCg != null)
+        {
+            Debug.Log("[MainMenuController] Runtime KeyGuidePanel created on-demand.");
+            runtimeCg.gameObject.SetActive(true);
+            runtimeCg.alpha = 1f;
+            runtimeCg.interactable = true;
+            runtimeCg.blocksRaycasts = true;
+            runtimeCg.transform.SetAsLastSibling();
+            keyGuidePanel = runtimeCg;
+            return;
+        }
+
+        Debug.LogError("[MainMenuController] ShowKeyGuide: Could not find or create KeyGuidePanel!");
     }
 
     CanvasGroup CreateRuntimeKeyGuide()
