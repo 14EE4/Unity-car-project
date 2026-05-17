@@ -93,22 +93,20 @@ public class PauseMenuController : MonoBehaviour
 
     CanvasGroup CreateRuntimeKeyGuide()
     {
-        // Prefer attaching to the pause panel's transform if available
+        // Prefer attaching to a Canvas in the active scene so CanvasScaler rules apply.
         Transform parent = null;
         var activeScene = SceneManager.GetActiveScene();
-        if (pausePanel != null) parent = pausePanel.transform;
-        else
+        var canvases = Object.FindObjectsOfType<Canvas>();
+        foreach (var c in canvases)
         {
-            var canvases = Object.FindObjectsOfType<Canvas>();
-            foreach (var c in canvases)
+            if (c.gameObject.scene == activeScene)
             {
-                if (c.gameObject.scene == activeScene)
-                {
-                    parent = c.transform;
-                    break;
-                }
+                parent = c.transform;
+                break;
             }
         }
+        // Fallback to pausePanel transform if no canvas found
+        if (parent == null && pausePanel != null) parent = pausePanel.transform;
 
         if (parent == null) return null;
 
@@ -178,7 +176,11 @@ public class PauseMenuController : MonoBehaviour
         body.fontSize = 22;
         body.fontStyle = FontStyle.Bold;
         body.horizontalOverflow = HorizontalWrapMode.Wrap;
-        body.verticalOverflow = VerticalWrapMode.Truncate;
+        body.verticalOverflow = VerticalWrapMode.Overflow;
+        // Allow the text to shrink to fit smaller panels/screens
+        body.resizeTextForBestFit = true;
+        body.resizeTextMinSize = 14;
+        body.resizeTextMaxSize = 22;
         var bRect = bodyGO.GetComponent<RectTransform>();
         bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
         bRect.pivot = new Vector2(0.5f, 0.5f);

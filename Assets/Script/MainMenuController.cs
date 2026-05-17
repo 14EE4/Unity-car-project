@@ -210,7 +210,11 @@ public class MainMenuController : MonoBehaviour
         body.fontSize = 22;
         body.fontStyle = FontStyle.Bold;
         body.horizontalOverflow = HorizontalWrapMode.Wrap;
-        body.verticalOverflow = VerticalWrapMode.Truncate;
+        body.verticalOverflow = VerticalWrapMode.Overflow;
+        // Allow the text to shrink to fit smaller panels/screens
+        body.resizeTextForBestFit = true;
+        body.resizeTextMinSize = 14;
+        body.resizeTextMaxSize = 22;
         var bRect = bodyGO.GetComponent<RectTransform>();
         bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
         bRect.pivot = new Vector2(0.5f, 0.5f);
