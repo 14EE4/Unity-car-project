@@ -10,28 +10,20 @@ public static class KeyGuideButtonSetup
     [MenuItem("Tools/Setup/Add Key Guide Button To Main Menu")]
     public static void AddKeyGuideButtonToMainMenu()
     {
-        var mm = Object.FindObjectOfType<MainMenuController>();
+        var mm = Object.FindFirstObjectByType<MainMenuController>();
         if (mm == null)
         {
             Debug.LogWarning("MainMenuController not found in scene. Attach MainMenuController to a GameObject first.");
             return;
         }
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             Debug.LogWarning("No Canvas found in scene.");
             return;
         }
         var btnGO = new GameObject("KeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        // Parent the button to the pause panel if available so it inherits visibility
-        if (pm.pausePanel != null)
-        {
-            btnGO.transform.SetParent(pm.pausePanel.transform, false);
-        }
-        else
-        {
-            btnGO.transform.SetParent(canvas.transform, false);
-        }
+        btnGO.transform.SetParent(canvas.transform, false);
         var btnRect = btnGO.GetComponent<RectTransform>();
         btnRect.anchorMin = new Vector2(0.5f, 0f);
         btnRect.anchorMax = new Vector2(0.5f, 0f);
@@ -63,13 +55,13 @@ public static class KeyGuideButtonSetup
     [MenuItem("Tools/Setup/Add Key Guide Button To Pause Menu")]
     public static void AddKeyGuideButtonToPauseMenu()
     {
-        var pm = Object.FindObjectOfType<PauseMenuController>();
+        var pm = Object.FindFirstObjectByType<PauseMenuController>();
         if (pm == null)
         {
             Debug.LogWarning("PauseMenuController not found in scene. Attach PauseMenuController to a GameObject first.");
             return;
         }
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             Debug.LogWarning("No Canvas found in scene.");
@@ -101,7 +93,7 @@ public static class KeyGuideButtonSetup
         txtRect.offsetMin = Vector2.zero;
         txtRect.offsetMax = Vector2.zero;
         // PauseMenuController에는 직접 ShowKeyGuide가 없으므로, MainMenuController를 찾아 호출
-        var mm = Object.FindObjectOfType<MainMenuController>();
+        var mm = Object.FindFirstObjectByType<MainMenuController>();
         if (mm != null)
             UnityEventTools.AddPersistentListener(btn.onClick, mm.ShowKeyGuide);
         else

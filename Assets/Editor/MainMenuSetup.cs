@@ -10,21 +10,21 @@ public static class MainMenuSetup
     [MenuItem("Tools/Setup/Main Menu Settings Panel")]
     public static void CreateSettingsPanel()
     {
-        var mm = Object.FindObjectOfType<MainMenuController>();
+        var mm = Object.FindFirstObjectByType<MainMenuController>();
         if (mm == null)
         {
             Debug.LogWarning("MainMenuController not found in scene. Attach MainMenuController to a GameObject first.");
             return;
         }
 
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             var cgo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvas = cgo.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-            if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
             }
@@ -87,21 +87,21 @@ public static class MainMenuSetup
     [MenuItem("Tools/Setup/Main Menu Key Guide Panel")]
     public static void CreateKeyGuidePanel()
     {
-        var mm = Object.FindObjectOfType<MainMenuController>();
+        var mm = Object.FindFirstObjectByType<MainMenuController>();
         if (mm == null)
         {
             Debug.LogWarning("MainMenuController not found in scene. Attach MainMenuController to a GameObject first.");
             return;
         }
 
-        Canvas canvas = Object.FindObjectOfType<Canvas>();
+        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         if (canvas == null)
         {
             var cgo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             canvas = cgo.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-            if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
             }
