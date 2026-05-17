@@ -1205,6 +1205,7 @@ GameObject:
   - component: {fileID: 1357813169}
   - component: {fileID: 1357813168}
   - component: {fileID: 1357813172}
+  - component: {fileID: 1357813173}
   m_Layer: 0
   m_Name: MenuCamera
   m_TagString: Untagged
@@ -1343,6 +1344,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuSceneName: MainMenu
+  setAsBackgroundCamera: 1
+  backgroundColor: {r: 0.08, g: 0.09, b: 0.12, a: 1}
+  backgroundDepth: -100
+--- !u!114 &1357813173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1357813167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a11f4e053fc791048b39e71586ecdec5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dontDestroyOnLoad: 1
+  textureWidth: 0
+  textureHeight: 0
+  format: 7
+  depthBuffer: 24
 --- !u!1 &1426985979
 GameObject:
   m_ObjectHideFlags: 0
