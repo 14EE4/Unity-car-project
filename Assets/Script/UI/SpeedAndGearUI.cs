@@ -27,7 +27,7 @@ public class SpeedAndGearUI : MonoBehaviour
 
         if (targetRigidbody != null)
         {
-            speed = targetRigidbody.velocity.magnitude * speedMultiplier;
+            speed = targetRigidbody.linearVelocity.magnitude * speedMultiplier;
         }
         else if (vehicleScript != null)
         {
