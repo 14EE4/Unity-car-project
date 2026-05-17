@@ -82,6 +82,12 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowKeyGuide()
     {
+        // If the tutorial has been completed before, do not show the key guide again
+        if (PlayerPrefs.GetInt("TutorialCompleted", 0) == 1)
+        {
+            Debug.Log("[MainMenuController] Tutorial already completed; skipping KeyGuide");
+            return;
+        }
         Debug.Log("[MainMenuController] ShowKeyGuide invoked");
         if (keyGuidePanel != null)
         {

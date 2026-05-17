@@ -10,7 +10,7 @@ public class PauseMenuController : MonoBehaviour
     public string mainMenuSceneName = "MainMenu";
 
     [Tooltip("If true, show the Key Guide automatically when pausing")]
-    public bool showKeyGuideOnPause = true;
+    public bool showKeyGuideOnPause = false;
 
     bool isPaused = false;
 
@@ -67,6 +67,12 @@ public class PauseMenuController : MonoBehaviour
     // Helper to show the key guide (delegates to MainMenuController if present)
     public void ShowKeyGuide()
     {
+        // If the tutorial has been completed before, do not show the key guide again
+        if (UnityEngine.PlayerPrefs.GetInt("TutorialCompleted", 0) == 1)
+        {
+            Debug.Log("[PauseMenuController] Tutorial already completed; skipping KeyGuide");
+            return;
+        }
         var mm = Object.FindFirstObjectByType<MainMenuController>();
         Debug.Log($"[PauseMenuController] ShowKeyGuide invoked. MainMenuController present={mm != null}");
         if (mm != null)

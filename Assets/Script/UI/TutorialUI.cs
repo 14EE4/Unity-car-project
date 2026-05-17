@@ -144,6 +144,10 @@ public class TutorialUI : MonoBehaviour
     {
         tutorialText.alpha = 0f;
         Debug.Log("[TutorialUI] All tutorial steps completed!");
+        // Persist that the tutorial has been completed so Key Guide won't be shown again
+        PlayerPrefs.SetInt("TutorialCompleted", 1);
+        PlayerPrefs.Save();
+        Debug.Log("[TutorialUI] Marked TutorialCompleted in PlayerPrefs");
     }
 
     float GetCurrentSpeed()
