@@ -7,8 +7,7 @@ public class TutorialUI : MonoBehaviour
     [System.Serializable]
     public class TutorialStep
     {
-        var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
-        var field = type.GetField(gearFieldName, flags);
+        public string message;
         public System.Func<bool> completionCondition;
         public bool completed = false;
     }
