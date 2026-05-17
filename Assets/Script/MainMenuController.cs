@@ -70,6 +70,22 @@ public class MainMenuController : MonoBehaviour
 
         if (cg != null)
         {
+            // Ensure the panel is parented to a canvas in the active scene so it isn't lost when scenes change
+            var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var parentCanvas = cg.GetComponentInParent<Canvas>();
+            if (parentCanvas == null || parentCanvas.gameObject.scene != activeScene)
+            {
+                var canvases = Object.FindObjectsOfType<Canvas>();
+                foreach (var c in canvases)
+                {
+                    if (c.gameObject.scene == activeScene)
+                    {
+                        cg.transform.SetParent(c.transform, false);
+                        break;
+                    }
+                }
+            }
+
             if (!cg.gameObject.activeInHierarchy) cg.gameObject.SetActive(true);
             cg.alpha = 1f;
             cg.interactable = true;
@@ -80,10 +96,21 @@ public class MainMenuController : MonoBehaviour
 
     CanvasGroup CreateRuntimeKeyGuide()
     {
-        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+        // Prefer a Canvas that exists in the currently active scene.
+        Canvas canvas = null;
+        var allCanvases = Object.FindObjectsOfType<Canvas>();
+        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        foreach (var c in allCanvases)
+        {
+            if (c.gameObject.scene == activeScene)
+            {
+                canvas = c;
+                break;
+            }
+        }
         var pm = Object.FindFirstObjectByType<PauseMenuController>();
         Transform parent = null;
-        // Prefer attaching to the root Canvas so the panel appears above other UI
+        // Prefer attaching to the root Canvas in the active scene so the panel appears above other UI
         if (canvas != null) parent = canvas.transform;
         else if (pm != null && pm.pausePanel != null) parent = pm.pausePanel.transform;
 

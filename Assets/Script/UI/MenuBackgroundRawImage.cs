@@ -22,6 +22,14 @@ public class MenuBackgroundRawImage : MonoBehaviour
         EnsureFullscreen();
         transform.SetAsFirstSibling();
         Debug.Log($"MenuBackgroundRawImage: OnEnable - BackgroundTexture is {(PersistentGameCamera.BackgroundTexture!=null ? "present" : "null")}");
+        // Ensure this RawImage's Canvas renders behind other UI by forcing overrideSorting and a low sortingOrder
+        var parentCanvas = GetComponentInParent<Canvas>();
+        if (parentCanvas != null)
+        {
+            parentCanvas.overrideSorting = true;
+            parentCanvas.sortingOrder = -100;
+            Debug.Log($"MenuBackgroundRawImage: set parent canvas sortingOrder={parentCanvas.sortingOrder}");
+        }
         if (PersistentGameCamera.BackgroundTexture != null)
         {
             rawImage.texture = PersistentGameCamera.BackgroundTexture;
@@ -45,6 +53,12 @@ public class MenuBackgroundRawImage : MonoBehaviour
     {
         EnsureFullscreen();
         transform.SetAsFirstSibling();
+        var parentCanvas = GetComponentInParent<Canvas>();
+        if (parentCanvas != null)
+        {
+            parentCanvas.overrideSorting = true;
+            parentCanvas.sortingOrder = -100;
+        }
         if (rt != null)
         {
             rawImage.texture = rt;
