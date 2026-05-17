@@ -812,6 +812,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pausePanel: {fileID: 662724408}
   mainMenuSceneName: MainMenu
+  showKeyGuideOnPause: 1
 --- !u!4 &470011394
 Transform:
   m_ObjectHideFlags: 0
@@ -2018,10 +2019,10 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 662724407}
   - {fileID: 1313881719}
   - {fileID: 20732912}
   - {fileID: 743593411}
+  - {fileID: 662724407}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

@@ -212,6 +212,11 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
        - KeyGuidePanel과 함께 Overlay도 활성화 (SetActive(true))
   - **결과**: 게임 진입/퇴장 후에도 키 가이드가 정상 작동
 
+  **해결(간단)**
+
+  - 문제 원인: 풀스크린 패널(오버레이)이 버튼 위에 있어 클릭을 막고 있었습니다.
+  - 해결 방법: 에디터의 Hierarchy에서 해당 패널을 같은 `Canvas` 내 "맨 밑(뒤쪽)"으로 이동시키면 버튼이 정상 작동합니다.
+
 ## 해결된 항목
 
 - `TutorialUI`: `CarController` 수동 할당 요구로 변경, 자동 탐색 제거, 기어 직접 읽기(`currentGear`), 마우스 이동으로 `Steer` 단계 완료 처리
