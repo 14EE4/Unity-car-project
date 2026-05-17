@@ -17,6 +17,8 @@ public class CameraController : MonoBehaviour
     // 새 옵션: 3인칭에서 yaw(수평 회전)를 차량에 고정할지 여부
     public bool lockThirdPersonYaw = true;
     public bool lockThirdPersonPitch = false;
+    // 새 옵션: 1인칭에서 마우스 룩 허용 여부 (기본: 비허용 => Anchor 고정)
+    public bool allowFirstPersonMouseLook = false;
 
     float yaw = 0f;
     float pitch = 10f;
@@ -45,15 +47,24 @@ public class CameraController : MonoBehaviour
 
         if (firstPerson)
         {
-            // 1인칭: 카메라를 차량 Anchor에 고정하기 위해 마우스 룩을 무시
-            if (firstPersonAnchor != null)
+            if (allowFirstPersonMouseLook)
             {
-                yaw = firstPersonAnchor.eulerAngles.y;
-                pitch = firstPersonAnchor.eulerAngles.x;
+                // 1인칭에서 마우스 룩 허용
+                yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
+                pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
             }
-            else if (target != null)
+            else
             {
-                yaw = target.eulerAngles.y;
+                // 1인칭: 카메라를 차량 Anchor에 고정하기 위해 마우스 룩을 무시
+                if (firstPersonAnchor != null)
+                {
+                    yaw = firstPersonAnchor.eulerAngles.y;
+                    pitch = firstPersonAnchor.eulerAngles.x;
+                }
+                else if (target != null)
+                {
+                    yaw = target.eulerAngles.y;
+                }
             }
         }
         else
