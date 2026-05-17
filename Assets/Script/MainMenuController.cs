@@ -69,6 +69,7 @@ public class MainMenuController : MonoBehaviour
 
         if (cg != null)
         {
+            if (!cg.gameObject.activeInHierarchy) cg.gameObject.SetActive(true);
             cg.alpha = 1f;
             cg.interactable = true;
             cg.blocksRaycasts = true;
@@ -81,8 +82,9 @@ public class MainMenuController : MonoBehaviour
         Canvas canvas = Object.FindFirstObjectByType<Canvas>();
         var pm = Object.FindFirstObjectByType<PauseMenuController>();
         Transform parent = null;
-        if (pm != null && pm.pausePanel != null) parent = pm.pausePanel.transform;
-        else if (canvas != null) parent = canvas.transform;
+        // Prefer attaching to the root Canvas so the panel appears above other UI
+        if (canvas != null) parent = canvas.transform;
+        else if (pm != null && pm.pausePanel != null) parent = pm.pausePanel.transform;
 
         if (parent == null) return null;
 
@@ -92,6 +94,11 @@ public class MainMenuController : MonoBehaviour
         img.color = new Color(0f, 0f, 0f, 0.84f);
         var cg = panelGO.GetComponent<CanvasGroup>();
         cg.alpha = 0f; cg.interactable = false; cg.blocksRaycasts = false;
+
+        // Ensure the panel is on top of the parent canvas hierarchy
+        if (canvas != null)
+            panelGO.transform.SetParent(canvas.transform, false);
+        panelGO.transform.SetAsLastSibling();
 
         var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         titleGO.transform.SetParent(panelGO.transform, false);

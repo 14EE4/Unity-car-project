@@ -72,6 +72,8 @@ public class PauseMenuController : MonoBehaviour
 
         if (cg != null)
         {
+            // Ensure GameObject is active and visible
+            if (!cg.gameObject.activeInHierarchy) cg.gameObject.SetActive(true);
             cg.alpha = 1f;
             cg.interactable = true;
             cg.blocksRaycasts = true;
