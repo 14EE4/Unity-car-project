@@ -214,7 +214,8 @@ public class MainMenuController : MonoBehaviour
         var bRect = bodyGO.GetComponent<RectTransform>();
         bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
         bRect.pivot = new Vector2(0.5f, 0.5f);
-        bRect.offsetMin = new Vector2(24f, 60f); bRect.offsetMax = new Vector2(-24f, -24f);
+        // Increase top inset so body sits further below the title
+        bRect.offsetMin = new Vector2(24f, 60f); bRect.offsetMax = new Vector2(-24f, -96f);
 
         // Close button
         var closeBtn = new GameObject("CloseKeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
