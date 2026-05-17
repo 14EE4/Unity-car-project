@@ -10,6 +10,7 @@ public class CarController : MonoBehaviour
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 30f; 
+    public float steerSensitivity = 2f;
     public float brakeTorque = 3000f; 
     public float rollingResistanceBrake = 10f;
     public float engineBrakeTorque = 60f;
@@ -52,24 +53,8 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
-        // ESC로 일시정지/메뉴 토글
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            TogglePause();
-        }
-
-        // Ensure cursor stays hidden/locked during gameplay when not paused
-        if (!isPaused)
-        {
-            if (Cursor.lockState != CursorLockMode.Locked || Cursor.visible)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
-
         // 1. 조향 (마우스 X축 누적)
-        currentSteer += Input.GetAxis("Mouse X") * 2f; 
+        currentSteer += Input.GetAxis("Mouse X") * steerSensitivity; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
 
         // 2. 입력 분리: W는 가속, S는 브레이크
@@ -95,42 +80,7 @@ public class CarController : MonoBehaviour
         }
     }
 
-    private bool isPaused = false;
-
-    private void TogglePause()
-    {
-        isPaused = !isPaused;
-        if (isPaused)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            Time.timeScale = 0f;
-        }
-        else
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            Time.timeScale = 1f;
-        }
-    }
-
-    void OnApplicationFocus(bool hasFocus)
-    {
-        // when returning focus, ensure cursor state matches pause state
-        if (hasFocus)
-        {
-            if (isPaused)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
-    }
+    
 
     void FixedUpdate()
     {
