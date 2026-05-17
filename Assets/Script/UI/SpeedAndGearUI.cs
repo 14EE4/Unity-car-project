@@ -102,7 +102,7 @@ public class SpeedAndGearUI : MonoBehaviour
 
     public void SetGear(int g)
     {
-        if (gearText != null) gearText.text = FormatGear(g);
+        if (gearText != null) gearText.text = string.Format("{0}{1}", gearPrefix, FormatGear(g));
     }
 
     string FormatGear(int g)

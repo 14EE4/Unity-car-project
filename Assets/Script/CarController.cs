@@ -43,6 +43,14 @@ public class CarController : MonoBehaviour
         // 마우스 커서를 게임 화면 중앙에 고정 (정교한 조작을 위해 필수)
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        // Ensure a CursorLockManager exists to enforce cursor state across scenes
+        if (FindObjectOfType<CursorLockManager>() == null)
+        {
+            var go = new GameObject("_CursorLockManager");
+            var mgr = go.AddComponent<CursorLockManager>();
+            mgr.enforceDuringPlay = true;
+            mgr.dontDestroy = true;
+        }
         // 차체 바닥(중앙보다 조금 아래)으로 무게 중심 강제 고정
         carRigidbody = GetComponent<Rigidbody>();
         carRigidbody.centerOfMass = new Vector3(0, -0.5f, 0);
