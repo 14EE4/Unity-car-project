@@ -127,13 +127,13 @@
 - 간단 설치: Unity 에디터에서 `Window > TextMeshPro > Import TMP Essentials`를 실행해 기본 에셋을 추가하세요.
 - 마이그레이션 팁: 기존 `UI Text`를 `TextMeshPro - Text (UI)`로 교체하고 스크립트의 타입을 `TextMeshProUGUI`로 변경하면 됩니다.
 
-## 메인 화면 키 구성
+## 메인 화면 키 가이드
 메인 화면에는 현재 조작 키를 바로 볼 수 있도록 키 가이드 패널을 추가할 수 있습니다.
+
 - 조향: 마우스 X축
 - 기어 변속: 숫자키 `1` / `2`
 - 1인칭 / 3인칭 전환: `C`
 - 일시정지: `Esc`
-- 리셋: `R`(기능 연결 시)
 - 엑셀 / 브레이크: `W` / `S`
 
 ## 완료 작업
@@ -205,3 +205,11 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
     3. `MainMenuController.ShowKeyGuide()` 강화
        - KeyGuidePanel과 함께 Overlay도 활성화 (SetActive(true))
   - **결과**: 게임 진입/퇴장 후에도 키 가이드가 정상 작동
+
+## 해결된 항목
+
+- `TutorialUI`: `CarController` 수동 할당 요구로 변경, 자동 탐색 제거, 기어 직접 읽기(`currentGear`), 마우스 이동으로 `Steer` 단계 완료 처리
+- `KeyGuide Overlay`: `Destroy` → `SetActive(false)`로 변경(오버레이 재사용 가능)
+- 입력/물리 분리: 입력은 `Update()`에서 수집하고 물리 적용은 `FixedUpdate()`로 분리
+- 감속 튜닝: `linearDamping` 조정으로 엑셀 해제 시 감속 체감 개선
+- TextMeshPro: 폰트 폴백 추가로 텍스트 깨짐 문제 완화

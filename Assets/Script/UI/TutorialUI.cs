@@ -16,7 +16,8 @@ public class TutorialUI : MonoBehaviour
     public TextMeshProUGUI tutorialText;
 
     [Header("Vehicle Source")]
-    public MonoBehaviour vehicleScript;
+    [Tooltip("Assign your CarController component here (required).")]
+    public CarController vehicleScript;
     public string gearFieldName = "currentGear";  // 소문자로 수정
 
     private List<TutorialStep> tutorialSteps = new List<TutorialStep>();
@@ -33,19 +34,11 @@ public class TutorialUI : MonoBehaviour
             return;
         }
 
-        // 자동 차량 스크립트 할당: 인스펙터에 할당되어 있지 않으면 씬에서 검색
+        // Do NOT auto-assign: require manual inspector assignment of CarController
         if (vehicleScript == null)
         {
-            var cc = FindObjectOfType<CarController>();
-            if (cc != null)
-            {
-                vehicleScript = cc;
-                Debug.Log("[TutorialUI] Auto-assigned vehicleScript to CarController instance.");
-            }
-            else
-            {
-                Debug.LogWarning("[TutorialUI] vehicleScript is not assigned and no CarController found in scene.");
-            }
+            Debug.LogWarning("[TutorialUI] vehicleScript is not assigned. Please assign your CarController in the inspector. Tutorial will not progress until assigned.");
+            return;
         }
 
         InitializeTutorialSteps();
@@ -116,8 +109,6 @@ public class TutorialUI : MonoBehaviour
                 return gear > 0;
             }
         });
-                    var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
-                    string[] speedNames = new[] { "CurrentSpeed", "currentSpeed", "speed", "Speed" };
         // Step 2: Accelerate
         tutorialSteps.Add(new TutorialStep
         {
@@ -129,10 +120,12 @@ public class TutorialUI : MonoBehaviour
         tutorialSteps.Add(new TutorialStep
         {
             message = "Move mouse to steer",
-            completionCondition = () => 
+            completionCondition = () =>
             {
-                // Simple check: complete after some time if no direct mouse input tracking
-                return Time.timeSinceLevelLoad > 15f; // Auto-complete after 15 seconds
+                // Complete when the player moves the mouse (Mouse X or Mouse Y)
+                float mx = Input.GetAxis("Mouse X");
+                float my = Input.GetAxis("Mouse Y");
+                return Mathf.Abs(mx) > 0.01f || Mathf.Abs(my) > 0.01f;
             }
         });
     }
@@ -157,14 +150,8 @@ public class TutorialUI : MonoBehaviour
     {
         if (vehicleScript == null) return 0f;
 
-        var type = vehicleScript.GetType();
-        var field = type.GetField("CurrentSpeed", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        if (field != null)
-        {
-            var val = field.GetValue(vehicleScript);
-            return ToFloat(val);
-        }
+        var rb = vehicleScript.GetComponent<Rigidbody>();
+        if (rb != null) return rb.linearVelocity.magnitude * 3.6f;
 
         return 0f;
     }
@@ -176,20 +163,8 @@ public class TutorialUI : MonoBehaviour
             Debug.LogWarning("[TutorialUI] vehicleScript is null!");
             return 0;
         }
-
-        var type = vehicleScript.GetType();
-        var field = type.GetField(gearFieldName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        if (field != null)
-        {
-            var val = field.GetValue(vehicleScript);
-            int gear = ToInt(val);
-            Debug.Log($"[TutorialUI] Retrieved gear value: {gear} from field: {gearFieldName}");
-            return gear;
-        }
-
-        Debug.LogWarning($"[TutorialUI] Could not find field: {gearFieldName}");
-        return 0;
+        Debug.Log($"[TutorialUI] Read gear directly from CarController.currentGear: {vehicleScript.currentGear}");
+        return vehicleScript.currentGear;
     }
 
     float ToFloat(object o)
