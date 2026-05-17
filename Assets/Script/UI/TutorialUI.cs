@@ -32,14 +32,38 @@ public class TutorialUI : MonoBehaviour
             return;
         }
 
+        // 자동 차량 스크립트 할당: 인스펙터에 할당되어 있지 않으면 씬에서 검색
+        if (vehicleScript == null)
+        {
+            var cc = FindObjectOfType<CarController>();
+            if (cc != null)
+            {
+                vehicleScript = cc;
+                Debug.Log("[TutorialUI] Auto-assigned vehicleScript to CarController instance.");
+            }
+            else
+            {
+                Debug.LogWarning("[TutorialUI] vehicleScript is not assigned and no CarController found in scene.");
+            }
+        }
+
         InitializeTutorialSteps();
         ShowCurrentStep();
-            // TextMeshPro 한글 폰트 설정
-            if (tutorialText.font == null)
+
+        // TextMeshPro 폰트 설정: 우선 리소스에서 시도하고, 없으면 TMP_Settings의 기본 폰트를 사용
+        if (tutorialText.font == null)
+        {
+            var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
+            if (font != null)
             {
-                var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
-                if (font != null) tutorialText.font = font;
+                tutorialText.font = font;
             }
+            else if (TMP_Settings.defaultFontAsset != null)
+            {
+                tutorialText.font = TMP_Settings.defaultFontAsset;
+                Debug.Log("[TutorialUI] Assigned TMP_Settings.defaultFontAsset as fallback font.");
+            }
+        }
     }
 
     void Update()
