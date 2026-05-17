@@ -27,7 +27,7 @@ public class CameraController : MonoBehaviour
 
     void Start()
     {
-        firstPerson = startFirstPerson;
+        firstPerson = true; // force start in first-person by default
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         if (target == null)
@@ -37,6 +37,20 @@ public class CameraController : MonoBehaviour
         // 프리팹 자식에 카메라가 붙어있다면 런타임에 분리 (권장)
         transform.SetParent(null);
 
+        // Ensure a firstPersonAnchor exists under the target so 1st-person can attach
+        if (firstPersonAnchor == null && target != null)
+        {
+            var existing = target.Find("firstPersonAnchor");
+            if (existing != null) firstPersonAnchor = existing;
+            else
+            {
+                var go = new GameObject("firstPersonAnchor");
+                go.transform.SetParent(target, false);
+                go.transform.localPosition = new Vector3(0f, 1.2f, 0.6f);
+                go.transform.localRotation = Quaternion.identity;
+                firstPersonAnchor = go.transform;
+            }
+        }
         if (target != null)
             yaw = target.eulerAngles.y;
         }

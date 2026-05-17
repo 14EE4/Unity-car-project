@@ -27,6 +27,12 @@ public class MainMenuController : MonoBehaviour
             keyGuidePanel.interactable = false;
             keyGuidePanel.blocksRaycasts = false;
         }
+        else
+        {
+            // create a runtime key guide so pause/menu buttons can find it
+            var cg = CreateRuntimeKeyGuide();
+            if (cg != null) keyGuidePanel = cg;
+        }
     }
 
     public void PlayGame()
@@ -159,11 +165,18 @@ public class MainMenuController : MonoBehaviour
 
     public void CloseKeyGuide()
     {
-        if (keyGuidePanel != null)
+        CanvasGroup cg = keyGuidePanel;
+        if (cg == null)
         {
-            keyGuidePanel.alpha = 0f;
-            keyGuidePanel.interactable = false;
-            keyGuidePanel.blocksRaycasts = false;
+            var go = GameObject.Find("KeyGuidePanel");
+            if (go != null) cg = go.GetComponent<CanvasGroup>();
+        }
+
+        if (cg != null)
+        {
+            cg.alpha = 0f;
+            cg.interactable = false;
+            cg.blocksRaycasts = false;
         }
     }
 
