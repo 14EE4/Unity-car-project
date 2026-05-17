@@ -40,6 +40,8 @@ public class MainMenuController : MonoBehaviour
             settingsPanel.alpha = 1f;
             settingsPanel.interactable = true;
             settingsPanel.blocksRaycasts = true;
+            // Ensure settings panel is on top of UI so other buttons (including key guide) appear dimmed/covered
+            settingsPanel.transform.SetAsLastSibling();
         }
     }
 
