@@ -1,13 +1,20 @@
 # My Car Project
 
+## Environment
+
+- Engine: Unity 6 (6000.0.72f1 LTS)
+- Project type: 3D
+- Render pipeline: Universal Render Pipeline (URP)
+- Recommended Editor: Unity Hub + Unity 6 LTS
+- Key packages: Universal RP (check Package Manager for exact version), Input System
+- Target platform: PC (Windows)
+
 ## 프로젝트 개요
 이 프로젝트는 다음 요소를 기반으로 한 Unity 차량 주행 게임입니다.
 - 마우스 X축 조향
 - W/S 페달 입력
 - 숫자키를 이용한 수동 변속
 - WheelCollider 기반 차량 물리
-- 사용 엔진: Unity 6 (6000.0.72f1 LTS)
-- 3D, URP
 
 ## 에셋이 보라색으로 보이는 문제
  ### 해결: URP 셰이더로 일괄 변환
@@ -153,4 +160,3 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
   - 기어별 최고 속도 제한: 1단 50km/h, 2단 85km/h, 3단 130km/h, 4단 160km/h, 5단 200km/h
   - 최고 속도 도달 시 토크를 점진적으로 감소시켜 자연스러운 가속 곡선 구현
 - 테스트: Play 모드에서 각 기어별 최고 속도 동작을 확인하고, 1단에서의 가속이 적절한지 검증하세요.
-
