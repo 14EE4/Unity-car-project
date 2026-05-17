@@ -7,7 +7,8 @@ public class TutorialUI : MonoBehaviour
     [System.Serializable]
     public class TutorialStep
     {
-        public string message;
+        var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var field = type.GetField(gearFieldName, flags);
         public System.Func<bool> completionCondition;
         public bool completed = false;
     }
@@ -116,7 +117,8 @@ public class TutorialUI : MonoBehaviour
                 return gear > 0;
             }
         });
-
+                    var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+                    string[] speedNames = new[] { "CurrentSpeed", "currentSpeed", "speed", "Speed" };
         // Step 2: Accelerate
         tutorialSteps.Add(new TutorialStep
         {
