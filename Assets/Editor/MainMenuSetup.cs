@@ -140,7 +140,7 @@ public static class MainMenuSetup
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var bodyText = bodyGO.GetComponent<Text>();
-        bodyText.text = "W: Accelerate\nS: Brake / Reverse\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
+        bodyText.text = "W: Accelerate\nS: Brake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu";
         bodyText.alignment = TextAnchor.MiddleCenter;
         bodyText.color = new Color(1f, 1f, 1f, 0.95f);
         bodyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
