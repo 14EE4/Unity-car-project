@@ -83,80 +83,50 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowKeyGuide()
     {
-        Debug.Log($"[MainMenuController] ShowKeyGuide invoked. keyGuidePanel assigned={keyGuidePanel != null}");
-        
-        // Check if stored reference is valid
-        CanvasGroup cg = keyGuidePanel;
-        if (cg != null && cg.gameObject == null)
+        Debug.Log("[MainMenuController] ShowKeyGuide invoked");
+        if (keyGuidePanel != null)
         {
-            // Reference is stale (object was destroyed), reset it
-            Debug.Log("[MainMenuController] keyGuidePanel reference is stale, resetting");
-            cg = null;
-            keyGuidePanel = null;
-        }
-        
-        // Try to find existing KeyGuidePanel in current scene
-        if (cg == null)
-        {
-            var go = GameObject.Find("KeyGuidePanel");
-            if (go != null)
-            {
-                cg = go.GetComponent<CanvasGroup>();
-                Debug.Log($"[MainMenuController] Found existing KeyGuidePanel");
-            }
+            Debug.Log("[MainMenuController] Using stored keyGuidePanel reference");
+            if (!keyGuidePanel.gameObject.activeSelf)
+                keyGuidePanel.gameObject.SetActive(true);
+            keyGuidePanel.alpha = 1f;
+            keyGuidePanel.interactable = true;
+            keyGuidePanel.blocksRaycasts = true;
+            keyGuidePanel.transform.SetAsLastSibling();
+            
+            // Also ensure overlay is visible
+            var overlay = keyGuidePanel.gameObject.transform.parent;
+            if (overlay != null && !overlay.gameObject.activeSelf)
+                overlay.gameObject.SetActive(true);
+            return;
         }
 
-        // Create new one if not found
-        if (cg == null)
+        // Try to find existing KeyGuidePanel in current scene
+        var go = GameObject.Find("KeyGuidePanel");
+        if (go != null)
         {
-            Debug.Log("[MainMenuController] Creating new KeyGuidePanel");
-            cg = CreateRuntimeKeyGuide();
+            var cg = go.GetComponent<CanvasGroup>();
             if (cg != null)
             {
+                Debug.Log("[MainMenuController] Found existing KeyGuidePanel");
+                if (!cg.gameObject.activeSelf)
+                    cg.gameObject.SetActive(true);
+                    
+                // Activate overlay too
+                var overlay = cg.gameObject.transform.parent;
+                if (overlay != null && !overlay.gameObject.activeSelf)
+                    overlay.gameObject.SetActive(true);
+                    
+                cg.alpha = 1f;
+                cg.interactable = true;
+                cg.blocksRaycasts = true;
+                cg.transform.SetAsLastSibling();
                 keyGuidePanel = cg;
-                Debug.Log($"[MainMenuController] Created runtime KeyGuidePanel, parent={cg.gameObject.transform.parent?.name}");
-            }
-            else
-            {
-                Debug.LogError("[MainMenuController] Failed to create KeyGuidePanel - no Canvas found in active scene!");
                 return;
             }
         }
 
-        if (cg != null)
-        {
-            // Ensure the panel is parented to a canvas in the active scene
-            var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-            var parentCanvas = cg.GetComponentInParent<Canvas>();
-            if (parentCanvas == null || parentCanvas.gameObject.scene != activeScene)
-            {
-                Debug.Log("[MainMenuController] Reparenting KeyGuidePanel to active scene Canvas");
-                var canvases = Object.FindObjectsOfType<Canvas>();
-                foreach (var c in canvases)
-                {
-                    if (c.gameObject.scene == activeScene)
-                    {
-                        cg.transform.SetParent(c.transform, false);
-                        break;
-                    }
-                }
-            }
-
-            // Ensure overlay exists and is properly positioned
-            var overlay = cg.gameObject.transform.parent as RectTransform;
-            if (overlay != null && overlay.gameObject.name == "KeyGuideOverlay")
-            {
-                if (!overlay.gameObject.activeInHierarchy) overlay.gameObject.SetActive(true);
-            }
-
-            // Show the panel
-            if (!cg.gameObject.activeInHierarchy) cg.gameObject.SetActive(true);
-            cg.alpha = 1f;
-            cg.interactable = true;
-            cg.blocksRaycasts = true;
-            Debug.Log($"[MainMenuController] Showing KeyGuidePanel (parent={cg.gameObject.transform.parent?.name})");
-            cg.transform.SetAsLastSibling();
-        }
+        Debug.LogError("[MainMenuController] ShowKeyGuide: Could not find KeyGuidePanel!");
     }
 
     CanvasGroup CreateRuntimeKeyGuide()
