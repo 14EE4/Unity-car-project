@@ -4,6 +4,9 @@ public class CarController : MonoBehaviour
 {
     public WheelCollider frontLeft, frontRight;
     public WheelCollider backLeft, backRight;
+    
+    [Header("HUD")]
+    public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 30f; 
@@ -127,6 +130,12 @@ public class CarController : MonoBehaviour
         }
         longitudinalAcceleration = (GetForwardSpeedMps() - previousForwardSpeed) / Time.fixedDeltaTime;
         previousForwardSpeed = GetForwardSpeedMps();
+        // Push speed and gear values to HUD if assigned (push method recommended for accuracy)
+        if (hud != null)
+        {
+            hud.SetSpeed(GetCurrentSpeedKmh());
+            hud.SetGear(currentGear);
+        }
     }
 
 

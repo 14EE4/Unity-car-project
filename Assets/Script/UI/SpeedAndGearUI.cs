@@ -1,13 +1,13 @@
 using System;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 public class SpeedAndGearUI : MonoBehaviour
 {
     [Header("UI Elements")]
-    public Text speedText;
-    public Text gearText;
+    public TextMeshProUGUI speedText;
+    public TextMeshProUGUI gearText;
 
     [Header("Vehicle Source (optional)")]
     public Rigidbody targetRigidbody;
