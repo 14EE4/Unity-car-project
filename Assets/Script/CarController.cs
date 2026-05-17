@@ -57,6 +57,8 @@ public class CarController : MonoBehaviour
         // 물리 기반 이동에서 카메라 끊김을 줄이기 위한 보간 설정
         carRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
         previousForwardSpeed = GetForwardSpeedMps();
+        // Ensure we start in neutral gear on scene start
+        currentGear = 0;
     }
 
     void Update()
