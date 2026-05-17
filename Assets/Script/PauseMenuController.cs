@@ -129,13 +129,28 @@ public class PauseMenuController : MonoBehaviour
         cg.alpha = 0f; cg.interactable = false; cg.blocksRaycasts = false;
 
         var panelRect = panelGO.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.5f, 0.5f); panelRect.anchorMax = new Vector2(0.5f, 0.5f);
         panelRect.pivot = new Vector2(0.5f, 0.5f);
-        // Responsive sizing: clamp to screen so panel doesn't overflow on small displays
-        float panelWidth = Mathf.Min(720f, Mathf.Max(200f, Screen.width - 80f));
-        float panelHeight = Mathf.Min(420f, Mathf.Max(120f, Screen.height - 120f));
+        var parentRect = overlayGO.GetComponent<RectTransform>();
+        float parentW = parentRect.rect.width;
+        float parentH = parentRect.rect.height;
+        float panelWidth = Mathf.Min(720f, Mathf.Max(200f, parentW - 80f));
+        float panelHeight = Mathf.Min(420f, Mathf.Max(140f, parentH - 80f));
         panelRect.sizeDelta = new Vector2(panelWidth, panelHeight);
-        panelRect.anchoredPosition = Vector2.zero;
+
+        if (panelHeight >= parentH - 40f)
+        {
+            panelRect.anchorMin = new Vector2(0.5f, 1f);
+            panelRect.anchorMax = new Vector2(0.5f, 1f);
+            panelRect.pivot = new Vector2(0.5f, 1f);
+            panelRect.anchoredPosition = new Vector2(0f, -20f);
+        }
+        else
+        {
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.anchoredPosition = Vector2.zero;
+        }
         panelGO.transform.SetAsLastSibling();
 
         var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
