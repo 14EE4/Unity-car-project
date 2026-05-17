@@ -7,7 +7,7 @@ public class CameraController : MonoBehaviour
     public Vector3 thirdPersonOffset = new Vector3(0f, 2f, -4f);
     public float mouseSensitivity = 1f;
     public float smoothTime = 0.08f;
-    public bool startFirstPerson = false;
+    public bool startFirstPerson = true;
     public KeyCode toggleKey = KeyCode.C;
     public float minPitch = -20f;
     public float maxPitch = 60f;
