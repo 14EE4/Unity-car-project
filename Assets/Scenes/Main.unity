@@ -2526,7 +2526,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: engineBrakeTorque
-      value: 30
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
