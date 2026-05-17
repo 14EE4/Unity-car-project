@@ -44,7 +44,7 @@ public class CarController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         // Ensure a CursorLockManager exists to enforce cursor state across scenes
-        if (FindObjectOfType<CursorLockManager>() == null)
+        if (Object.FindFirstObjectByType<CursorLockManager>() == null)
         {
             var go = new GameObject("_CursorLockManager");
             var mgr = go.AddComponent<CursorLockManager>();

@@ -26,17 +26,15 @@ public class CursorStateLogger : MonoBehaviour
 
         Debug.Log($"[CursorStateLogger] Cursor.visible={Cursor.visible} lockState={Cursor.lockState} Time.timeScale={Time.timeScale}");
 
-        var mgr = FindObjectOfType<CursorLockManager>();
+        var mgr = Object.FindFirstObjectByType<CursorLockManager>();
         Debug.Log($"[CursorStateLogger] CursorLockManager: {(mgr != null ? "present" : "missing")}");
-
-        var pm = FindObjectOfType<PauseMenuController>();
+        var pm = Object.FindFirstObjectByType<PauseMenuController>();
         if (pm != null)
         {
             Debug.Log($"[CursorStateLogger] PauseMenuController: present, enabled={pm.enabled}");
         }
         else Debug.Log("[CursorStateLogger] PauseMenuController: missing");
-
-        var mm = FindObjectOfType<MainMenuController>();
+        var mm = Object.FindFirstObjectByType<MainMenuController>();
         if (mm != null)
         {
             Debug.Log($"[CursorStateLogger] MainMenuController: present, enabled={mm.enabled}");
