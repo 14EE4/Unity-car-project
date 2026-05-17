@@ -22,6 +22,7 @@ public class TutorialUI : MonoBehaviour
     private List<TutorialStep> tutorialSteps = new List<TutorialStep>();
     private int currentStepIndex = 0;
     private bool allTutorialsCompleted = false;
+    private float uiDebugTimer = 0f;
 
     void Start()
     {
@@ -90,16 +91,24 @@ public class TutorialUI : MonoBehaviour
                 ShowCurrentStep();
             }
         }
+
+        // Periodic debug: print current gear and active tutorial step every 0.5s
+        uiDebugTimer += Time.deltaTime;
+        if (uiDebugTimer >= 0.5f)
+        {
+            uiDebugTimer = 0f;
+            Debug.Log($"[TutorialUI] Active step: {currentStepIndex}, Message: {tutorialSteps[currentStepIndex].message}, Gear: {GetCurrentGear()}");
+        }
     }
 
     void InitializeTutorialSteps()
     {
         tutorialSteps.Clear();
 
-        // Step 1: Shift to gear
+        // Step 1: Shift up (any forward gear)
         tutorialSteps.Add(new TutorialStep
         {
-            message = "기어를 올리세요 (1 또는 2 키)",
+            message = "Shift up (press 2)",
             completionCondition = () => 
             {
                 int gear = GetCurrentGear();
@@ -111,17 +120,17 @@ public class TutorialUI : MonoBehaviour
         // Step 2: Accelerate
         tutorialSteps.Add(new TutorialStep
         {
-            message = "W 키를 눌러 가속하세요",
+            message = "Press W to accelerate",
             completionCondition = () => GetCurrentSpeed() > 5f
         });
 
         // Step 3: Steer
         tutorialSteps.Add(new TutorialStep
         {
-            message = "마우스를 움직여 조향하세요",
+            message = "Move mouse to steer",
             completionCondition = () => 
             {
-                // Simple check: see if player has moved mouse (we can't directly check this easily, so complete after some time)
+                // Simple check: complete after some time if no direct mouse input tracking
                 return Time.timeSinceLevelLoad > 15f; // Auto-complete after 15 seconds
             }
         });
