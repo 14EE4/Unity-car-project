@@ -238,7 +238,7 @@ public class PauseMenuController : MonoBehaviour
         cg.interactable = false;
         cg.blocksRaycasts = false;
         var overlay = GameObject.Find("KeyGuideOverlay");
-        if (overlay != null) GameObject.Destroy(overlay);
+        if (overlay != null) overlay.SetActive(false);  // Changed from Destroy to SetActive(false)
     }
 
     public void ReturnToMainMenu()

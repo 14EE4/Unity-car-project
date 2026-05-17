@@ -94,7 +94,7 @@ public class MainMenuController : MonoBehaviour
             keyGuidePanel.blocksRaycasts = true;
             keyGuidePanel.transform.SetAsLastSibling();
             
-            // Also ensure overlay is visible
+            // Also ensure overlay is active
             var overlay = keyGuidePanel.gameObject.transform.parent;
             if (overlay != null && !overlay.gameObject.activeSelf)
                 overlay.gameObject.SetActive(true);
@@ -308,7 +308,7 @@ public class MainMenuController : MonoBehaviour
         }
         
         var overlay = GameObject.Find("KeyGuideOverlay");
-        if (overlay != null) GameObject.Destroy(overlay);
+        if (overlay != null) overlay.SetActive(false);  // Changed from Destroy to SetActive(false)
         
         // Reset reference to force recreation on next call
         keyGuidePanel = null;
