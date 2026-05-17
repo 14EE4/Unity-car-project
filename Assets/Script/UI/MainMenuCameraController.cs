@@ -35,8 +35,8 @@ public class MainMenuCameraController : MonoBehaviour
 
     void Start()
     {
-        // Menu camera management is now active to display the menu properly
-        UpdateCameraState();
+        // Disabled - MainMenu uses Screen Space Overlay canvas
+        enabled = false;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
