@@ -106,6 +106,12 @@
 - `engineBrakeTorque`
 - `debugLogInterval`
 
+## 최근 조정값
+최근에는 기본 주행 감각을 조금 더 부드럽게 맞추기 위해 아래 값을 조정했습니다.
+- `engineBrakeTorque`: `60` → `10`
+- 기본 카메라 인칭: 1인칭 우선
+- `mouseSensitivity`: `1`
+
 ## 현재 튜닝 방향
 최근 조정은 감속이 너무 빠르지 않도록 낮추는 쪽에 맞췄습니다.
 - 특히 `linearDamping`이 차체 감속 체감에 가장 크게 영향을 주는 값이라 우선적으로 확인했고, 이 값을 조정해서 감속 문제가 개선됐습니다.
@@ -159,6 +165,10 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 - 2026-05-15: 1인칭 카메라에서 위치 보간으로 인해 입력과 시점이 미세하게 끊기는 문제가 발견되었습니다. 해결: `Assets/Script/CameraController.cs`에서 1인칭 모드의 위치/회전 보간을 제거하고 즉시 Anchor 위치로 설정하도록 변경했습니다.
 - 2026-05-15: 3인칭(외부) 카메라가 물리 기반 이동 시 따라감이 끊기는 현상 개선을 위해 `Assets/Script/CarController.cs`의 `Start()`에 `carRigidbody.interpolation = RigidbodyInterpolation.Interpolate;`를 추가했습니다. 이로써 물리 업데이트와 카메라 LateUpdate 간의 불연속성이 줄어듭니다.
 - 2026-05-15: 1인칭에서 카메라를 `firstPersonAnchor` 자식으로 런타임에 부모화하여 완전히 고정했습니다. 1인칭에서는 마우스 룩이 무시되고, 3인칭으로 전환할 때 자동으로 분리됩니다.
+- 2026-05-17: 기본 조작 감도를 다시 정리했습니다.
+  - `engineBrakeTorque`를 `10`으로 낮춰 엑셀 해제 시 감속이 과하게 강하지 않도록 조정했습니다.
+  - 기본 카메라 인칭을 1인칭 우선으로 바꿨습니다.
+  - 마우스 민감도는 `1`로 맞췄습니다.
 - 2026-05-15: 기어별 최고 속도와 토크를 실제 자동차처럼 설정했습니다:
   - maxTorque: 1500 → 500 (엔진 토크 단위 통일)
   - 기어 비율: 1단 4.0, 2단 2.8, 3단 1.9, 4단 1.4, 5단 1.0

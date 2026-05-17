@@ -18,7 +18,7 @@ public class CameraController : MonoBehaviour
     public bool lockThirdPersonYaw = true;
     public bool lockThirdPersonPitch = false;
     // 새 옵션: 1인칭에서 마우스 룩 허용 여부 (기본: 비허용 => Anchor 고정)
-    public bool allowFirstPersonMouseLook = false;
+    public bool allowFirstPersonMouseLook = true;
 
     float yaw = 0f;
     float pitch = 10f;

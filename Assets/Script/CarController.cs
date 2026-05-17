@@ -13,7 +13,7 @@ public class CarController : MonoBehaviour
     public float steerSensitivity = 1f;
     public float brakeTorque = 3000f; 
     public float rollingResistanceBrake = 10f;
-    public float engineBrakeTorque = 60f;
+    public float engineBrakeTorque = 10f;
     public float throttleDrag = 0.03f;
     public float neutralDrag = 0.08f;
     public float driveDrag = 0.6f;
