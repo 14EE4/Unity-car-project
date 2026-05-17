@@ -22,12 +22,16 @@ public class SpeedAndGearUI : MonoBehaviour
 
     void Update()
     {
+        // Only auto-update from components if a source is assigned.
+        bool useAuto = (targetRigidbody != null) || (vehicleScript != null);
+        if (!useAuto) return;
+
         float speed = 0f;
         int gear = 0;
 
         if (targetRigidbody != null)
         {
-            speed = targetRigidbody.linearVelocity.magnitude * speedMultiplier;
+            speed = targetRigidbody.velocity.magnitude * speedMultiplier;
         }
         else if (vehicleScript != null)
         {
@@ -61,7 +65,7 @@ public class SpeedAndGearUI : MonoBehaviour
         }
 
         if (speedText != null) speedText.text = Mathf.RoundToInt(speed).ToString(speedFormat);
-        if (gearText != null) gearText.text = string.Format(gearFormat, gear);
+        if (gearText != null) gearText.text = FormatGear(gear);
     }
 
     float ToFloat(object o)
@@ -95,6 +99,13 @@ public class SpeedAndGearUI : MonoBehaviour
 
     public void SetGear(int g)
     {
-        if (gearText != null) gearText.text = string.Format(gearFormat, g);
+        if (gearText != null) gearText.text = FormatGear(g);
+    }
+
+    string FormatGear(int g)
+    {
+        if (g < 0) return "R";
+        if (g == 0) return "N";
+        return g.ToString();
     }
 }

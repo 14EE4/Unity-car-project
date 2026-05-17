@@ -41,6 +41,7 @@ public class CarController : MonoBehaviour
     {
         // 마우스 커서를 게임 화면 중앙에 고정 (정교한 조작을 위해 필수)
         Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         // 차체 바닥(중앙보다 조금 아래)으로 무게 중심 강제 고정
         carRigidbody = GetComponent<Rigidbody>();
         carRigidbody.centerOfMass = new Vector3(0, -0.5f, 0);
@@ -51,6 +52,12 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
+        // ESC로 일시정지/메뉴 토글
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePause();
+        }
+
         // 1. 조향 (마우스 X축 누적)
         currentSteer += Input.GetAxis("Mouse X") * 2f; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
@@ -75,6 +82,25 @@ public class CarController : MonoBehaviour
         {
             debugLogTimer = 0f;
             Debug.Log(string.Format("Speed: {0:F1} km/h | Accel: {1:F2} m/s^2 | Throttle: {2} | Brake: {3} | Gear: {4} | Motor: {5:F1} | BrakeTorque: {6:F1} | Slope: {7:F1} deg{8}", GetCurrentSpeedKmh(), longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()));
+        }
+    }
+
+    private bool isPaused = false;
+
+    private void TogglePause()
+    {
+        isPaused = !isPaused;
+        if (isPaused)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            Time.timeScale = 1f;
         }
     }
 
