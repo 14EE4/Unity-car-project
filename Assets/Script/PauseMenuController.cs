@@ -83,9 +83,9 @@ public class PauseMenuController : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        // Ensure timeScale restored before scene load
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(mainMenuSceneName);
+        // Keep the main scene loaded so its camera can continue rendering the background.
+        Time.timeScale = 0f;
+        SceneManager.LoadScene(mainMenuSceneName, LoadSceneMode.Additive);
     }
 
     void HidePanelImmediate()
