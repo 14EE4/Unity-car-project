@@ -45,9 +45,7 @@ public class PauseMenuController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         isPaused = true;
-        // Optionally show the key guide when pausing, but only if tutorial not completed
-        if (showKeyGuideOnPause)
-            ShowKeyGuide();
+        // if (showKeyGuideOnPause) ShowKeyGuide();
     }
 
     public void Resume()
