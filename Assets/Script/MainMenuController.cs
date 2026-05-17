@@ -6,6 +6,7 @@ public class MainMenuController : MonoBehaviour
     [Tooltip("Scene name to load when Play is pressed")]
     public string mainSceneName = "Main";
     public CanvasGroup settingsPanel;
+    public CanvasGroup keyGuidePanel;
 
     void Start()
     {
@@ -17,6 +18,13 @@ public class MainMenuController : MonoBehaviour
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
+        }
+
+        if (keyGuidePanel != null)
+        {
+            keyGuidePanel.alpha = 0f;
+            keyGuidePanel.interactable = false;
+            keyGuidePanel.blocksRaycasts = false;
         }
     }
 
@@ -35,6 +43,16 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    public void ShowKeyGuide()
+    {
+        if (keyGuidePanel != null)
+        {
+            keyGuidePanel.alpha = 1f;
+            keyGuidePanel.interactable = true;
+            keyGuidePanel.blocksRaycasts = true;
+        }
+    }
+
     public void CloseSettings()
     {
         if (settingsPanel != null)
@@ -42,6 +60,16 @@ public class MainMenuController : MonoBehaviour
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
+        }
+    }
+
+    public void CloseKeyGuide()
+    {
+        if (keyGuidePanel != null)
+        {
+            keyGuidePanel.alpha = 0f;
+            keyGuidePanel.interactable = false;
+            keyGuidePanel.blocksRaycasts = false;
         }
     }
 
