@@ -9,6 +9,9 @@ public class PauseMenuController : MonoBehaviour
     [Tooltip("Scene name for the main menu to return to")]
     public string mainMenuSceneName = "MainMenu";
 
+    [Tooltip("If true, show the Key Guide automatically when pausing")]
+    public bool showKeyGuideOnPause = true;
+
     bool isPaused = false;
 
     void Start()
@@ -42,6 +45,8 @@ public class PauseMenuController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         isPaused = true;
+        // Optionally show the key guide when pausing
+        if (showKeyGuideOnPause) ShowKeyGuide();
     }
 
     public void Resume()
@@ -243,9 +248,7 @@ public class PauseMenuController : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        // Keep the main scene loaded so its camera can continue rendering the background.
-        Time.timeScale = 0f;
-        SceneManager.LoadScene(mainMenuSceneName, LoadSceneMode.Additive);
+        LoadingScreenManager.LoadScene(mainMenuSceneName);
     }
 
     void HidePanelImmediate()
