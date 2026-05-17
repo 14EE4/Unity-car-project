@@ -224,3 +224,35 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 - 입력/물리 분리: 입력은 `Update()`에서 수집하고 물리 적용은 `FixedUpdate()`로 분리
 - 감속 튜닝: `linearDamping` 조정으로 엑셀 해제 시 감속 체감 개선
 - TextMeshPro: 폰트 폴백 추가로 텍스트 깨짐 문제 완화
+
+## 🛠 Unity 6 URP 빌드 에러 해결 과정
+
+Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 실패하는 문제에 대한 해결 과정을 정리합니다.
+
+### 1. 발생한 문제 (Problem)
+* **에러 메시지**: `The UniversalRenderPipelineAsset... is not at last version.`
+* **원인**: 유니티 엔진 및 URP 패키지 버전은 최신(Unity 6)이나, 기존의 `.asset` 설정 파일들이 구형 데이터 구조를 유지하고 있어 빌드 프로세스에서 거절됨.
+
+---
+
+### 2. 해결 단계 (Solution Steps)
+
+#### **Step 1: 렌더 파이프라인 컨버터 실행 (Primary)**
+유니티 공식 업데이트 도구를 사용하여 일괄 업데이트를 시도합니다.
+1. **경로**: `Window` > `Rendering` > `Render Pipeline Converter`
+2. **방법**: `Built-in to URP` 또는 `URP Asset Upgrader` 옵션 선택
+3. **실행**: 모든 항목 체크 후 `Initialize And Convert` 버튼 클릭
+4. **결과**: 대부분의 재질(Material)과 설정 파일이 최신 버전으로 갱신됨
+
+#### **Step 2: 설정 파일 삭제 및 재생성 (Final Solution)**
+컨버터로 해결되지 않는 경우, 설정 파일을 새로 생성하는 가장 확실한 방법입니다.
+1. **파일 삭제**: `Assets/Settings` 폴더 내 에러가 발생하는 구형 `.asset` 파일(예: `PC_RPAsset`, `UniversalRenderPipelineGlobalSettings`)을 삭제
+2. **새 에셋 생성**: `Project` 창 우클릭 > `Create` > `Rendering` > `URP Asset (with Universal Renderer)` 선택하여 새 파일 생성
+3. **에셋 재연결 (Link)**:
+   * **Graphics**: `Project Settings` > `Graphics` 탭의 `Scriptable Render Pipeline Settings` 칸에 새 에셋 할당
+   * **Quality**: `Project Settings` > `Quality` 탭의 각 품질 레벨별 `Render Asset` 칸에 새 에셋 할당
+
+---
+
+### 💡 참고 사항
+* Unity 6는 이전 버전 설정 파일의 무결성을 엄격하게 검사하므로, 업데이트가 되지 않을 때는 **삭제 후 재생성**하는 것이 가장 빠르고 확실한 해결책입니다.
