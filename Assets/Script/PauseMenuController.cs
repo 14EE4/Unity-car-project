@@ -58,6 +58,18 @@ public class PauseMenuController : MonoBehaviour
         isPaused = false;
     }
 
+    // Helper to show the key guide (delegates to MainMenuController if present)
+    public void ShowKeyGuide()
+    {
+        var mm = Object.FindFirstObjectByType<MainMenuController>();
+        if (mm != null && mm.keyGuidePanel != null)
+        {
+            mm.keyGuidePanel.alpha = 1f;
+            mm.keyGuidePanel.interactable = true;
+            mm.keyGuidePanel.blocksRaycasts = true;
+        }
+    }
+
     public void ReturnToMainMenu()
     {
         // Ensure timeScale restored before scene load

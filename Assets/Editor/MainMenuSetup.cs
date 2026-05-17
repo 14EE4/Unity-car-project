@@ -108,7 +108,12 @@ public static class MainMenuSetup
         }
 
         var panelGO = new GameObject("KeyGuidePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-        panelGO.transform.SetParent(canvas.transform, false);
+        // If PauseMenuController with a pause panel exists, parent key guide to that panel
+        var pm = Object.FindFirstObjectByType<PauseMenuController>();
+        if (pm != null && pm.pausePanel != null)
+            panelGO.transform.SetParent(pm.pausePanel.transform, false);
+        else
+            panelGO.transform.SetParent(canvas.transform, false);
         var panelImage = panelGO.GetComponent<Image>();
         panelImage.color = new Color(0f, 0f, 0f, 0.84f);
         var panelRect = panelGO.GetComponent<RectTransform>();

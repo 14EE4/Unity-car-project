@@ -22,9 +22,9 @@ public class MainMenuController : MonoBehaviour
 
         if (keyGuidePanel != null)
         {
-            keyGuidePanel.alpha = 1f;
-            keyGuidePanel.interactable = true;
-            keyGuidePanel.blocksRaycasts = true;
+            keyGuidePanel.alpha = 0f;
+            keyGuidePanel.interactable = false;
+            keyGuidePanel.blocksRaycasts = false;
         }
     }
 

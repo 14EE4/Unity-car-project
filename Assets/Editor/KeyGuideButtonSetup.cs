@@ -23,7 +23,11 @@ public static class KeyGuideButtonSetup
             return;
         }
         var btnGO = new GameObject("KeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        btnGO.transform.SetParent(canvas.transform, false);
+        // Parent the button to the pause panel so it only appears when pausePanel is visible
+        if (pm.pausePanel != null)
+            btnGO.transform.SetParent(pm.pausePanel.transform, false);
+        else
+            btnGO.transform.SetParent(canvas.transform, false);
         var btnRect = btnGO.GetComponent<RectTransform>();
         btnRect.anchorMin = new Vector2(0.5f, 0f);
         btnRect.anchorMax = new Vector2(0.5f, 0f);
