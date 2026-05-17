@@ -50,6 +50,8 @@ public class MainMenuController : MonoBehaviour
             keyGuidePanel.alpha = 1f;
             keyGuidePanel.interactable = true;
             keyGuidePanel.blocksRaycasts = true;
+            // Ensure the key guide panel renders above other UI (bring to front)
+            keyGuidePanel.transform.SetAsLastSibling();
         }
     }
 

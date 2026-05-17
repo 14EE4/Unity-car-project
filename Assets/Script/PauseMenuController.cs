@@ -67,6 +67,8 @@ public class PauseMenuController : MonoBehaviour
             mm.keyGuidePanel.alpha = 1f;
             mm.keyGuidePanel.interactable = true;
             mm.keyGuidePanel.blocksRaycasts = true;
+            // Bring key guide to front so it covers pause buttons
+            mm.keyGuidePanel.transform.SetAsLastSibling();
         }
     }
 
