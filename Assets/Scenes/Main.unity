@@ -810,6 +810,12 @@ MonoBehaviour:
   thirdPersonOffset: {x: 0, y: 2, z: -4}
   mouseSensitivity: 3
   smoothTime: 0.08
+  positionLerpSpeed: 25
+  collisionSmooth: 12
+  zoomSpeed: 1
+  zoomDistance: 0
+  minZoom: -2
+  maxZoom: 3
   startFirstPerson: 0
   toggleKey: 99
   minPitch: -20
@@ -3570,12 +3576,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 33482922}
     - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: brakeTorque
+      value: 1000
+      objectReference: {fileID: 0}
+    - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: handbrakeTorque
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: steerSensitivity
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: engineBrakeTorque
-      value: 10
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
