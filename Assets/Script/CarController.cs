@@ -7,6 +7,7 @@ public class CarController : MonoBehaviour
     
     [Header("HUD")]
     public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
+    public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 30f; 
@@ -66,6 +67,13 @@ public class CarController : MonoBehaviour
         // 1. 조향 (마우스 X축 누적)
         currentSteer += Input.GetAxis("Mouse X") * steerSensitivity; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
+
+        // Update steering indicator UI (normalized -1..1)
+        if (steeringUi != null)
+        {
+            float normalized = maxSteerAngle != 0f ? currentSteer / maxSteerAngle : 0f;
+            steeringUi.SetSteer(normalized);
+        }
 
         // 2. 입력 분리: W는 가속, S는 브레이크
         throttleInput = Input.GetKey(KeyCode.W) ? 1f : 0f;
