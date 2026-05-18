@@ -8,15 +8,13 @@ public class TutorialSettingsPanel : MonoBehaviour
     public GameObject panel;
     public TMP_Text statusText;
     public Button clearButton;
-    public Button logButton;
-    public Button closeButton;
+    
 
     void Awake()
     {
         if (panel != null) panel.SetActive(false);
         if (clearButton != null) clearButton.onClick.AddListener(ClearTutorial);
-        if (logButton != null) logButton.onClick.AddListener(LogStatus);
-        if (closeButton != null) closeButton.onClick.AddListener(Hide);
+        
     }
 
     public void Show()
@@ -45,20 +43,5 @@ public class TutorialSettingsPanel : MonoBehaviour
         PlayerPrefs.Save();
         UpdateStatus();
         Debug.Log("TutorialSettingsPanel: Cleared TutorialCompleted");
-    }
-
-    public void LogStatus()
-    {
-        var tut = FindObjectOfType<TutorialUI>();
-        if (tut == null)
-        {
-            Debug.Log("TutorialSettingsPanel: No TutorialUI instance found in scene.");
-            return;
-        }
-        Debug.Log($"TutorialSettingsPanel: TutorialUI found. vehicleScript assigned: {tut.vehicleScript != null}");
-        if (tut.vehicleScript != null)
-        {
-            Debug.Log($"TutorialSettingsPanel: CarController.currentGear = {tut.vehicleScript.currentGear}");
-        }
     }
 }
