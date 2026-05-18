@@ -7,7 +7,7 @@ public class CameraController : MonoBehaviour
     public Transform firstPersonAnchor; // 1인칭 카메라 위치
     public Vector3 thirdPersonOffset = new Vector3(0f, 2f, -4f);
     public float mouseSensitivity = 1f;
-    public float smoothTime = 0.08f;
+    public float smoothTime = 0.02f;
     public bool startFirstPerson = true;
     public KeyCode toggleKey = KeyCode.C;
     public float minPitch = -20f;
@@ -148,7 +148,7 @@ public class CameraController : MonoBehaviour
             }
 
             transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref currentVel, smoothTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 10f * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 25f * Time.deltaTime);
         }
     }
 
