@@ -153,6 +153,20 @@ public class MainMenuController : MonoBehaviour
             if (cg != null)
             {
                 Debug.Log("[MainMenuController] Found existing KeyGuidePanel");
+                // Ensure Body text contains the latest control hint (Space: Handbrake)
+                var bodyTf = cg.gameObject.transform.Find("Body");
+                if (bodyTf != null)
+                {
+                    var txt = bodyTf.GetComponent<Text>();
+                    if (txt != null)
+                    {
+                        if (!txt.text.Contains("Space: Handbrake"))
+                        {
+                            txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
+                            Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
+                        }
+                    }
+                }
                 if (!cg.gameObject.activeSelf)
                     cg.gameObject.SetActive(true);
                     
@@ -292,7 +306,7 @@ public class MainMenuController : MonoBehaviour
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var body = bodyGO.GetComponent<Text>();
-        body.text = "W: Accelerate\nS: Brake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
+        body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
         body.alignment = TextAnchor.MiddleCenter;
         body.color = Color.white;
         body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
