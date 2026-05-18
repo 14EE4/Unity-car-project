@@ -222,6 +222,15 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
   - 문제 원인: 풀스크린 패널(오버레이)이 버튼 위에 있어 클릭을 막고 있었습니다.
   - 해결 방법: 에디터의 Hierarchy에서 해당 패널을 같은 `Canvas` 내 "맨 밑(뒤쪽)"으로 이동시키면 버튼이 정상 작동합니다.
 
+- 2026-05-18: **메인 메뉴 설정 패널 - 첫 클릭에 안 열리는 문제 해결**
+  - **문제**: 설정 버튼을 처음 누르면 `ShowSettings()` 로그는 찍히지만 패널이 보이지 않고, 두 번째 클릭에서야 패널이 열림.
+  - **원인**: `SettingsPanel`을 `GameObject.SetActive(false)`로 껐다 켜는 방식과 다른 UI 오브젝트의 상태가 겹치면서 첫 클릭 시점에 `activeSelf=false`가 유지되는 흐름이 있었음.
+  - **최종 해결**:
+    1. `MainMenuController.ShowSettings()`에서 패널의 `CanvasGroup`만 켜고(`alpha=1`, `interactable=true`, `blocksRaycasts=true`) GameObject는 계속 활성 상태로 유지.
+    2. `MainMenuController.CloseSettings()`도 GameObject를 끄지 않고 CanvasGroup만 숨기도록 변경.
+    3. 디버그 로그로 `activeSelf` / `activeInHierarchy` / sibling index를 확인해 문제 원인을 추적.
+  - **결과**: 설정 버튼을 한 번만 눌러도 패널이 바로 표시되도록 안정화됨.
+
 ## 해결된 항목
 
 - `TutorialUI`: `CarController` 수동 할당 요구로 변경, 자동 탐색 제거, 기어 직접 읽기(`currentGear`), 마우스 이동으로 `Steer` 단계 완료 처리
