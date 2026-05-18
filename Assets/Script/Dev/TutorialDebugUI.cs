@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TutorialDebugUI : MonoBehaviour
 {
-    public bool showOnStart = true;
+    public bool showOnStart = false;
     public Rect windowRect = new Rect(10, 10, 280, 140);
     bool visible = false;
 
