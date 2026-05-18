@@ -37,10 +37,12 @@ public class MainMenuController : MonoBehaviour
 
         if (settingsPanel != null)
         {
+            if (!settingsPanel.gameObject.activeSelf)
+                settingsPanel.gameObject.SetActive(true);
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
-            settingsPanel.gameObject.SetActive(false);
+            Debug.Log($"[MainMenuController] settingsPanel initialized activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
         }
 
         if (keyGuidePanel != null)
@@ -100,19 +102,10 @@ public class MainMenuController : MonoBehaviour
             Debug.Log($"[MainMenuController] settingsPanel sibling before={settingsPanel.transform.GetSiblingIndex()}, activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
             Debug.Log($"[MainMenuController] settingsPanel active before show={settingsPanel.gameObject.activeSelf}, alpha={settingsPanel.alpha}, interactable={settingsPanel.interactable}, blocksRaycasts={settingsPanel.blocksRaycasts}");
 
-            var t = settingsPanel.transform;
-            while (t != null)
+            if (!settingsPanel.gameObject.activeSelf)
             {
-                if (!t.gameObject.activeSelf)
-                {
-                    Debug.Log($"[MainMenuController] Activating parent chain object '{t.name}'");
-                    t.gameObject.SetActive(true);
-                }
-
-                if (t.GetComponent<Canvas>() != null)
-                    break;
-
-                t = t.parent;
+                Debug.Log("[MainMenuController] Activating settingsPanel GameObject directly");
+                settingsPanel.gameObject.SetActive(true);
             }
 
             settingsPanel.alpha = 1f;
@@ -354,8 +347,7 @@ public class MainMenuController : MonoBehaviour
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
-            settingsPanel.gameObject.SetActive(false);
-            Debug.Log("[MainMenuController] settingsPanel hidden");
+            Debug.Log($"[MainMenuController] settingsPanel hidden via CanvasGroup only (activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy})");
         }
         else
         {
