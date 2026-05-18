@@ -7,7 +7,15 @@ public class CameraController : MonoBehaviour
     public Transform firstPersonAnchor; // 1인칭 카메라 위치
     public Vector3 thirdPersonOffset = new Vector3(0f, 2f, -4f);
     public float mouseSensitivity = 1f;
-    public float smoothTime = 0.08f;
+    public float smoothTime = 0.02f;
+    // Lerp-based follow settings (replace SmoothDamp)
+    public float positionLerpSpeed = 25f;
+    public float collisionSmooth = 12f;
+    // Mouse-wheel zoom (adjust third-person distance)
+    public float zoomSpeed = 1.0f;
+    public float zoomDistance = 0f;
+    public float minZoom = -2f;
+    public float maxZoom = 3f;
     public bool startFirstPerson = true;
     public KeyCode toggleKey = KeyCode.C;
     public float minPitch = -20f;
@@ -109,6 +117,12 @@ public class CameraController : MonoBehaviour
 
             if (!lockThirdPersonPitch)
                 pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+            // 마우스 휠로 3인칭 카메라 앞/뒤 조절
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (Mathf.Abs(scroll) > 0f)
+            {
+                zoomDistance = Mathf.Clamp(zoomDistance + scroll * zoomSpeed, minZoom, maxZoom);
+            }
         }
 
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
@@ -137,18 +151,21 @@ public class CameraController : MonoBehaviour
             if (transform.parent == firstPersonAnchor)
                 transform.SetParent(null);
 
-            Vector3 desiredPos = target.position + rot * thirdPersonOffset;
+            Vector3 offsetWithZoom = thirdPersonOffset + new Vector3(0f, 0f, zoomDistance);
+            Vector3 desiredPos = target.position + rot * offsetWithZoom;
             Vector3 origin = target.position + Vector3.up * 1f;
             Vector3 dir = desiredPos - origin;
             float distance = dir.magnitude;
             RaycastHit hit;
             if (Physics.SphereCast(origin, collisionRadius, dir.normalized, out hit, distance))
             {
-                desiredPos = hit.point - dir.normalized * collisionOffset;
+                Vector3 collPos = hit.point - dir.normalized * collisionOffset;
+                desiredPos = Vector3.Lerp(desiredPos, collPos, Mathf.Clamp01(collisionSmooth * Time.deltaTime));
             }
 
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref currentVel, smoothTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 10f * Time.deltaTime);
+            float alpha = Mathf.Clamp01(positionLerpSpeed * Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, desiredPos, alpha);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 45f * Time.deltaTime);
         }
     }
 

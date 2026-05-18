@@ -37,10 +37,12 @@ public class MainMenuController : MonoBehaviour
 
         if (settingsPanel != null)
         {
+            if (!settingsPanel.gameObject.activeSelf)
+                settingsPanel.gameObject.SetActive(true);
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
-            settingsPanel.gameObject.SetActive(false);
+            Debug.Log($"[MainMenuController] settingsPanel initialized activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
         }
 
         if (keyGuidePanel != null)
@@ -93,15 +95,30 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowSettings()
     {
+        Debug.Log($"[MainMenuController] ShowSettings invoked (panel assigned={settingsPanel != null})");
         if (settingsPanel != null)
         {
+            LogHierarchy(settingsPanel.transform);
+            Debug.Log($"[MainMenuController] settingsPanel sibling before={settingsPanel.transform.GetSiblingIndex()}, activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
+            Debug.Log($"[MainMenuController] settingsPanel active before show={settingsPanel.gameObject.activeSelf}, alpha={settingsPanel.alpha}, interactable={settingsPanel.interactable}, blocksRaycasts={settingsPanel.blocksRaycasts}");
+
             if (!settingsPanel.gameObject.activeSelf)
+            {
+                Debug.Log("[MainMenuController] Activating settingsPanel GameObject directly");
                 settingsPanel.gameObject.SetActive(true);
+            }
+
             settingsPanel.alpha = 1f;
             settingsPanel.interactable = true;
             settingsPanel.blocksRaycasts = true;
             // Ensure settings panel is on top of UI so other buttons (including key guide) appear dimmed/covered
             settingsPanel.transform.SetAsLastSibling();
+            Debug.Log($"[MainMenuController] settingsPanel sibling after={settingsPanel.transform.GetSiblingIndex()}, activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
+            Debug.Log($"[MainMenuController] settingsPanel shown (activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}, alpha={settingsPanel.alpha}, interactable={settingsPanel.interactable}, blocksRaycasts={settingsPanel.blocksRaycasts})");
+        }
+        else
+        {
+            Debug.LogWarning("[MainMenuController] ShowSettings called but settingsPanel is null.");
         }
     }
 
@@ -112,12 +129,14 @@ public class MainMenuController : MonoBehaviour
         if (keyGuidePanel != null)
         {
             Debug.Log("[MainMenuController] Using stored keyGuidePanel reference");
+            Debug.Log($"[MainMenuController] keyGuidePanel sibling before={keyGuidePanel.transform.GetSiblingIndex()}, activeSelf={keyGuidePanel.gameObject.activeSelf}");
             if (!keyGuidePanel.gameObject.activeSelf)
                 keyGuidePanel.gameObject.SetActive(true);
             keyGuidePanel.alpha = 1f;
             keyGuidePanel.interactable = true;
             keyGuidePanel.blocksRaycasts = true;
             keyGuidePanel.transform.SetAsLastSibling();
+            Debug.Log($"[MainMenuController] keyGuidePanel sibling after={keyGuidePanel.transform.GetSiblingIndex()}");
             
             // Also ensure overlay is active
             var overlay = keyGuidePanel.gameObject.transform.parent;
@@ -134,6 +153,25 @@ public class MainMenuController : MonoBehaviour
             if (cg != null)
             {
                 Debug.Log("[MainMenuController] Found existing KeyGuidePanel");
+                // Ensure Body text contains the latest control hint (Space: Handbrake)
+                var bodyTf = cg.gameObject.transform.Find("Body");
+                if (bodyTf != null)
+                {
+                    var txt = bodyTf.GetComponent<Text>();
+                    if (txt != null)
+                    {
+                        if (!txt.text.Contains("Space: Handbrake"))
+                        {
+                            txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
+                            Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
+                        }
+                        if (!txt.text.Contains("Use Mouse Wheel to adjust camera distance"))
+                        {
+                            txt.text = txt.text + "\n\nUse Mouse Wheel to adjust camera distance.";
+                            Debug.Log("[MainMenuController] Appended simplified camera note to KeyGuidePanel Body text");
+                        }
+                    }
+                }
                 if (!cg.gameObject.activeSelf)
                     cg.gameObject.SetActive(true);
                     
@@ -273,7 +311,7 @@ public class MainMenuController : MonoBehaviour
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var body = bodyGO.GetComponent<Text>();
-        body.text = "W: Accelerate\nS: Brake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
+            body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)\n\nNote: Third-person camera no longer auto-pulls forward. Use Mouse Wheel to adjust camera distance.";
         body.alignment = TextAnchor.MiddleCenter;
         body.color = Color.white;
         body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -322,12 +360,27 @@ public class MainMenuController : MonoBehaviour
 
     public void CloseSettings()
     {
+        Debug.Log($"[MainMenuController] CloseSettings invoked (panel assigned={settingsPanel != null})");
         if (settingsPanel != null)
         {
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
-            settingsPanel.gameObject.SetActive(false);
+            Debug.Log($"[MainMenuController] settingsPanel hidden via CanvasGroup only (activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy})");
+        }
+        else
+        {
+            Debug.LogWarning("[MainMenuController] CloseSettings called but settingsPanel is null.");
+        }
+    }
+
+    void LogHierarchy(Transform start)
+    {
+        var current = start;
+        while (current != null)
+        {
+            Debug.Log($"[MainMenuController] hierarchy: {current.name} activeSelf={current.gameObject.activeSelf} activeInHierarchy={current.gameObject.activeInHierarchy}");
+            current = current.parent;
         }
     }
 
@@ -342,9 +395,11 @@ public class MainMenuController : MonoBehaviour
 
         if (cg != null)
         {
+            Debug.Log($"[MainMenuController] CloseKeyGuide invoked. sibling={cg.transform.GetSiblingIndex()}, activeSelf={cg.gameObject.activeSelf}");
             cg.alpha = 0f;
             cg.interactable = false;
             cg.blocksRaycasts = false;
+            cg.gameObject.SetActive(false);
         }
         
         var overlay = GameObject.Find("KeyGuideOverlay");
