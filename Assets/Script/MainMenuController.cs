@@ -153,6 +153,20 @@ public class MainMenuController : MonoBehaviour
             if (cg != null)
             {
                 Debug.Log("[MainMenuController] Found existing KeyGuidePanel");
+                // Ensure Body text contains the latest control hint (Space: Handbrake)
+                var bodyTf = cg.gameObject.transform.Find("Body");
+                if (bodyTf != null)
+                {
+                    var txt = bodyTf.GetComponent<Text>();
+                    if (txt != null)
+                    {
+                        if (!txt.text.Contains("Space: Handbrake"))
+                        {
+                            txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
+                            Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
+                        }
+                    }
+                }
                 if (!cg.gameObject.activeSelf)
                     cg.gameObject.SetActive(true);
                     
