@@ -165,12 +165,11 @@ public class MainMenuController : MonoBehaviour
                             txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
                             Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
                         }
-                            // Ensure camera note is present in the key guide
-                            if (!txt.text.Contains("Third-person camera no longer auto-pulls forward"))
-                            {
-                                txt.text = txt.text + "\n\nNote: Third-person camera no longer auto-pulls forward. Use Mouse Wheel to adjust camera distance.";
-                                Debug.Log("[MainMenuController] Appended camera note to KeyGuidePanel Body text");
-                            }
+                        if (!txt.text.Contains("Use Mouse Wheel to adjust camera distance"))
+                        {
+                            txt.text = txt.text + "\n\nUse Mouse Wheel to adjust camera distance.";
+                            Debug.Log("[MainMenuController] Appended simplified camera note to KeyGuidePanel Body text");
+                        }
                     }
                 }
                 if (!cg.gameObject.activeSelf)
