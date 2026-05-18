@@ -8,6 +8,9 @@ public class CameraController : MonoBehaviour
     public Vector3 thirdPersonOffset = new Vector3(0f, 2f, -4f);
     public float mouseSensitivity = 1f;
     public float smoothTime = 0.02f;
+    // Lerp-based follow settings (replace SmoothDamp)
+    public float positionLerpSpeed = 10f;
+    public float collisionSmooth = 8f;
     public bool startFirstPerson = true;
     public KeyCode toggleKey = KeyCode.C;
     public float minPitch = -20f;
@@ -144,10 +147,12 @@ public class CameraController : MonoBehaviour
             RaycastHit hit;
             if (Physics.SphereCast(origin, collisionRadius, dir.normalized, out hit, distance))
             {
-                desiredPos = hit.point - dir.normalized * collisionOffset;
+                Vector3 collPos = hit.point - dir.normalized * collisionOffset;
+                desiredPos = Vector3.Lerp(desiredPos, collPos, Mathf.Clamp01(collisionSmooth * Time.deltaTime));
             }
 
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref currentVel, smoothTime);
+            float alpha = Mathf.Clamp01(positionLerpSpeed * Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, desiredPos, alpha);
             transform.rotation = Quaternion.Slerp(transform.rotation, rot, 25f * Time.deltaTime);
         }
     }
