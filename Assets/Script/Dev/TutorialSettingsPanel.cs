@@ -26,6 +26,7 @@ public class TutorialSettingsPanel : MonoBehaviour
     {
         if (panel == null) return;
         UpdateStatus();
+        panel.transform.SetAsLastSibling();
         panel.SetActive(true);
     }
 
