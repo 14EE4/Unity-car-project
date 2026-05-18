@@ -93,15 +93,38 @@ public class MainMenuController : MonoBehaviour
 
     public void ShowSettings()
     {
+        Debug.Log($"[MainMenuController] ShowSettings invoked (panel assigned={settingsPanel != null})");
         if (settingsPanel != null)
         {
-            if (!settingsPanel.gameObject.activeSelf)
-                settingsPanel.gameObject.SetActive(true);
+            Debug.Log($"[MainMenuController] settingsPanel sibling before={settingsPanel.transform.GetSiblingIndex()}, activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
+            Debug.Log($"[MainMenuController] settingsPanel active before show={settingsPanel.gameObject.activeSelf}, alpha={settingsPanel.alpha}, interactable={settingsPanel.interactable}, blocksRaycasts={settingsPanel.blocksRaycasts}");
+
+            var t = settingsPanel.transform;
+            while (t != null)
+            {
+                if (!t.gameObject.activeSelf)
+                {
+                    Debug.Log($"[MainMenuController] Activating parent chain object '{t.name}'");
+                    t.gameObject.SetActive(true);
+                }
+
+                if (t.GetComponent<Canvas>() != null)
+                    break;
+
+                t = t.parent;
+            }
+
             settingsPanel.alpha = 1f;
             settingsPanel.interactable = true;
             settingsPanel.blocksRaycasts = true;
             // Ensure settings panel is on top of UI so other buttons (including key guide) appear dimmed/covered
             settingsPanel.transform.SetAsLastSibling();
+            Debug.Log($"[MainMenuController] settingsPanel sibling after={settingsPanel.transform.GetSiblingIndex()}, activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
+            Debug.Log($"[MainMenuController] settingsPanel shown (activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}, alpha={settingsPanel.alpha}, interactable={settingsPanel.interactable}, blocksRaycasts={settingsPanel.blocksRaycasts})");
+        }
+        else
+        {
+            Debug.LogWarning("[MainMenuController] ShowSettings called but settingsPanel is null.");
         }
     }
 
@@ -112,12 +135,14 @@ public class MainMenuController : MonoBehaviour
         if (keyGuidePanel != null)
         {
             Debug.Log("[MainMenuController] Using stored keyGuidePanel reference");
+            Debug.Log($"[MainMenuController] keyGuidePanel sibling before={keyGuidePanel.transform.GetSiblingIndex()}, activeSelf={keyGuidePanel.gameObject.activeSelf}");
             if (!keyGuidePanel.gameObject.activeSelf)
                 keyGuidePanel.gameObject.SetActive(true);
             keyGuidePanel.alpha = 1f;
             keyGuidePanel.interactable = true;
             keyGuidePanel.blocksRaycasts = true;
             keyGuidePanel.transform.SetAsLastSibling();
+            Debug.Log($"[MainMenuController] keyGuidePanel sibling after={keyGuidePanel.transform.GetSiblingIndex()}");
             
             // Also ensure overlay is active
             var overlay = keyGuidePanel.gameObject.transform.parent;
@@ -322,12 +347,18 @@ public class MainMenuController : MonoBehaviour
 
     public void CloseSettings()
     {
+        Debug.Log($"[MainMenuController] CloseSettings invoked (panel assigned={settingsPanel != null})");
         if (settingsPanel != null)
         {
             settingsPanel.alpha = 0f;
             settingsPanel.interactable = false;
             settingsPanel.blocksRaycasts = false;
             settingsPanel.gameObject.SetActive(false);
+            Debug.Log("[MainMenuController] settingsPanel hidden");
+        }
+        else
+        {
+            Debug.LogWarning("[MainMenuController] CloseSettings called but settingsPanel is null.");
         }
     }
 
@@ -342,9 +373,11 @@ public class MainMenuController : MonoBehaviour
 
         if (cg != null)
         {
+            Debug.Log($"[MainMenuController] CloseKeyGuide invoked. sibling={cg.transform.GetSiblingIndex()}, activeSelf={cg.gameObject.activeSelf}");
             cg.alpha = 0f;
             cg.interactable = false;
             cg.blocksRaycasts = false;
+            cg.gameObject.SetActive(false);
         }
         
         var overlay = GameObject.Find("KeyGuideOverlay");
