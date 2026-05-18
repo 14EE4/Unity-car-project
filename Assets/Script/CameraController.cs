@@ -9,8 +9,10 @@ public class CameraController : MonoBehaviour
     public float mouseSensitivity = 1f;
     public float smoothTime = 0.02f;
     // Lerp-based follow settings (replace SmoothDamp)
-    public float positionLerpSpeed = 10f;
-    public float collisionSmooth = 8f;
+    public float positionLerpSpeed = 25f;
+    public float collisionSmooth = 12f;
+    // Predictive offset based on target Rigidbody velocity to reduce apparent lag
+    public float predictionFactor = 0.15f;
     public bool startFirstPerson = true;
     public KeyCode toggleKey = KeyCode.C;
     public float minPitch = -20f;
@@ -141,6 +143,18 @@ public class CameraController : MonoBehaviour
                 transform.SetParent(null);
 
             Vector3 desiredPos = target.position + rot * thirdPersonOffset;
+            // Apply simple prediction using target's Rigidbody velocity if available
+            Rigidbody tgtRb = null;
+            if (target != null)
+            {
+                tgtRb = target.GetComponent<Rigidbody>();
+                if (tgtRb == null && target.root != null)
+                    tgtRb = target.root.GetComponent<Rigidbody>();
+            }
+            if (tgtRb != null)
+            {
+                desiredPos += tgtRb.velocity * predictionFactor;
+            }
             Vector3 origin = target.position + Vector3.up * 1f;
             Vector3 dir = desiredPos - origin;
             float distance = dir.magnitude;
@@ -153,7 +167,7 @@ public class CameraController : MonoBehaviour
 
             float alpha = Mathf.Clamp01(positionLerpSpeed * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, desiredPos, alpha);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 25f * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rot, 45f * Time.deltaTime);
         }
     }
 
