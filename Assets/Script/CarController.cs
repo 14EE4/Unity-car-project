@@ -13,6 +13,7 @@ public class CarController : MonoBehaviour
     public float maxSteerAngle = 30f; 
     public float steerSensitivity = 1f;
     public float brakeTorque = 3000f; 
+    public float handbrakeTorque = 2000f;
     public float rollingResistanceBrake = 10f;
     public float engineBrakeTorque = 10f;
     public float throttleDrag = 0.03f;
@@ -27,6 +28,7 @@ public class CarController : MonoBehaviour
     private Rigidbody carRigidbody;
     private float throttleInput = 0f;
     private float brakeInput = 0f;
+    private bool handbrakeActive = false;
     private float appliedMotorTorque = 0f;
     private float appliedBrakeTorque = 0f;
     private float previousForwardSpeed = 0f;
@@ -78,6 +80,8 @@ public class CarController : MonoBehaviour
         // 2. 입력 분리: W는 가속, S는 브레이크
         throttleInput = Input.GetKey(KeyCode.W) ? 1f : 0f;
         brakeInput = Input.GetKey(KeyCode.S) ? 1f : 0f;
+        // Space: Handbrake (side / emergency brake)
+        handbrakeActive = Input.GetKey(KeyCode.Space);
 
         // 기어 변속: 2는 업시프트, 1은 다운시프트
         if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -94,7 +98,8 @@ public class CarController : MonoBehaviour
         if (debugLogTimer >= debugLogInterval)
         {
             debugLogTimer = 0f;
-            Debug.Log(string.Format("Speed: {0:F1} km/h | Accel: {1:F2} m/s^2 | Throttle: {2} | Brake: {3} | Gear: {4} | Motor: {5:F1} | BrakeTorque: {6:F1} | Slope: {7:F1} deg{8}", GetCurrentSpeedKmh(), longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()));
+            string hb = handbrakeActive ? " | Handbrake: ON" : "";
+            Debug.Log(string.Format("Speed: {0:F1} km/h | Accel: {1:F2} m/s^2 | Throttle: {2} | Brake: {3} | Gear: {4} | Motor: {5:F1} | BrakeTorque: {6:F1} | Slope: {7:F1} deg{8}", GetCurrentSpeedKmh(), longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
         }
     }
 
@@ -116,7 +121,18 @@ public class CarController : MonoBehaviour
         }
 
         // 3. 가속 및 브레이크 로직
-        if (throttleInput > 0f)
+        // Handbrake has highest priority when active: apply strong brake on rear wheels
+        if (handbrakeActive)
+        {
+            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            backLeft.motorTorque = backRight.motorTorque = 0f;
+            // keep a small front brake so front doesn't lock immediately
+            frontLeft.brakeTorque = frontRight.brakeTorque = engineBrakeTorque;
+            backLeft.brakeTorque = backRight.brakeTorque = handbrakeTorque;
+            appliedMotorTorque = 0f;
+            appliedBrakeTorque = handbrakeTorque;
+        }
+        else if (throttleInput > 0f)
         {
             // 기어별 최고 속도 제한 적용: 속도 도달 시 토크 감소
             float currentSpeedKmh = GetCurrentSpeedKmh();

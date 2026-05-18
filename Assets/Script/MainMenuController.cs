@@ -292,7 +292,7 @@ public class MainMenuController : MonoBehaviour
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var body = bodyGO.GetComponent<Text>();
-        body.text = "W: Accelerate\nS: Brake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
+        body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
         body.alignment = TextAnchor.MiddleCenter;
         body.color = Color.white;
         body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
