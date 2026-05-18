@@ -14,7 +14,12 @@ public class TutorialSettingsPanel : MonoBehaviour
     {
         if (panel != null) panel.SetActive(false);
         if (clearButton != null) clearButton.onClick.AddListener(ClearTutorial);
-        
+        UpdateStatus();
+    }
+
+    void Start()
+    {
+        UpdateStatus();
     }
 
     public void Show()
