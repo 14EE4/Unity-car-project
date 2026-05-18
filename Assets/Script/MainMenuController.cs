@@ -360,6 +360,8 @@ public class MainMenuController : MonoBehaviour
         else
         {
             Debug.LogWarning("[MainMenuController] CloseSettings called but settingsPanel is null.");
+        }
+    }
 
     void LogHierarchy(Transform start)
     {
@@ -368,8 +370,6 @@ public class MainMenuController : MonoBehaviour
         {
             Debug.Log($"[MainMenuController] hierarchy: {current.name} activeSelf={current.gameObject.activeSelf} activeInHierarchy={current.gameObject.activeInHierarchy}");
             current = current.parent;
-        }
-    }
         }
     }
 
