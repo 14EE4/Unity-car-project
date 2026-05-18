@@ -153,7 +153,7 @@ public class CameraController : MonoBehaviour
             }
             if (tgtRb != null)
             {
-                desiredPos += tgtRb.velocity * predictionFactor;
+                desiredPos += tgtRb.linearVelocity * predictionFactor;
             }
             Vector3 origin = target.position + Vector3.up * 1f;
             Vector3 dir = desiredPos - origin;
