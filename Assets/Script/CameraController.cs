@@ -11,8 +11,11 @@ public class CameraController : MonoBehaviour
     // Lerp-based follow settings (replace SmoothDamp)
     public float positionLerpSpeed = 25f;
     public float collisionSmooth = 12f;
-    // Predictive offset based on target Rigidbody velocity to reduce apparent lag
-    public float predictionFactor = 0.15f;
+    // Mouse-wheel zoom (adjust third-person distance)
+    public float zoomSpeed = 1.0f;
+    public float zoomDistance = 0f;
+    public float minZoom = -2f;
+    public float maxZoom = 3f;
     public bool startFirstPerson = true;
     public KeyCode toggleKey = KeyCode.C;
     public float minPitch = -20f;
@@ -114,6 +117,12 @@ public class CameraController : MonoBehaviour
 
             if (!lockThirdPersonPitch)
                 pitch -= Input.GetAxis("Mouse Y") * mouseSensitivity;
+            // 마우스 휠로 3인칭 카메라 앞/뒤 조절
+            float scroll = Input.GetAxis("Mouse ScrollWheel");
+            if (Mathf.Abs(scroll) > 0f)
+            {
+                zoomDistance = Mathf.Clamp(zoomDistance + scroll * zoomSpeed, minZoom, maxZoom);
+            }
         }
 
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
@@ -142,19 +151,8 @@ public class CameraController : MonoBehaviour
             if (transform.parent == firstPersonAnchor)
                 transform.SetParent(null);
 
-            Vector3 desiredPos = target.position + rot * thirdPersonOffset;
-            // Apply simple prediction using target's Rigidbody velocity if available
-            Rigidbody tgtRb = null;
-            if (target != null)
-            {
-                tgtRb = target.GetComponent<Rigidbody>();
-                if (tgtRb == null && target.root != null)
-                    tgtRb = target.root.GetComponent<Rigidbody>();
-            }
-            if (tgtRb != null)
-            {
-                desiredPos += tgtRb.linearVelocity * predictionFactor;
-            }
+            Vector3 offsetWithZoom = thirdPersonOffset + new Vector3(0f, 0f, zoomDistance);
+            Vector3 desiredPos = target.position + rot * offsetWithZoom;
             Vector3 origin = target.position + Vector3.up * 1f;
             Vector3 dir = desiredPos - origin;
             float distance = dir.magnitude;
