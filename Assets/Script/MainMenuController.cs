@@ -165,6 +165,11 @@ public class MainMenuController : MonoBehaviour
                             txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
                             Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
                         }
+                        if (!txt.text.Contains("Use Mouse Wheel to adjust camera distance"))
+                        {
+                            txt.text = txt.text + "\n\nUse Mouse Wheel to adjust camera distance.";
+                            Debug.Log("[MainMenuController] Appended simplified camera note to KeyGuidePanel Body text");
+                        }
                     }
                 }
                 if (!cg.gameObject.activeSelf)
@@ -306,7 +311,7 @@ public class MainMenuController : MonoBehaviour
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var body = bodyGO.GetComponent<Text>();
-        body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)";
+            body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)\n\nNote: Third-person camera no longer auto-pulls forward. Use Mouse Wheel to adjust camera distance.";
         body.alignment = TextAnchor.MiddleCenter;
         body.color = Color.white;
         body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
