@@ -96,6 +96,7 @@ public class MainMenuController : MonoBehaviour
         Debug.Log($"[MainMenuController] ShowSettings invoked (panel assigned={settingsPanel != null})");
         if (settingsPanel != null)
         {
+            LogHierarchy(settingsPanel.transform);
             Debug.Log($"[MainMenuController] settingsPanel sibling before={settingsPanel.transform.GetSiblingIndex()}, activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
             Debug.Log($"[MainMenuController] settingsPanel active before show={settingsPanel.gameObject.activeSelf}, alpha={settingsPanel.alpha}, interactable={settingsPanel.interactable}, blocksRaycasts={settingsPanel.blocksRaycasts}");
 
@@ -359,6 +360,16 @@ public class MainMenuController : MonoBehaviour
         else
         {
             Debug.LogWarning("[MainMenuController] CloseSettings called but settingsPanel is null.");
+
+    void LogHierarchy(Transform start)
+    {
+        var current = start;
+        while (current != null)
+        {
+            Debug.Log($"[MainMenuController] hierarchy: {current.name} activeSelf={current.gameObject.activeSelf} activeInHierarchy={current.gameObject.activeInHierarchy}");
+            current = current.parent;
+        }
+    }
         }
     }
 
