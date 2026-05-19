@@ -2,14 +2,14 @@ using UnityEngine;
 
 public class FinishLine : MonoBehaviour
 {
-    private CheckpointManager checkpointManager;
+    private LapTimer lapTimer;
 
     private void Start()
     {
-        checkpointManager = FindObjectOfType<CheckpointManager>();
-        if (checkpointManager == null)
+        lapTimer = FindFirstObjectByType<LapTimer>();
+        if (lapTimer == null)
         {
-            Debug.LogError("CheckpointManager not found in the scene.");
+            Debug.LogError("LapTimer not found in the scene.");
         }
     }
 
@@ -17,13 +17,9 @@ public class FinishLine : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            if (checkpointManager != null && checkpointManager.AllCheckpointsVisited())
+            if (lapTimer != null)
             {
-                Debug.Log("Race completed successfully!");
-            }
-            else
-            {
-                Debug.LogWarning("Not all checkpoints visited. Complete all checkpoints before finishing.");
+                lapTimer.TryCompleteLap();
             }
         }
     }
