@@ -4452,6 +4452,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SportCar_1
       objectReference: {fileID: 0}
+    - target: {fileID: 1047952856737852628, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 5729193632298416017, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.56

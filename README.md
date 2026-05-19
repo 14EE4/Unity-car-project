@@ -296,3 +296,46 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 ### 향후 개선 사항
 - 랩타임 시스템과의 통합.
 - 플레이어 경험을 향상시키기 위한 추가 시각 및 오디오 피드백.
+
+---
+
+### SteeringIndicatorUI.cs 문제 요약
+
+#### **문제: NaN 회전값 에러**
+- `UpdateVisual` 함수에서 `localEulerAngles`를 설정할 때 NaN 값이 발생합니다.
+- Unity 콘솔에 다음과 같은 에러가 출력됩니다:
+  - `Assertion failed on expression: 'CompareApproximately(SqrMagnitude(result), 1.0F)'`
+  - `transform.localRotation assign attempt for 'Handle' is not valid. Input rotation is { NaN, NaN, NaN, NaN }.`
+
+#### **원인**
+1. **0으로 나누기**:
+   - 각도 계산 중 0으로 나누는 연산이 발생할 가능성이 있습니다.
+2. **잘못된 입력 값**:
+   - 계산에 사용되는 값이 유효하지 않거나, 정의되지 않은 상태일 수 있습니다.
+
+#### **해결 방안**
+1. **NaN 체크 추가**:
+   - `float.IsNaN()`를 사용하여 계산된 값이 NaN인지 확인한 후, NaN일 경우 기본값(예: 0)을 할당합니다.
+2. **예외 처리**:
+   - 각도 계산 로직에서 0으로 나누는 상황을 방지하기 위해 조건문을 추가합니다.
+3. **디버깅**:
+   - 문제가 발생하는 입력 값과 계산 과정을 Unity 디버그 로그로 출력하여 원인을 정확히 파악합니다.
+
+#### **예시 코드 수정**
+```csharp
+public void UpdateVisual(float angle)
+{
+    if (float.IsNaN(angle))
+    {
+        Debug.LogWarning("Invalid angle detected. Resetting to 0.");
+        angle = 0f;
+    }
+
+    // 기존 로직
+    transform.localEulerAngles = new Vector3(0, angle, 0);
+}
+```
+
+---
+
+이 내용은 나중에 수정할 때 참고할 수 있도록 정리한 것입니다. 추가적인 질문이 있으면 말씀해주세요!
