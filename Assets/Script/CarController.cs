@@ -41,6 +41,8 @@ public class CarController : MonoBehaviour
     // 각 기어별 최고 속도 (km/h)
     private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
 
+    public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
+
     void Start()
     {
         // 마우스 커서를 게임 화면 중앙에 고정 (정교한 조작을 위해 필수)
@@ -95,7 +97,7 @@ public class CarController : MonoBehaviour
         }
 
         debugLogTimer += Time.deltaTime;
-        if (debugLogTimer >= debugLogInterval)
+        if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
         {
             debugLogTimer = 0f;
             string hb = handbrakeActive ? " | Handbrake: ON" : "";
@@ -311,5 +313,15 @@ public class CarController : MonoBehaviour
         }
 
         return "air";
+    }
+
+    private float GetCurrentSpeed()
+    {
+        if (carRigidbody == null)
+        {
+            return 0f;
+        }
+
+        return carRigidbody.linearVelocity.magnitude * 3.6f;
     }
 }

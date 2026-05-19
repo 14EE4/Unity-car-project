@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 6098422715097023425}
   - component: {fileID: 1399820743625226832}
   - component: {fileID: 7413723322844923651}
-  - component: {fileID: 6622591494992648567}
   - component: {fileID: 2282613548202667844}
   m_Layer: 0
   m_Name: Checkpoint
@@ -104,33 +103,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!65 &6622591494992648567
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8155078426579503203}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.0000001, y: 1.0000001, z: 1.0000004}
-  m_Center: {x: 0, y: -0.00000011920929, z: -0.00000047683716}
 --- !u!114 &2282613548202667844
 MonoBehaviour:
   m_ObjectHideFlags: 0

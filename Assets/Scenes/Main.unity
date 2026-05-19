@@ -4505,6 +4505,14 @@ PrefabInstance:
       value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: currentGear
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: EnableSpeedLogs
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: handbrakeTorque
       value: 500
       objectReference: {fileID: 0}
