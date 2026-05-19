@@ -152,6 +152,7 @@
   - 설정 패널에 튜토리얼 초기화 버튼
   - UI 구현: 조향 표시 바
   - 가면 안되는 길에 주황색 화살표, 주행 방향 초록 화살표로 맵에 추가
+  - 체크포인트
 
 ## 남은 작업 
 - 문제  
@@ -165,7 +166,6 @@
   - 음향 적용: 엔진 RPM 연동 피치 변화, 스키드/환경음 추가
   - 여러 차량 선택 기능
   - 다른 맵
-  - 체크포인트
 
 - **장기 (4주 — 최종)**
   - 레이스 플로우 기본 구현: 신호등 카운트다운, 체크포인트 순서 판정
@@ -188,6 +188,10 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 현재는 UI와 레이스 진행 기능을 붙이기 전에 주행감과 입력 흐름을 안정화하는 데 집중하고 있습니다.
 
 ## 수정 기록
+- 2026-05-19: 체크포인트 시스템을 완료했습니다.
+  - `Checkpoint.cs`가 `CheckpointManager.ValidateCheckpoint(this)`를 호출하도록 연동했습니다.
+  - 체크포인트 순서 검증, 중복 통과 방지, 방문 색상 변경, 완료 여부 확인 로그를 모두 정상 동작으로 검증했습니다.
+  - 실제 플레이 로그에서 5개 체크포인트가 `1/5`부터 `5/5`까지 순서대로 통과되는 것을 확인했습니다.
 - 2026-05-17: 씬 전환 로딩 화면을 추가했습니다.
   - `Assets/Script/UI/LoadingScreenManager.cs`를 추가해 비동기 씬 로딩 중 공통 로딩 화면을 띄우도록 했습니다.
   - `Assets/Script/MainMenuController.cs`의 Play 버튼과 `Assets/Script/PauseMenuController.cs`의 메인 메뉴 복귀가 이제 공통 로딩 화면을 통해 씬을 전환합니다.
@@ -293,9 +297,21 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 - 체크포인트 초기화 기능.
 - 레이스 완료를 위한 체크포인트 통합 검증.
 
+### 구현 완료 및 검증 결과
+- `Checkpoint.cs`가 플레이어의 트리거 진입을 감지하면 `CheckpointManager.ValidateCheckpoint(this)`를 호출해 순서를 먼저 검증합니다.
+- 검증이 성공한 경우에만 `IsVisited`가 `true`로 바뀌고, 체크포인트 색상이 초록색으로 바뀝니다.
+- `CheckpointManager.cs`는 체크포인트를 `1/5`, `2/5`처럼 순서대로 검증하며 현재 인덱스를 로그로 남깁니다.
+- 실제 플레이 로그에서 `Checkpoint Checkpoint validated. Current index: 1/5`부터 `Checkpoint Checkpoint (4) validated. Current index: 5/5`까지 정상적으로 출력되어, 5개 체크포인트가 순서대로 모두 통과됨을 확인했습니다.
+- 중복 통과는 `!IsVisited` 조건으로 막고 있으며, `FinishLine`에서는 `AllCheckpointsVisited()`를 통해 최종 완주 조건을 확인할 수 있습니다.
+
 ### 향후 개선 사항
 - 랩타임 시스템과의 통합.
 - 플레이어 경험을 향상시키기 위한 추가 시각 및 오디오 피드백.
+
+### 현재 상태 메모
+- 체크포인트 매니저와 개별 체크포인트의 연동은 완료되었습니다.
+- 순서 검증, 방문 상태 갱신, 시각적 피드백, 완료 여부 확인까지 동작하는 상태입니다.
+- 다음 단계에서는 이 시스템을 랩타임과 레이스 종료 처리에 연결하면 됩니다.
 
 ---
 
