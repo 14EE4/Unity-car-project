@@ -8,7 +8,7 @@ public class CheckpointManager : MonoBehaviour
 
     private void Start()
     {
-        Checkpoints.AddRange(FindObjectsOfType<Checkpoint>());
+        Checkpoints.AddRange(GetComponentsInChildren<Checkpoint>());
         Checkpoints.Sort((a, b) => a.gameObject.name.CompareTo(b.gameObject.name)); // Optional: Sort by name
     }
 
