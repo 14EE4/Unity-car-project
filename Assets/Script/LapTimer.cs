@@ -20,6 +20,7 @@ public class LapTimer : MonoBehaviour
     public List<float> bestLapTimes = new List<float>();
     public string notificationMessage { get; private set; }
     public bool hasNotification => Time.time < notificationEndTime && !string.IsNullOrEmpty(notificationMessage);
+    public bool isRunFinished { get; private set; }
 
     private float lapStartTime;
     private float notificationEndTime;
@@ -34,7 +35,7 @@ public class LapTimer : MonoBehaviour
 
     private void Update()
     {
-        if (!isTimerRunning && IsAccelerationPressed())
+        if (!isRunFinished && !isTimerRunning && IsAccelerationPressed())
         {
             StartTimer();
         }
@@ -66,12 +67,14 @@ public class LapTimer : MonoBehaviour
             bestLapTimes.Sort();
 
             ResetTimerState();
+            isRunFinished = true;
             checkpointManager.ResetCheckpoints();
             SetNotification($"Lap recorded: {FormatLapTime(recentLapTime)}");
             return true;
         }
 
         ResetTimerState();
+        isRunFinished = true;
 
         if (checkpointManager != null)
         {
@@ -104,6 +107,14 @@ public class LapTimer : MonoBehaviour
         isTimerRunning = false;
         currentLapTime = 0f;
         lapStartTime = 0f;
+    }
+
+    public void ResetRunState()
+    {
+        isRunFinished = false;
+        notificationMessage = string.Empty;
+        notificationEndTime = 0f;
+        ResetTimerState();
     }
 
     private bool IsAccelerationPressed()
