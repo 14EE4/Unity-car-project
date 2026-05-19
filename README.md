@@ -273,26 +273,26 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 ### 💡 참고 사항
 * Unity 6는 이전 버전 설정 파일의 무결성을 엄격하게 검사하므로, 업데이트가 되지 않을 때는 **삭제 후 재생성**하는 것이 가장 빠르고 확실한 해결책입니다.
 
-## Checkpoint System
+## 체크포인트 시스템
 
-### Overview
-The checkpoint system ensures that players follow the intended route in the racing game. It consists of the following components:
+### 개요
+체크포인트 시스템은 플레이어가 레이싱 게임에서 의도된 경로를 따르도록 보장합니다. 이 시스템은 다음과 같은 구성 요소로 이루어져 있습니다:
 
-1. **Checkpoint**: Detects when the player passes through and provides visual feedback.
-2. **CheckpointManager**: Manages all checkpoints in the scene and validates the order of traversal.
-3. **FinishLine**: Checks if all checkpoints have been visited before allowing the race to finish.
+1. **Checkpoint**: 플레이어가 통과했을 때 감지하고 시각적 피드백을 제공합니다.
+2. **CheckpointManager**: 씬 내 모든 체크포인트를 관리하고 통과 순서를 검증합니다.
+3. **FinishLine**: 모든 체크포인트를 방문했는지 확인한 후 레이스를 완료할 수 있도록 합니다.
 
-### Scripts
-- `Checkpoint.cs`: Handles individual checkpoint logic.
-- `CheckpointManager.cs`: Manages the list of checkpoints and validates traversal order.
-- `FinishLine.cs`: Ensures all checkpoints are visited before completing the race.
+### 스크립트
+- `Checkpoint.cs`: 개별 체크포인트 로직을 처리합니다.
+- `CheckpointManager.cs`: 체크포인트 리스트를 관리하고 통과 순서를 검증합니다.
+- `FinishLine.cs`: 모든 체크포인트를 방문했는지 확인하여 레이스 완료를 처리합니다.
 
-### Features
-- Visual feedback when a checkpoint is visited.
-- Validation of checkpoint traversal order.
-- Reset functionality for checkpoints.
-- Integration with the finish line to ensure proper race completion.
+### 주요 기능
+- 체크포인트 방문 시 시각적 피드백 제공.
+- 체크포인트 통과 순서 검증.
+- 체크포인트 초기화 기능.
+- 레이스 완료를 위한 체크포인트 통합 검증.
 
-### Future Enhancements
-- Integration with a lap time system.
-- Additional visual and audio feedback for better player experience.
+### 향후 개선 사항
+- 랩타임 시스템과의 통합.
+- 플레이어 경험을 향상시키기 위한 추가 시각 및 오디오 피드백.
