@@ -272,3 +272,27 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 
 ### 💡 참고 사항
 * Unity 6는 이전 버전 설정 파일의 무결성을 엄격하게 검사하므로, 업데이트가 되지 않을 때는 **삭제 후 재생성**하는 것이 가장 빠르고 확실한 해결책입니다.
+
+## Checkpoint System
+
+### Overview
+The checkpoint system ensures that players follow the intended route in the racing game. It consists of the following components:
+
+1. **Checkpoint**: Detects when the player passes through and provides visual feedback.
+2. **CheckpointManager**: Manages all checkpoints in the scene and validates the order of traversal.
+3. **FinishLine**: Checks if all checkpoints have been visited before allowing the race to finish.
+
+### Scripts
+- `Checkpoint.cs`: Handles individual checkpoint logic.
+- `CheckpointManager.cs`: Manages the list of checkpoints and validates traversal order.
+- `FinishLine.cs`: Ensures all checkpoints are visited before completing the race.
+
+### Features
+- Visual feedback when a checkpoint is visited.
+- Validation of checkpoint traversal order.
+- Reset functionality for checkpoints.
+- Integration with the finish line to ensure proper race completion.
+
+### Future Enhancements
+- Integration with a lap time system.
+- Additional visual and audio feedback for better player experience.
