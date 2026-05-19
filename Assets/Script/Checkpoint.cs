@@ -21,7 +21,7 @@ public class Checkpoint : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             IsVisited = true;
-            Debug.Log($"Checkpoint {gameObject.name} visited.");
+            Debug.Log($"Checkpoint {gameObject.name} visited: {IsVisited}");
 
             if (checkpointRenderer != null)
             {
