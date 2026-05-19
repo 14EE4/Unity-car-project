@@ -6,6 +6,7 @@ public class Checkpoint : MonoBehaviour
 
     private Renderer checkpointRenderer;
     private Color originalColor;
+    private CheckpointManager checkpointManager;
 
     private void Awake()
     {
@@ -14,18 +15,31 @@ public class Checkpoint : MonoBehaviour
         {
             originalColor = checkpointRenderer.material.color;
         }
+
+        checkpointManager = FindObjectOfType<CheckpointManager>();
+        if (checkpointManager == null)
+        {
+            Debug.LogError("CheckpointManager not found in the scene.");
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && !IsVisited)
         {
-            IsVisited = true;
-            Debug.Log($"Checkpoint {gameObject.name} visited: {IsVisited}");
-
-            if (checkpointRenderer != null)
+            if (checkpointManager != null && checkpointManager.ValidateCheckpoint(this))
             {
-                checkpointRenderer.material.color = Color.green;
+                IsVisited = true;
+                Debug.Log($"Checkpoint {gameObject.name} validated and visited.");
+
+                if (checkpointRenderer != null)
+                {
+                    checkpointRenderer.material.color = Color.green;
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"Checkpoint {gameObject.name} validation failed.");
             }
         }
     }

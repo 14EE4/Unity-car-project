@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class CheckpointManager : MonoBehaviour
 {
@@ -8,21 +9,25 @@ public class CheckpointManager : MonoBehaviour
 
     private void Start()
     {
-        Checkpoints.AddRange(GetComponentsInChildren<Checkpoint>());
-        Checkpoints.Sort((a, b) => a.gameObject.name.CompareTo(b.gameObject.name)); // Optional: Sort by name
+        if (Checkpoints.Count == 0)
+        {
+            Checkpoints.AddRange(GetComponentsInChildren<Checkpoint>());
+        }
+
+        Checkpoints = Checkpoints.OrderBy(cp => cp.gameObject.name, new NaturalComparer()).ToList();
     }
 
     public bool ValidateCheckpoint(Checkpoint checkpoint)
     {
-        if (Checkpoints[currentCheckpointIndex] == checkpoint)
+        if (currentCheckpointIndex < Checkpoints.Count && Checkpoints[currentCheckpointIndex] == checkpoint)
         {
             currentCheckpointIndex++;
-            Debug.Log($"Checkpoint {checkpoint.gameObject.name} validated. Current index: {currentCheckpointIndex}");
+            Debug.Log($"Checkpoint {checkpoint.gameObject.name} validated. Current index: {currentCheckpointIndex}/{Checkpoints.Count}");
             return true;
         }
         else
         {
-            Debug.LogWarning("Wrong checkpoint order!");
+            Debug.LogWarning($"Checkpoint {checkpoint.gameObject.name} validation failed. Expected: {Checkpoints[currentCheckpointIndex].gameObject.name}");
             return false;
         }
     }
@@ -43,6 +48,14 @@ public class CheckpointManager : MonoBehaviour
         foreach (var checkpoint in Checkpoints)
         {
             checkpoint.ResetCheckpoint();
+        }
+    }
+
+    private class NaturalComparer : IComparer<string>
+    {
+        public int Compare(string x, string y)
+        {
+            return string.Compare(x, y, System.StringComparison.OrdinalIgnoreCase);
         }
     }
 }
