@@ -12,6 +12,7 @@ public class LapTimer : MonoBehaviour
 
     [Header("Feedback")]
     public float notificationDuration = 2f;
+    public bool verboseDebugLogs = true;
 
     public bool isTimerRunning { get; private set; }
     public float currentLapTime { get; private set; }
@@ -30,6 +31,11 @@ public class LapTimer : MonoBehaviour
         if (checkpointManager == null)
         {
             checkpointManager = FindFirstObjectByType<CheckpointManager>();
+        }
+
+        if (verboseDebugLogs)
+        {
+            Debug.Log($"[LapTimer] Awake on '{gameObject.name}' | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : \"null\")}");
         }
     }
 
@@ -53,24 +59,51 @@ public class LapTimer : MonoBehaviour
 
     public bool TryCompleteLap()
     {
+        if (verboseDebugLogs)
+        {
+            Debug.Log($"[LapTimer] TryCompleteLap called | isTimerRunning={isTimerRunning} | isRunFinished={isRunFinished} | currentLapTime={currentLapTime:F3} | recentLapTime={recentLapTime:F3}");
+        }
+
         if (!isTimerRunning)
         {
+            if (verboseDebugLogs)
+            {
+                Debug.LogWarning("[LapTimer] Finish line reached before timer started.");
+            }
             SetNotification("랩이 아직 시작되지 않았습니다.");
             return false;
         }
 
-        if (checkpointManager != null && checkpointManager.AllCheckpointsVisited())
+        bool allCheckpointsVisited = checkpointManager != null && checkpointManager.AllCheckpointsVisited();
+
+        if (verboseDebugLogs)
+        {
+            Debug.Log($"[LapTimer] Checkpoint validation result={allCheckpointsVisited} | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : \"null\")}");
+        }
+
+        if (allCheckpointsVisited)
         {
             recentLapTime = currentLapTime;
             hasRecentLapTime = true;
             bestLapTimes.Add(recentLapTime);
             bestLapTimes.Sort();
 
+            if (verboseDebugLogs)
+            {
+                string bestTimesText = string.Join(", ", bestLapTimes.ConvertAll(FormatLapTime));
+                Debug.Log($"[LapTimer] Lap accepted. Recent={FormatLapTime(recentLapTime)} | BestTimes=[{bestTimesText}]");
+            }
+
             ResetTimerState();
             isRunFinished = true;
             checkpointManager.ResetCheckpoints();
             SetNotification($"Lap recorded: {FormatLapTime(recentLapTime)}");
             return true;
+        }
+
+        if (verboseDebugLogs)
+        {
+            Debug.LogWarning($"[LapTimer] Lap rejected because not all checkpoints were visited. Timer will stop until the scene is restarted.");
         }
 
         ResetTimerState();
@@ -100,6 +133,11 @@ public class LapTimer : MonoBehaviour
         isTimerRunning = true;
         currentLapTime = 0f;
         lapStartTime = Time.time;
+
+        if (verboseDebugLogs)
+        {
+            Debug.Log($"[LapTimer] Timer started at Time.time={lapStartTime:F3}");
+        }
     }
 
     private void ResetTimerState()
@@ -115,6 +153,11 @@ public class LapTimer : MonoBehaviour
         notificationMessage = string.Empty;
         notificationEndTime = 0f;
         ResetTimerState();
+
+        if (verboseDebugLogs)
+        {
+            Debug.Log("[LapTimer] Run state reset.");
+        }
     }
 
     private bool IsAccelerationPressed()
