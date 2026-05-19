@@ -29,7 +29,12 @@ public class CheckpointManager : MonoBehaviour
 
     public bool AllCheckpointsVisited()
     {
-        return currentCheckpointIndex >= Checkpoints.Count;
+        bool allVisited = currentCheckpointIndex >= Checkpoints.Count;
+        if (allVisited)
+        {
+            Debug.Log("All checkpoints have been visited.");
+        }
+        return allVisited;
     }
 
     public void ResetCheckpoints()
