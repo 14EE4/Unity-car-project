@@ -22,35 +22,89 @@ public class SteeringIndicatorUI : MonoBehaviour
     float currentSteer;
     float steerVelocity;
 
+    static bool IsInvalid(float value)
+    {
+        return float.IsNaN(value) || float.IsInfinity(value);
+    }
+
     void Update()
     {
         if (readFromAxis)
         {
             float v = Input.GetAxis(axisName);
+            if (IsInvalid(v))
+            {
+                v = 0f;
+            }
+
             SetSteer(v);
         }
 
-        currentSteer = Mathf.SmoothDamp(currentSteer, targetSteer, ref steerVelocity, smoothTime);
+        if (IsInvalid(targetSteer))
+        {
+            targetSteer = 0f;
+        }
+
+        if (IsInvalid(currentSteer))
+        {
+            currentSteer = 0f;
+        }
+
+        if (IsInvalid(steerVelocity))
+        {
+            steerVelocity = 0f;
+        }
+
+        float safeSmoothTime = Mathf.Max(0.0001f, smoothTime);
+        currentSteer = Mathf.SmoothDamp(currentSteer, targetSteer, ref steerVelocity, safeSmoothTime);
+
+        if (IsInvalid(currentSteer))
+        {
+            currentSteer = 0f;
+            steerVelocity = 0f;
+        }
+
         UpdateVisual(currentSteer);
     }
 
     void UpdateVisual(float steer)
     {
+        if (IsInvalid(steer))
+        {
+            steer = 0f;
+        }
+
         if (handle != null)
         {
             var pos = handle.anchoredPosition;
             pos.x = steer * maxOffset;
+            if (IsInvalid(pos.x))
+            {
+                pos.x = 0f;
+            }
+
             handle.anchoredPosition = pos;
 
             if (rotateHandle)
             {
-                handle.localEulerAngles = new Vector3(0f, 0f, -steer * maxRotation);
+                float rotationZ = -steer * maxRotation;
+                if (IsInvalid(rotationZ))
+                {
+                    rotationZ = 0f;
+                }
+
+                handle.localEulerAngles = new Vector3(0f, 0f, rotationZ);
             }
         }
 
         if (fillImage != null)
         {
             float mag = Mathf.Abs(steer);
+            if (IsInvalid(mag))
+            {
+                mag = 0f;
+            }
+
             fillImage.fillAmount = mag;
             var c = fillImage.color;
             c.a = Mathf.Lerp(fillMinAlpha, 1f, mag);
@@ -61,6 +115,11 @@ public class SteeringIndicatorUI : MonoBehaviour
     // Call from CarController (or other) with value in range -1..1 (left..right)
     public void SetSteer(float normalizedSteer)
     {
+        if (IsInvalid(normalizedSteer))
+        {
+            normalizedSteer = 0f;
+        }
+
         targetSteer = Mathf.Clamp(normalizedSteer, -1f, 1f);
     }
 }
