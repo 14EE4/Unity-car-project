@@ -110,6 +110,12 @@
 - 체크포인트 시스템 구현 및 검증
 - UI: 속도, 기어, 랩 타임 표시
 
+- 타이어 모델 추가: 원본 에셋의 타이어 프리팹을 차량 프리팹(Assets/SportCar/Prefabs/SportCar_1.prefab) 내 바퀴 플레이스홀더에 연결(Assets/SportCar/Prefabs/Wheels/Sport/*)
+- 조향 표시 바(`SteeringIndicatorUI`) 구현 및 NaN 방어 코드 적용 (Assets/Script/UI/SteeringIndicatorUI.cs)
+- 튜토리얼 초기화/초기화 버튼 흐름 정리(에디터 도구 `Assets/Editor/ClearTutorialPref.cs` 및 `Assets/Script/Dev/TutorialSettingsPanel.cs` 연동)
+- 초기화 버튼이 `PauseMenuController`와 `CarController.ResetGameState()` 흐름에서 체크포인트/차량 상태를 안전하게 리셋하도록 구현
+- 주행 방향 안내 화살표 및 금지 구역 표시 기능 구현(씬 오브젝트 또는 프리팹으로 적용 — 프리팹이 리포지토리에 없는 경우, 에셋/씬에서 런타임 생성됨)
+
 ## 남은 작업 (summary moved from README)
 
 - 메인 메뉴 배경 이미지/카메라 연결 문제 해결
