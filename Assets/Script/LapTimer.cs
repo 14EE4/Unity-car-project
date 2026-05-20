@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -25,17 +27,30 @@ public class LapTimer : MonoBehaviour
 
     private float lapStartTime;
     private float notificationEndTime;
+    private string saveFilePath;
+
+    [Serializable]
+    private class LapTimerSaveData
+    {
+        public bool hasRecentLapTime;
+        public float recentLapTime;
+        public List<float> bestLapTimes = new List<float>();
+    }
 
     private void Awake()
     {
+        saveFilePath = Path.Combine(Application.persistentDataPath, "lap_times.json");
+
         if (checkpointManager == null)
         {
             checkpointManager = FindFirstObjectByType<CheckpointManager>();
         }
 
+        LoadPersistentLapData();
+
         if (verboseDebugLogs)
         {
-            Debug.Log($"[LapTimer] Awake on '{gameObject.name}' | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : "null")}");
+            Debug.Log($"[LapTimer] Awake on '{gameObject.name}' | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : "null")} | saveFilePath={saveFilePath}");
         }
     }
 
@@ -91,6 +106,7 @@ public class LapTimer : MonoBehaviour
             hasRecentLapTime = true;
             bestLapTimes.Add(recentLapTime);
             bestLapTimes.Sort();
+            SavePersistentLapData();
 
             if (verboseDebugLogs)
             {
@@ -189,5 +205,91 @@ public class LapTimer : MonoBehaviour
     {
         notificationMessage = message;
         notificationEndTime = Time.time + Mathf.Max(0f, notificationDuration);
+    }
+
+    private void LoadPersistentLapData()
+    {
+        if (string.IsNullOrEmpty(saveFilePath) || !File.Exists(saveFilePath))
+        {
+            return;
+        }
+
+        try
+        {
+            string json = File.ReadAllText(saveFilePath);
+            LapTimerSaveData saveData = JsonUtility.FromJson<LapTimerSaveData>(json);
+
+            if (saveData == null)
+            {
+                return;
+            }
+
+            hasRecentLapTime = saveData.hasRecentLapTime;
+            recentLapTime = saveData.recentLapTime;
+            bestLapTimes = saveData.bestLapTimes != null ? new List<float>(saveData.bestLapTimes) : new List<float>();
+            bestLapTimes.Sort();
+
+            if (!hasRecentLapTime)
+            {
+                recentLapTime = 0f;
+            }
+
+            if (verboseDebugLogs)
+            {
+                Debug.Log($"[LapTimer] Loaded persistent lap data from {saveFilePath} | hasRecentLapTime={hasRecentLapTime} | bestCount={bestLapTimes.Count}");
+            }
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[LapTimer] Failed to load persistent lap data from {saveFilePath}: {exception.Message}");
+        }
+    }
+
+    private void SavePersistentLapData()
+    {
+        if (string.IsNullOrEmpty(saveFilePath))
+        {
+            return;
+        }
+
+        try
+        {
+            var saveData = new LapTimerSaveData
+            {
+                hasRecentLapTime = hasRecentLapTime,
+                recentLapTime = recentLapTime,
+                bestLapTimes = new List<float>(bestLapTimes)
+            };
+
+            string directory = Path.GetDirectoryName(saveFilePath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllText(saveFilePath, JsonUtility.ToJson(saveData, true));
+
+            if (verboseDebugLogs)
+            {
+                Debug.Log($"[LapTimer] Saved persistent lap data to {saveFilePath}");
+            }
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning($"[LapTimer] Failed to save persistent lap data to {saveFilePath}: {exception.Message}");
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        SavePersistentLapData();
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            SavePersistentLapData();
+        }
     }
 }

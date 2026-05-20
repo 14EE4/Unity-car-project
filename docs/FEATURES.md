@@ -42,6 +42,7 @@
 
 - 메인 메뉴에는 기본 조작 키를 보여주는 키 가이드를 배치할 수 있습니다.
 - 인게임 HUD는 속도, 현재 기어, 조향 표시 바, 랩 타임을 보여줍니다.
+- 랩 타임 저장 위치는 Windows 기준 `AppData/LocalLow` 아래의 `Application.persistentDataPath/lap_times.json`이며, 메인 화면 복귀 후에도 Recent / Best 3가 복원됩니다.
 - 설정 패널과 튜토리얼 초기화 버튼이 포함되어 있습니다.
 
 ## 구현 기준
