@@ -125,8 +125,8 @@ WheelCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 629609881002598571}
   serializedVersion: 2
-  m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.5
+  m_Center: {x: 0, y: 0.15, z: 0}
+  m_Radius: 0.35
   m_SuspensionSpring:
     spring: 20000
     damper: 8000
@@ -169,8 +169,8 @@ WheelCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 783352911727102500}
   serializedVersion: 2
-  m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.5
+  m_Center: {x: 0, y: 0.15, z: 0}
+  m_Radius: 0.35
   m_SuspensionSpring:
     spring: 20000
     damper: 8000
@@ -248,9 +248,13 @@ MonoBehaviour:
   frontRight: {fileID: 5162221393377771133}
   backLeft: {fileID: 1347462698821581191}
   backRight: {fileID: 52504637802212703}
+  hud: {fileID: 0}
+  steeringUi: {fileID: 0}
   maxTorque: 1500
   maxSteerAngle: 30
+  steerSensitivity: 1
   brakeTorque: 3000
+  handbrakeTorque: 2000
   rollingResistanceBrake: 10
   engineBrakeTorque: 60
   throttleDrag: 0.03
@@ -260,6 +264,7 @@ MonoBehaviour:
   debugLogInterval: 0.25
   detailedWheelDebug: 1
   currentGear: 1
+  EnableSpeedLogs: 1
 --- !u!65 &5425068724996265905
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -294,8 +299,8 @@ WheelCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4027797708340876540}
   serializedVersion: 2
-  m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.5
+  m_Center: {x: 0, y: 0.15, z: 0}
+  m_Radius: 0.35
   m_SuspensionSpring:
     spring: 20000
     damper: 8000
@@ -343,8 +348,8 @@ WheelCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7840275385799706575}
   serializedVersion: 2
-  m_Center: {x: 0, y: 0, z: 0}
-  m_Radius: 0.5
+  m_Center: {x: 0, y: 0.15, z: 0}
+  m_Radius: 0.35
   m_SuspensionSpring:
     spring: 20000
     damper: 8000
