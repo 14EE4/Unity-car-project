@@ -8,6 +8,13 @@
 
 ## Revision History (latest first)
 
+### 2026-05-21
+
+- 일시정지 메뉴 리셋을 `R` 키로도 동작하도록 연결
+- 리셋 직후 남는 전진 관성 제거: `Rigidbody` 위치/회전/속도 초기화 및 `Sleep()` 적용
+- 리셋 직후 가속 키가 눌린 상태로 남는 문제 방지: 드라이브 입력 해제 전까지 입력 잠금 추가
+- `PauseMenuController` / `CarController`에 디버그 로그를 추가해 리셋 흐름과 입력 상태 추적 가능하도록 정리
+
 ### 2026-05-20
 
 - Key Guide 버튼 중복/불일치 문제 해결 (`KeyGuideFactory` 통합)
