@@ -6,7 +6,8 @@ public static class KeyGuideFactory
 {
     // Create a KeyGuide panel. If preferredParent is provided it will be used as the parent;
     // otherwise the method will prefer a Canvas in the active scene and fall back to any Canvas.
-    public static CanvasGroup CreateKeyGuide(Transform preferredParent = null)
+    // 기존에 만든 Text 오브젝트를 재사용하려면 existingTitle 또는 existingBody를 전달하세요.
+    public static CanvasGroup CreateKeyGuide(Transform preferredParent = null, UnityEngine.UI.Text existingTitle = null, UnityEngine.UI.Text existingBody = null)
     {
         Transform parent = null;
 
@@ -75,39 +76,60 @@ public static class KeyGuideFactory
             panelRect.anchoredPosition = Vector2.zero;
         }
 
-        var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        titleGO.transform.SetParent(panelGO.transform, false);
-        var title = titleGO.GetComponent<Text>();
-        title.text = "KEY GUIDE";
-        title.alignment = TextAnchor.UpperCenter;
-        title.color = Color.white;
-        title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        title.fontSize = 28;
-        title.fontStyle = FontStyle.Bold;
-        var tRect = titleGO.GetComponent<RectTransform>();
-        tRect.anchorMin = new Vector2(0f, 1f); tRect.anchorMax = new Vector2(1f, 1f);
-        tRect.pivot = new Vector2(0.5f, 1f);
-        tRect.sizeDelta = new Vector2(0f, 48f);
-        tRect.anchoredPosition = new Vector2(0f, -12f);
+        UnityEngine.UI.Text title = null;
+        if (existingTitle != null)
+        {
+            // 기존 Title Text를 패널 자식으로 이동시켜 재사용
+            existingTitle.transform.SetParent(panelGO.transform, false);
+            existingTitle.gameObject.name = "Title";
+            title = existingTitle;
+        }
+        else
+        {
+            var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            titleGO.transform.SetParent(panelGO.transform, false);
+            title = titleGO.GetComponent<Text>();
+            title.text = "KEY GUIDE";
+            title.alignment = TextAnchor.UpperCenter;
+            title.color = Color.white;
+            title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            title.fontSize = 28;
+            title.fontStyle = FontStyle.Bold;
+            var tRect = titleGO.GetComponent<RectTransform>();
+            tRect.anchorMin = new Vector2(0f, 1f); tRect.anchorMax = new Vector2(1f, 1f);
+            tRect.pivot = new Vector2(0.5f, 1f);
+            tRect.sizeDelta = new Vector2(0f, 48f);
+            tRect.anchoredPosition = new Vector2(0f, -12f);
+        }
 
-        var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        bodyGO.transform.SetParent(panelGO.transform, false);
-        var body = bodyGO.GetComponent<Text>();
-        body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset\n\nUse Mouse Wheel to adjust camera distance.";
-        body.alignment = TextAnchor.MiddleCenter;
-        body.color = Color.white;
-        body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        body.fontSize = 22;
-        body.fontStyle = FontStyle.Bold;
-        body.horizontalOverflow = HorizontalWrapMode.Wrap;
-        body.verticalOverflow = VerticalWrapMode.Overflow;
-        body.resizeTextForBestFit = true;
-        body.resizeTextMinSize = 14;
-        body.resizeTextMaxSize = 22;
-        var bRect = bodyGO.GetComponent<RectTransform>();
-        bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
-        bRect.pivot = new Vector2(0.5f, 0.5f);
-        bRect.offsetMin = new Vector2(24f, 60f); bRect.offsetMax = new Vector2(-24f, -96f);
+        UnityEngine.UI.Text body = null;
+        if (existingBody != null)
+        {
+            existingBody.transform.SetParent(panelGO.transform, false);
+            existingBody.gameObject.name = "Body";
+            body = existingBody;
+        }
+        else
+        {
+            var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            bodyGO.transform.SetParent(panelGO.transform, false);
+            body = bodyGO.GetComponent<Text>();
+            body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset\n\nUse Mouse Wheel to adjust camera distance.";
+            body.alignment = TextAnchor.MiddleCenter;
+            body.color = Color.white;
+            body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            body.fontSize = 22;
+            body.fontStyle = FontStyle.Bold;
+            body.horizontalOverflow = HorizontalWrapMode.Wrap;
+            body.verticalOverflow = VerticalWrapMode.Overflow;
+            body.resizeTextForBestFit = true;
+            body.resizeTextMinSize = 14;
+            body.resizeTextMaxSize = 22;
+            var bRect = bodyGO.GetComponent<RectTransform>();
+            bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
+            bRect.pivot = new Vector2(0.5f, 0.5f);
+            bRect.offsetMin = new Vector2(24f, 60f); bRect.offsetMax = new Vector2(-24f, -96f);
+        }
 
         var closeBtn = new GameObject("CloseKeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         closeBtn.transform.SetParent(panelGO.transform, false);
