@@ -302,3 +302,43 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 - 중립은 더 오래 굴러가게 조정
 - 브레이크는 강하게, 하지만 과하게 급정지하지 않게 조정
 - 필요하면 다음 단계에서 `WheelCollider` 마찰값까지 추가로 손볼 예정
+
+## 프로젝트 전송(압축) 가이드
+
+다른 컴퓨터로 프로젝트를 옮길 때 안전하게 압축해서 보내는 방법과 권장 포함/제외 항목입니다.
+
+- 포함할 항목(권장)
+  - `ProjectSettings/` — 프로젝트 전반 설정(플레이어, 그래픽, 레이어 등). 반드시 포함하세요.
+  - `Packages/` (특히 `Packages/manifest.json`) — 사용 중인 패키지와 버전 정보.
+  - `Assets/` — 필요한 에셋만 포함합니다. 전체 전송이 부담스러우면 필요한 서브폴더만 선택하거나 `.unitypackage`로 내보내세요.
+  - `.gitignore`, `.gitattributes`(있다면) — 협업 규칙을 유지하려면 포함을 권장합니다.
+  - 필요시 `UserSettings/`(에디터 설정, 선택)
+
+- 제외할 항목(반드시 제외)
+  - `Library/`, `Temp/`, `Obj/` — Unity가 재생성 가능한 캐시/중간 파일입니다.
+  - `Build/`, `Builds/`, `Logs/` — 빌드 산출물과 로그 파일
+  - `.git/` — 깃 레포를 통째로 옮기려면 별도 처리; 일반 압축 전송에서는 제외 권장
+
+- 전송 순서 권장
+  1. `ProjectSettings/`와 `Packages/`를 먼저 압축/전송해서 대상 환경에 복원합니다.
+  2. 에셋은 필요한 폴더만 `.unitypackage`로 내보내거나 선택적으로 `Assets/`의 일부 폴더를 압축해 전송합니다.
+  3. 대상 컴퓨터에서 Unity를 열기 전에 압축을 풀고 `ProjectSettings/`와 `Packages/`를 같은 위치에 놓습니다. Unity를 열면 `Library/`를 새로 생성합니다.
+
+- 압축(예시)
+  - `robocopy`(Windows) — 특정 폴더만 안전하게 복사할 때(예: 외장 드라이브로 전송):
+```powershell
+robocopy "D:\pyeongju\unity project\Unity-car-project" "E:\transfer\Unity-car-project" /E /COPYALL /R:2 /W:1 /XD "Library" "Temp" "Obj" "Build" "Builds" "Logs" 
+```
+
+  - ZIP(빠른 압축 전송) — `ProjectSettings/`, `Packages/`와 선택한 `Assets/` 폴더만 묶기:
+```powershell
+# PowerShell 예시
+Compress-Archive -Path "ProjectSettings","Packages","Assets/MyLargeAssetFolder" -DestinationPath "C:\temp\Unity-car-project-transfer.zip"
+```
+
+- 팁
+  - Unity 버전이 동일한지 확인하세요(버전 차이는 설정·에셋 충돌을 유발할 수 있음).
+  - 에셋을 자주 주고받아야 한다면 `Git LFS`(대용량 파일) 또는 Unity Plastic SCM 사용을 고려하세요.
+  - 민감·상업용 에셋은 라이선스 규정을 확인한 뒤 안전한 채널(사내 서버, 암호화된 공유 드라이브, 외장 하드)로 전달하세요.
+
+이 섹션을 통해 프로젝트를 옮길 때 어떤 파일을 포함/제외해야 하는지 명확해집니다. 필요하면 전송용 PowerShell 스크립트(.ps1)를 직접 생성해 드릴게요.
