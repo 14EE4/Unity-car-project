@@ -54,7 +54,9 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 
 ## 진행 상태
 
-- 현재는 UI와 레이스 진행 기능을 붙이기 전에 주행감과 입력 흐름을 안정화하는 중입니다.
+- 현재는 주행 UI와 레이스 진행 기능이 연결된 상태이며, 랩 타임 표시와 체크포인트 기반 완주 판정까지 동작합니다.
+- 남은 작업은 랩 타임의 장기 저장 방식(PlayerPrefs 또는 파일 저장)과 레이스 플로우 고도화입니다.
+- 2026-05-20 기준으로는 결승선 트리거 진입 디버깅 로그를 추가해, FinishLine 트리거가 실제로 호출되는지와 Player 태그/체크포인트 판정이 어디서 막히는지 확인하는 단계입니다.
 
 ## 완료 작업
 - 1인칭/3인칭 카메라 전환(c키) 구현 및 카메라 보정
@@ -67,6 +69,8 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 - 타이어 모델 추가: 원본 에셋의 타이어 프리펩을 부모 차 프리펩의 바퀴 플레이스홀더 하위에 넣음
 - 메인화면 키 가이드
 - UI 구현: 속도, 현재 기어
+- UI 구현: 랩 타임 표시
+- 랩 타임 시스템: 첫 가속 시 타이머 시작, 체크포인트 전부 방문 후 결승선 통과 시 기록 저장, 최근 기록 및 Best 3 표시
 - 로딩 창
 - 설정 패널에 튜토리얼 초기화 버튼
 - UI 구현: 조향 표시 바
@@ -81,7 +85,6 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
   - 설정 창 내용 구현 - 창 화면, 전체 화면, 해상도, 키 설정
 
 - **중기 (2주 — 4주)**
-  - UI 구현: 랩 타임 표시
   - 음향 적용: 엔진 RPM 연동 피치 변화, 스키드/환경음 추가
   - 여러 차량 선택 기능
   - 다른 맵
@@ -89,7 +92,7 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 - **장기 (4주 — 최종)**
   - 레이스 플로우 기본 구현: 신호등 카운트다운, 체크포인트 순서 판정
   - 트랙 확정 및 주행 테스트, 트랙 이탈 시 노면 마찰 감소(슬립) 처리 고도화
-  - 랩 타임 측정·저장·조회 시스템(파일 또는 PlayerPrefs 기반)
+  - 랩 타임 장기 저장/조회 시스템(파일 또는 PlayerPrefs 기반)
   - 빌드 생성
   - 문서(제출용) 정리
 
@@ -174,7 +177,39 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 ---
 
 ## 수정 기록
+### 2026-05-20
+- 결승선 랩 타임 디버깅 로그를 추가했습니다.
+  - `FinishLine.cs`에 트리거 진입 로그를 넣어 실제로 결승선 콜라이더가 호출되는지 확인할 수 있게 했습니다.
+  - `LapTimer.cs`에 타이머 시작, 완주 시도, 체크포인트 판정, 랩 수락/거절 사유 로그를 넣었습니다.
+  - 현재는 결승선 통과 후 랩이 끝나지 않는 현상을 추적하는 단계이며, 로그를 통해 Player 태그와 `AllCheckpointsVisited()` 결과를 확인하면 됩니다.
+
+- 결승선 선통과(출발 직후 FinishLine 먼저 통과) 이슈를 해결했습니다.
+  - 증상:
+    - 시작 지점이 결승선 뒤쪽이라 출발 직후 결승선을 먼저 통과함.
+    - 기존 로직에서는 체크포인트 미완료 상태에서 결승선을 통과하면 런을 종료(`isRunFinished=true`)하고 타이머를 리셋해, 이후 정상 주행을 해도 같은 런에서 기록이 막힘.
+    - 초기 디버깅 과정에서 결승선 박스에 Rigidbody가 붙어 있어 트리거 인식이 불안정한 구간이 있었고, Rigidbody 제거 후 트리거 인식이 안정화됨.
+  - 로그로 확인한 원인:
+    - 첫 결승선 통과 시 `TryCompleteLap result=False`와 함께 `AllCheckpointsVisited=False (0/5)`가 출력됨.
+    - 이어서 리셋/종료가 발생해 두 번째 결승선 통과 시점에는 타이머가 멈춰 있거나 런 종료 상태가 남는 흐름이 확인됨.
+  - 적용한 수정:
+    - 체크포인트 미완료 결승선 통과 시 런을 종료하지 않고, 타이머를 계속 유지하도록 변경.
+    - `CheckpointManager`에 진행 여부 확인(`HasVisitedAnyCheckpoint`)을 추가.
+    - 첫 체크포인트 이전(진행도 0) 결승선 통과는 `Missing checkpoints.` 알림도 숨김.
+    - 체크포인트를 1개 이상 밟은 뒤 미완료 상태로 결승선을 통과한 경우에만 `Missing checkpoints.` 알림을 표시.
+  - 결과:
+    - 출발 직후 결승선 선통과는 무시되고 주행이 계속됨.
+    - 체크포인트 5개 완료 후 결승선 재통과 시 `Lap accepted`와 함께 랩 타임이 정상 기록됨.
+
+- 인게임 표시 문자열을 영어로 통일했습니다.
+  - `Txt_LapTime`/로딩/키가이드 등 사용자 노출 텍스트에서 한글 문자열을 제거해 TMP 한글 글리프 누락 경고를 방지했습니다.
+  - 코드 주석은 디버깅 가독성을 위해 한글 사용을 허용합니다.
+
 ### 2026-05-19
+- 랩 타임 시스템을 추가했습니다.
+  - `LapTimer.cs`가 첫 가속 입력(`W` 또는 `UpArrow`)에서 타이머를 시작하고, 결승선 통과 시 `CheckpointManager.AllCheckpointsVisited()`를 검사해 기록을 인정합니다.
+  - 성공한 랩은 최근 기록과 `bestLapTimes` 목록에 저장되고, 세션 동안 상위 3개 기록이 유지됩니다.
+  - `LapTimeDisplay.cs`가 UGUI TMP 텍스트를 좌상단에 고정해 `Current / Recent / Best 3` 형식으로 표시합니다.
+  - `FinishLine.cs`는 이제 완주 판정만 `LapTimer`에 전달합니다.
 - `SteeringIndicatorUI` 경고를 정리했습니다.
   - 인디케이터 자체의 null 참조 문제가 아니라, `SmoothDamp`와 UI 회전 입력에 비정상 float 값이 들어가며 발생할 수 있는 NaN 회전 문제였습니다.
   - `SteeringIndicatorUI.cs`에 `NaN` / `Infinity` 방어 코드를 넣고, `smoothTime` 최소값을 보장하도록 수정했습니다.
@@ -288,3 +323,43 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
 - 중립은 더 오래 굴러가게 조정
 - 브레이크는 강하게, 하지만 과하게 급정지하지 않게 조정
 - 필요하면 다음 단계에서 `WheelCollider` 마찰값까지 추가로 손볼 예정
+
+## 프로젝트 전송(압축) 가이드
+
+다른 컴퓨터로 프로젝트를 옮길 때 안전하게 압축해서 보내는 방법과 권장 포함/제외 항목입니다.
+
+- 포함할 항목(권장)
+  - `ProjectSettings/` — 프로젝트 전반 설정(플레이어, 그래픽, 레이어 등). 반드시 포함하세요.
+  - `Packages/` (특히 `Packages/manifest.json`) — 사용 중인 패키지와 버전 정보.
+  - `Assets/` — 필요한 에셋만 포함합니다. 전체 전송이 부담스러우면 필요한 서브폴더만 선택하거나 `.unitypackage`로 내보내세요.
+  - `.gitignore`, `.gitattributes`(있다면) — 협업 규칙을 유지하려면 포함을 권장합니다.
+  - 필요시 `UserSettings/`(에디터 설정, 선택)
+
+- 제외할 항목(반드시 제외)
+  - `Library/`, `Temp/`, `Obj/` — Unity가 재생성 가능한 캐시/중간 파일입니다.
+  - `Build/`, `Builds/`, `Logs/` — 빌드 산출물과 로그 파일
+  - `.git/` — 깃 레포를 통째로 옮기려면 별도 처리; 일반 압축 전송에서는 제외 권장
+
+- 전송 순서 권장
+  1. `ProjectSettings/`와 `Packages/`를 먼저 압축/전송해서 대상 환경에 복원합니다.
+  2. 에셋은 필요한 폴더만 `.unitypackage`로 내보내거나 선택적으로 `Assets/`의 일부 폴더를 압축해 전송합니다.
+  3. 대상 컴퓨터에서 Unity를 열기 전에 압축을 풀고 `ProjectSettings/`와 `Packages/`를 같은 위치에 놓습니다. Unity를 열면 `Library/`를 새로 생성합니다.
+
+- 압축(예시)
+  - `robocopy`(Windows) — 특정 폴더만 안전하게 복사할 때(예: 외장 드라이브로 전송):
+```powershell
+robocopy "D:\pyeongju\unity project\Unity-car-project" "E:\transfer\Unity-car-project" /E /COPYALL /R:2 /W:1 /XD "Library" "Temp" "Obj" "Build" "Builds" "Logs" 
+```
+
+  - ZIP(빠른 압축 전송) — `ProjectSettings/`, `Packages/`와 선택한 `Assets/` 폴더만 묶기:
+```powershell
+# PowerShell 예시
+Compress-Archive -Path "ProjectSettings","Packages","Assets/MyLargeAssetFolder" -DestinationPath "C:\temp\Unity-car-project-transfer.zip"
+```
+
+- 팁
+  - Unity 버전이 동일한지 확인하세요(버전 차이는 설정·에셋 충돌을 유발할 수 있음).
+  - 에셋을 자주 주고받아야 한다면 `Git LFS`(대용량 파일) 또는 Unity Plastic SCM 사용을 고려하세요.
+  - 민감·상업용 에셋은 라이선스 규정을 확인한 뒤 안전한 채널(사내 서버, 암호화된 공유 드라이브, 외장 하드)로 전달하세요.
+
+이 섹션을 통해 프로젝트를 옮길 때 어떤 파일을 포함/제외해야 하는지 명확해집니다. 필요하면 전송용 PowerShell 스크립트(.ps1)를 직접 생성해 드릴게요.

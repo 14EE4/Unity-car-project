@@ -219,7 +219,7 @@ public class PauseMenuController : MonoBehaviour
         var closeTextGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         closeTextGO.transform.SetParent(closeBtn.transform, false);
         var closeText = closeTextGO.GetComponent<Text>();
-        closeText.text = "닫기";
+        closeText.text = "Close";
         closeText.alignment = TextAnchor.MiddleCenter;
         closeText.color = Color.black;
         closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
