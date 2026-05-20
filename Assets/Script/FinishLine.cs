@@ -65,4 +65,25 @@ public class FinishLine : MonoBehaviour
         bool completed = lapTimer.TryCompleteLap();
         Debug.Log($"[FinishLine] TryCompleteLap result={completed}");
     }
+
+    /// <summary>
+    /// Reset the race/lap timer to start a new attempt. Public helper used by menu/controllers.
+    /// </summary>
+    public void ResetRaceTimer()
+    {
+        if (lapTimer == null)
+        {
+            lapTimer = FindFirstObjectByType<LapTimer>();
+        }
+
+        if (lapTimer != null)
+        {
+            lapTimer.ResetRunState();
+            Debug.Log("[FinishLine] Race timer reset via ResetRaceTimer().");
+        }
+        else
+        {
+            Debug.LogWarning("[FinishLine] Cannot reset race timer because LapTimer not found.");
+        }
+    }
 }
