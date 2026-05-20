@@ -299,10 +299,21 @@ public class PauseMenuController : MonoBehaviour
             Debug.LogWarning("[PauseMenuController] CameraController not found");
         }
         
-        // 4. 게임 재개 (일시정지 해제)
+        // 4. 랩타임 카운터 리셋 (새로운 시도 시작)
+        var finishLine = Object.FindFirstObjectByType<FinishLine>();
+        if (finishLine != null)
+        {
+            finishLine.ResetRaceTimer();
+        }
+        else
+        {
+            Debug.LogWarning("[PauseMenuController] FinishLine not found");
+        }
+        
+        // 5. 게임 재개 (일시정지 해제)
         Resume();
         
-        Debug.Log("[PauseMenuController] Game reset complete! (Lap times preserved)");
+        Debug.Log("[PauseMenuController] Game reset complete! (Best lap times preserved)");
     }
 
     void HidePanelImmediate()
