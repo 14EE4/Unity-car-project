@@ -1,5 +1,7 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEditor.SceneManagement;
 
 // MainMenuController 전용 에디터 검사기
 // - 씬에서 적절한 CanvasGroup을 찾아 `settingsPanel`/`keyGuidePanel`에 할당하는 단축 버튼을 제공합니다.
@@ -21,6 +23,10 @@ public class MainMenuControllerEditor : Editor
         {
             AutoAssignPanels(t);
         }
+        if (GUILayout.Button("KeyGuide 생성 및 할당"))
+        {
+            CreateAndAssignKeyGuide(t);
+        }
         if (GUILayout.Button("할당된 객체 핑"))
         {
             PingAssigned(t);
@@ -34,6 +40,55 @@ public class MainMenuControllerEditor : Editor
         {
             EditorUtility.SetDirty(target);
         }
+    }
+
+    private void CreateAndAssignKeyGuide(MainMenuController t)
+    {
+        // 씬에서 재사용 가능한 Title/Body Text 컴포넌트를 찾아 KeyGuideFactory에 전달합니다.
+        Text foundTitle = null;
+        Text foundBody = null;
+        var texts = Object.FindObjectsOfType<Text>();
+        foreach (var txt in texts)
+        {
+            var n = txt.gameObject.name.ToLower();
+            if (foundTitle == null && (n == "title" || n.Contains("title") || n.Contains("key") && n.Contains("title")))
+            {
+                foundTitle = txt;
+                continue;
+            }
+            if (foundBody == null && (n == "body" || n.Contains("body") || n.Contains("guide") || n.Contains("key")))
+            {
+                foundBody = txt;
+                continue;
+            }
+        }
+
+        // Create KeyGuide via factory, reusing any found Texts.
+        var cg = KeyGuideFactory.CreateKeyGuide(null, foundTitle, foundBody);
+        if (cg == null)
+        {
+            Debug.LogError("[MainMenuControllerEditor] KeyGuideFactory.CreateKeyGuide returned null. Ensure a Canvas exists in the scene.");
+            return;
+        }
+
+        // Register created objects for Undo
+        var overlay = cg.gameObject.transform.parent;
+        if (overlay != null)
+        {
+            Undo.RegisterCreatedObjectUndo(overlay.gameObject, "Create KeyGuideOverlay");
+        }
+        Undo.RegisterCreatedObjectUndo(cg.gameObject, "Create KeyGuidePanel");
+
+        // Hide overlay initially so it behaves like an inspector-assigned panel
+        if (overlay != null) overlay.gameObject.SetActive(false);
+
+        // Assign to target and mark scene dirty
+        Undo.RecordObject(t, "Assign keyGuidePanel");
+        t.keyGuidePanel = cg;
+        EditorUtility.SetDirty(t);
+        EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+
+        Debug.Log($"[MainMenuControllerEditor] Created KeyGuide and assigned to MainMenuController.keyGuidePanel -> {cg.gameObject.name} (overlay parent={(overlay!=null?overlay.gameObject.name:"<none>")})");
     }
 
     private void AutoAssignPanels(MainMenuController t)
