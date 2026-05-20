@@ -72,7 +72,7 @@ public class LapTimer : MonoBehaviour
             {
                 Debug.LogWarning("[LapTimer] Finish line reached before timer started.");
             }
-            SetNotification("랩이 아직 시작되지 않았습니다.");
+            SetNotification("Lap has not started yet.");
             return false;
         }
 
@@ -108,19 +108,12 @@ public class LapTimer : MonoBehaviour
 
         if (verboseDebugLogs)
         {
-            Debug.LogWarning($"[LapTimer] Lap rejected because not all checkpoints were visited. Timer will stop until the scene is restarted.");
-            Debug.Log("[LapTimer] Reject path: ResetTimerState -> isRunFinished=true -> checkpoint reset.");
+            Debug.LogWarning("[LapTimer] Lap rejected because not all checkpoints were visited. Timer continues running.");
         }
 
-        ResetTimerState();
-        isRunFinished = true;
-
-        if (checkpointManager != null)
-        {
-            checkpointManager.ResetCheckpoints();
-        }
-
-        SetNotification("체크포인트 부족");
+        // Ignore premature finish-line passes (e.g. starting behind finish line)
+        // so the player can continue and complete checkpoints in the same run.
+        SetNotification("Missing checkpoints.");
         return false;
     }
 

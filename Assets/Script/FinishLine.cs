@@ -55,6 +55,12 @@ public class FinishLine : MonoBehaviour
             return;
         }
 
+        if (lapTimer.isRunFinished)
+        {
+            Debug.Log("[FinishLine] Run already finished. Ignoring duplicate finish trigger.");
+            return;
+        }
+
         Debug.Log($"[FinishLine] Player reached finish line. TimerRunning={lapTimer.isTimerRunning}, RunFinished={lapTimer.isRunFinished}");
         bool completed = lapTimer.TryCompleteLap();
         Debug.Log($"[FinishLine] TryCompleteLap result={completed}");
