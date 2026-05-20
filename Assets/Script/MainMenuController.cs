@@ -68,7 +68,7 @@ public class MainMenuController : MonoBehaviour
         {
             if (b == null || b.onClick == null) continue;
             var nm = b.gameObject.name.ToLower();
-            bool matchesName = nm.Contains("key") || nm.Contains("guide") || nm.Contains("키") || nm.Contains("가이드");
+            bool matchesName = nm.Contains("key") || nm.Contains("guide");
             if (!matchesName)
             {
                 // also check child Text component for label
@@ -76,7 +76,7 @@ public class MainMenuController : MonoBehaviour
                 if (txt != null)
                 {
                     var t = txt.text.ToLower();
-                    matchesName = t.Contains("key") || t.Contains("guide") || t.Contains("키") || t.Contains("가이드");
+                    matchesName = t.Contains("key") || t.Contains("guide");
                 }
             }
 
@@ -344,7 +344,7 @@ public class MainMenuController : MonoBehaviour
         var closeTextGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         closeTextGO.transform.SetParent(closeBtn.transform, false);
         var closeText = closeTextGO.GetComponent<Text>();
-        closeText.text = "닫기";
+        closeText.text = "Close";
         closeText.alignment = TextAnchor.MiddleCenter;
         closeText.color = Color.black;
         closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");

@@ -116,7 +116,7 @@ public class LoadingScreenManager : MonoBehaviour
         var statusGO = new GameObject("Status", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         statusGO.transform.SetParent(cardGO.transform, false);
         statusText = statusGO.GetComponent<Text>();
-        statusText.text = "씬을 준비하는 중...";
+        statusText.text = "Preparing scene...";
         statusText.alignment = TextAnchor.MiddleCenter;
         statusText.color = new Color(1f, 1f, 1f, 0.9f);
         statusText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -173,7 +173,7 @@ public class LoadingScreenManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        SetStatus($"{sceneName} 로딩 중...");
+        SetStatus($"Loading {sceneName}...");
         SetProgress(0f);
         yield return FadeTo(1f);
 
@@ -181,7 +181,7 @@ public class LoadingScreenManager : MonoBehaviour
         var operation = SceneManager.LoadSceneAsync(sceneName, mode);
         if (operation == null)
         {
-            SetStatus($"{sceneName} 씬을 찾을 수 없습니다.");
+            SetStatus($"Scene '{sceneName}' was not found.");
             yield return new WaitForSecondsRealtime(1f);
             yield return FadeTo(0f);
             loadingRoutine = null;
@@ -201,7 +201,7 @@ public class LoadingScreenManager : MonoBehaviour
         while (Time.unscaledTime - startedAt < minimumDisplayTime)
             yield return null;
 
-        SetStatus("거의 완료...");
+        SetStatus("Almost done...");
         operation.allowSceneActivation = true;
 
         while (!operation.isDone)
