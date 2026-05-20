@@ -82,8 +82,33 @@ public class MainMenuController : MonoBehaviour
 
             if (matchesName)
             {
-                Debug.Log($"[MainMenuController] Binding runtime onClick for button '{b.gameObject.name}' to ShowKeyGuide()");
-                b.onClick.AddListener(ShowKeyGuide);
+                // Don't add a runtime listener if a persistent listener to ShowKeyGuide
+                // already exists (prevents double invocation when inspector bindings are present).
+                bool hasPersistentShow = false;
+                try
+                {
+                    int pc = b.onClick.GetPersistentEventCount();
+                    for (int i = 0; i < pc; i++)
+                    {
+                        var method = b.onClick.GetPersistentMethodName(i);
+                        if (!string.IsNullOrEmpty(method) && method.Contains("ShowKeyGuide"))
+                        {
+                            hasPersistentShow = true;
+                            break;
+                        }
+                    }
+                }
+                catch { /* Some platforms may not expose persistent info; ignore and continue binding. */ }
+
+                if (hasPersistentShow)
+                {
+                    Debug.Log($"[MainMenuController] Skipping auto-bind for button '{b.gameObject.name}' because a persistent ShowKeyGuide listener exists.");
+                }
+                else
+                {
+                    Debug.Log($"[MainMenuController] Binding runtime onClick for button '{b.gameObject.name}' to ShowKeyGuide()");
+                    b.onClick.AddListener(ShowKeyGuide);
+                }
             }
         }
     }
