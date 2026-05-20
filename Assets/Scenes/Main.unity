@@ -2222,6 +2222,7 @@ MonoBehaviour:
   accelerateKey: 119
   alternateAccelerateKey: 273
   notificationDuration: 2
+  verboseDebugLogs: 1
   bestLapTimes: []
 --- !u!4 &963801997 stripped
 Transform:
@@ -2761,8 +2762,8 @@ Transform:
   m_GameObject: {fileID: 1316920826}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -43.695908, y: 0.59, z: -28.1}
-  m_LocalScale: {x: 1, y: 1.9798, z: 16.435934}
+  m_LocalPosition: {x: -43.695908, y: 1.63, z: -29.5}
+  m_LocalScale: {x: 1, y: 3.4699953, z: 21.77942}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
