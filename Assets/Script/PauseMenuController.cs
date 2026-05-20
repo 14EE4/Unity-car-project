@@ -32,6 +32,9 @@ public class PauseMenuController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
             TogglePause();
+
+        if (isPaused && Input.GetKeyDown(KeyCode.R))
+            ResetGame();
     }
 
     public void TogglePause()
