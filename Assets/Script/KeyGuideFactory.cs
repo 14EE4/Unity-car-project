@@ -93,7 +93,7 @@ public static class KeyGuideFactory
         var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         bodyGO.transform.SetParent(panelGO.transform, false);
         var body = bodyGO.GetComponent<Text>();
-        body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)\n\nNote: Third-person camera no longer auto-pulls forward. Use Mouse Wheel to adjust camera distance.";
+        body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset\n\nUse Mouse Wheel to adjust camera distance.";
         body.alignment = TextAnchor.MiddleCenter;
         body.color = Color.white;
         body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
