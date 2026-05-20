@@ -113,7 +113,16 @@ public class LapTimer : MonoBehaviour
 
         // Ignore premature finish-line passes (e.g. starting behind finish line)
         // so the player can continue and complete checkpoints in the same run.
-        SetNotification("Missing checkpoints.");
+        bool hasCheckpointProgress = checkpointManager != null && checkpointManager.HasVisitedAnyCheckpoint();
+        if (hasCheckpointProgress)
+        {
+            SetNotification("Missing checkpoints.");
+        }
+        else if (verboseDebugLogs)
+        {
+            Debug.Log("[LapTimer] Missing-checkpoint notice suppressed because no checkpoint was visited yet.");
+        }
+
         return false;
     }
 

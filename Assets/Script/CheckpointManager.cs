@@ -53,6 +53,11 @@ public class CheckpointManager : MonoBehaviour
         return allVisited;
     }
 
+    public bool HasVisitedAnyCheckpoint()
+    {
+        return currentCheckpointIndex > 0;
+    }
+
     public void ResetCheckpoints()
     {
         Debug.Log($"[CheckpointManager] ResetCheckpoints called. Clearing {Checkpoints.Count} checkpoint visited states.");
