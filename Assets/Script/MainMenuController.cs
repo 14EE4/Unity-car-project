@@ -9,6 +9,9 @@ public class MainMenuController : MonoBehaviour
     public CanvasGroup settingsPanel;
     public CanvasGroup keyGuidePanel;
 
+    [Tooltip("If true, MainMenuController is allowed to create a KeyGuide at runtime when no reference is assigned. Keep false to enforce editor-assigned references.")]
+    public bool allowRuntimeKeyGuideCreation = false;
+
     void OnValidate()
     {
         if (Application.isPlaying) return;
@@ -51,78 +54,26 @@ public class MainMenuController : MonoBehaviour
             keyGuidePanel.interactable = false;
             keyGuidePanel.blocksRaycasts = false;
         }
-        else
+        else if (allowRuntimeKeyGuideCreation)
         {
-            // If a non-factory KeyGuidePanel exists in the scene (created previously
-            // without the overlay), remove it so we always use KeyGuideFactory.
-            var existing = GameObject.Find("KeyGuidePanel");
-            if (existing != null && (existing.transform.parent == null || existing.transform.parent.name != "KeyGuideOverlay"))
-            {
-                Debug.Log("[MainMenuController] Found non-factory KeyGuidePanel in scene; removing to enforce factory creation.");
-                Object.Destroy(existing);
-            }
-
-            // create a runtime key guide so pause/menu buttons can find it
+            // As an opt-in fallback, create a runtime key guide so pause/menu buttons can find it.
             var cg = KeyGuideFactory.CreateKeyGuide(null);
             if (cg != null)
             {
                 keyGuidePanel = cg;
-                // Hide overlay by default so it doesn't block the main menu
                 var overlay = cg.gameObject.transform.parent;
                 if (overlay != null) overlay.gameObject.SetActive(false);
                 Debug.Log($"[MainMenuController] Runtime KeyGuidePanel created in Start (parent={cg.gameObject.transform.parent?.name})");
             }
-        }
-
-        // Defensive: find any Button named like KeyGuide or containing Key/Guide text and bind it to ShowKeyGuide
-        var allButtons = Object.FindObjectsOfType<Button>();
-        foreach (var b in allButtons)
-        {
-            if (b == null || b.onClick == null) continue;
-            var nm = b.gameObject.name.ToLower();
-            bool matchesName = nm.Contains("key") || nm.Contains("guide");
-            if (!matchesName)
+            else
             {
-                // also check child Text component for label
-                var txt = b.GetComponentInChildren<Text>();
-                if (txt != null)
-                {
-                    var t = txt.text.ToLower();
-                    matchesName = t.Contains("key") || t.Contains("guide");
-                }
-            }
-
-            if (matchesName)
-            {
-                // Don't add a runtime listener if a persistent listener to ShowKeyGuide
-                // already exists (prevents double invocation when inspector bindings are present).
-                bool hasPersistentShow = false;
-                try
-                {
-                    int pc = b.onClick.GetPersistentEventCount();
-                    for (int i = 0; i < pc; i++)
-                    {
-                        var method = b.onClick.GetPersistentMethodName(i);
-                        if (!string.IsNullOrEmpty(method) && method.Contains("ShowKeyGuide"))
-                        {
-                            hasPersistentShow = true;
-                            break;
-                        }
-                    }
-                }
-                catch { /* Some platforms may not expose persistent info; ignore and continue binding. */ }
-
-                if (hasPersistentShow)
-                {
-                    Debug.Log($"[MainMenuController] Skipping auto-bind for button '{b.gameObject.name}' because a persistent ShowKeyGuide listener exists.");
-                }
-                else
-                {
-                    Debug.Log($"[MainMenuController] Binding runtime onClick for button '{b.gameObject.name}' to ShowKeyGuide()");
-                    b.onClick.AddListener(ShowKeyGuide);
-                }
+                Debug.LogWarning("[MainMenuController] allowRuntimeKeyGuideCreation=true but KeyGuideFactory.CreateKeyGuide returned null.");
             }
         }
+
+        // NOTE: Automatic runtime binding of UI buttons has been removed to encourage
+        // editor-time wiring. Use the inspector to assign button onClick handlers
+        // to call `ShowKeyGuide()` and `ShowSettings()` for clearer ownership.
     }
 
     public void PlayGame()
