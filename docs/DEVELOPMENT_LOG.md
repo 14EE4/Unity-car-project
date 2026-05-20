@@ -64,6 +64,8 @@
 - [x] 타이어 프리팹 연결: 차량 프리팹 바퀴 플레이스홀더에 타이어 적용 (`Assets/SportCar/Prefabs/...`)
 - [x] 조향 표시 바(`SteeringIndicatorUI`) 및 NaN/Infinity 방어 적용 (`Assets/Script/UI/SteeringIndicatorUI.cs`)
 - [x] 주행 안내 화살표(주황: 금지 / 초록: 주행 방향) 적용
+- 체크포인트 프리펩 녹색 v자 모델로 보이게 만듦
+- 바퀴 모델과 콜라이더가 안맞던 문제 수정
 
 ---
 
