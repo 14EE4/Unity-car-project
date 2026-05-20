@@ -67,6 +67,9 @@ public class MainMenuController : MonoBehaviour
             if (cg != null)
             {
                 keyGuidePanel = cg;
+                // Hide overlay by default so it doesn't block the main menu
+                var overlay = cg.gameObject.transform.parent;
+                if (overlay != null) overlay.gameObject.SetActive(false);
                 Debug.Log($"[MainMenuController] Runtime KeyGuidePanel created in Start (parent={cg.gameObject.transform.parent?.name})");
             }
         }
@@ -288,11 +291,9 @@ public class MainMenuController : MonoBehaviour
         }
         
         var overlay = GameObject.Find("KeyGuideOverlay");
-        if (overlay != null) overlay.SetActive(false);  // Changed from Destroy to SetActive(false)
+        if (overlay != null) overlay.SetActive(false);  // Keep reference so it can be reused
         
-        // Reset reference to force recreation on next call
-        keyGuidePanel = null;
-        Debug.Log("[MainMenuController] Closed KeyGuidePanel and reset reference");
+        Debug.Log("[MainMenuController] Closed KeyGuidePanel");
     }
 
     public void QuitGame()

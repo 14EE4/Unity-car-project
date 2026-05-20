@@ -104,6 +104,12 @@ public class PauseMenuController : MonoBehaviour
         {
             Debug.Log("[PauseMenuController] Creating runtime KeyGuidePanel via KeyGuideFactory");
             cg = KeyGuideFactory.CreateKeyGuide(pausePanel != null ? pausePanel.transform : null);
+            // Hide overlay by default so it doesn't block the pause menu
+            if (cg != null)
+            {
+                var overlay = cg.gameObject.transform.parent;
+                if (overlay != null) overlay.gameObject.SetActive(false);
+            }
         }
 
         if (cg != null)
