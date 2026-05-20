@@ -108,96 +108,39 @@ public static class MainMenuSetup
             }
         }
 
-        var panelGO = new GameObject("KeyGuidePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-        // If PauseMenuController with a pause panel exists, parent key guide to that panel
+        // Use KeyGuideFactory so runtime and editor-created key guides are identical
         var pm = Object.FindFirstObjectByType<PauseMenuController>();
-        if (pm != null && pm.GetPausePanel != null)
-            panelGO.transform.SetParent(pm.GetPausePanel.transform, false);
-        else
-            panelGO.transform.SetParent(canvas.transform, false);
-        var panelImage = panelGO.GetComponent<Image>();
-        panelImage.color = new Color(0f, 0f, 0f, 0.84f);
-        var panelRect = panelGO.GetComponent<RectTransform>();
-        panelRect.anchorMin = Vector2.zero;
-        panelRect.anchorMax = Vector2.one;
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
+        Transform preferredParent = null;
+        if (pm != null && pm.GetPausePanel != null) preferredParent = pm.GetPausePanel.transform;
+        else preferredParent = canvas.transform;
 
-        var cg = panelGO.GetComponent<CanvasGroup>();
-        cg.alpha = 0f;
-        cg.interactable = false;
-        cg.blocksRaycasts = false;
+        var cg = KeyGuideFactory.CreateKeyGuide(preferredParent);
+        if (cg == null)
+        {
+            Debug.LogError("Failed to create KeyGuide via KeyGuideFactory.");
+            return;
+        }
 
-        var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        titleGO.transform.SetParent(panelGO.transform, false);
-        var titleText = titleGO.GetComponent<Text>();
-        titleText.text = "KEY GUIDE";
-        titleText.alignment = TextAnchor.UpperCenter;
-        titleText.color = Color.white;
-        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        titleText.fontSize = 28;
-        titleText.fontStyle = FontStyle.Bold;
-        var titleOutline = titleGO.AddComponent<Outline>();
-        titleOutline.effectColor = new Color(0f, 0f, 0f, 0.95f);
-        titleOutline.effectDistance = new Vector2(1.5f, -1.5f);
-        var titleRect = titleGO.GetComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.5f, 1f);
-        titleRect.anchorMax = new Vector2(0.5f, 1f);
-        titleRect.pivot = new Vector2(0.5f, 1f);
-        titleRect.sizeDelta = new Vector2(420f, 40f);
-        titleRect.anchoredPosition = new Vector2(0f, -24f);
+        // Register to MainMenuController
+        var buttonTransform = cg.gameObject.transform.Find("CloseKeyGuideButton");
+        if (buttonTransform != null)
+        {
+            var button = buttonTransform.GetComponent<Button>();
+            if (button != null)
+            {
+                Undo.RegisterCompleteObjectUndo(mm, "Assign keyGuidePanel");
+                mm.keyGuidePanel = cg;
+                UnityEventTools.AddPersistentListener(button.onClick, mm.CloseKeyGuide);
+                EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+                Debug.Log("Key guide panel created via KeyGuideFactory and wired to MainMenuController.CloseKeyGuide().");
+                return;
+            }
+        }
 
-        var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        bodyGO.transform.SetParent(panelGO.transform, false);
-        var bodyText = bodyGO.GetComponent<Text>();
-        bodyText.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\n\nUse Mouse Wheel to adjust camera distance.";
-        bodyText.alignment = TextAnchor.MiddleCenter;
-        bodyText.color = Color.white;
-        bodyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        bodyText.fontSize = 22;
-        bodyText.fontStyle = FontStyle.Bold;
-        var bodyOutline = bodyGO.AddComponent<Outline>();
-        bodyOutline.effectColor = new Color(0f, 0f, 0f, 0.95f);
-        bodyOutline.effectDistance = new Vector2(1.25f, -1.25f);
-        var bodyRect = bodyGO.GetComponent<RectTransform>();
-        bodyRect.anchorMin = new Vector2(0.5f, 0.5f);
-        bodyRect.anchorMax = new Vector2(0.5f, 0.5f);
-        bodyRect.pivot = new Vector2(0.5f, 0.5f);
-        bodyRect.sizeDelta = new Vector2(640f, 300f);
-        bodyRect.anchoredPosition = Vector2.zero;
-
-        var closeBtnGO = new GameObject("CloseKeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        closeBtnGO.transform.SetParent(panelGO.transform, false);
-        var closeImg = closeBtnGO.GetComponent<Image>();
-        closeImg.color = Color.white;
-        var closeRect = closeBtnGO.GetComponent<RectTransform>();
-        closeRect.anchorMin = new Vector2(1f, 1f);
-        closeRect.anchorMax = new Vector2(1f, 1f);
-        closeRect.pivot = new Vector2(1f, 1f);
-        closeRect.sizeDelta = new Vector2(160f, 44f);
-        closeRect.anchoredPosition = new Vector2(-80f, -30f);
-
-        var closeTextGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        closeTextGO.transform.SetParent(closeBtnGO.transform, false);
-        var closeText = closeTextGO.GetComponent<Text>();
-        closeText.text = "닫기";
-        closeText.alignment = TextAnchor.MiddleCenter;
-        closeText.color = Color.black;
-        closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        closeText.fontStyle = FontStyle.Bold;
-        var closeTextRect = closeTextGO.GetComponent<RectTransform>();
-        closeTextRect.anchorMin = Vector2.zero;
-        closeTextRect.anchorMax = Vector2.one;
-        closeTextRect.offsetMin = Vector2.zero;
-        closeTextRect.offsetMax = Vector2.zero;
-
-        var button = closeBtnGO.GetComponent<Button>();
+        // Fallback assignment
         Undo.RegisterCompleteObjectUndo(mm, "Assign keyGuidePanel");
         mm.keyGuidePanel = cg;
-
-        UnityEventTools.AddPersistentListener(button.onClick, mm.CloseKeyGuide);
-
         EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
-        Debug.Log("Key guide panel created under Canvas and wired to MainMenuController.CloseKeyGuide().");
+        Debug.Log("Key guide panel created via KeyGuideFactory.");
     }
 }

@@ -53,6 +53,15 @@ public class MainMenuController : MonoBehaviour
         }
         else
         {
+            // If a non-factory KeyGuidePanel exists in the scene (created previously
+            // without the overlay), remove it so we always use KeyGuideFactory.
+            var existing = GameObject.Find("KeyGuidePanel");
+            if (existing != null && (existing.transform.parent == null || existing.transform.parent.name != "KeyGuideOverlay"))
+            {
+                Debug.Log("[MainMenuController] Found non-factory KeyGuidePanel in scene; removing to enforce factory creation.");
+                Object.Destroy(existing);
+            }
+
             // create a runtime key guide so pause/menu buttons can find it
             var cg = KeyGuideFactory.CreateKeyGuide(null);
             if (cg != null)

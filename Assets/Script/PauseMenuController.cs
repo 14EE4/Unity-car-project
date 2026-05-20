@@ -86,7 +86,19 @@ public class PauseMenuController : MonoBehaviour
 
         CanvasGroup cg = null;
         var go = GameObject.Find("KeyGuidePanel");
-        if (go != null) cg = go.GetComponent<CanvasGroup>();
+        if (go != null)
+        {
+            // If this panel wasn't created by KeyGuideFactory (no overlay parent), remove it
+            if (go.transform.parent == null || go.transform.parent.name != "KeyGuideOverlay")
+            {
+                Debug.Log("[PauseMenuController] Removing non-factory KeyGuidePanel found in scene before creating factory version.");
+                Object.Destroy(go);
+            }
+            else
+            {
+                cg = go.GetComponent<CanvasGroup>();
+            }
+        }
 
         if (cg == null)
         {
