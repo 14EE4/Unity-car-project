@@ -61,7 +61,9 @@ public class LapTimer : MonoBehaviour
     {
         if (verboseDebugLogs)
         {
-            Debug.Log($"[LapTimer] TryCompleteLap called | isTimerRunning={isTimerRunning} | isRunFinished={isRunFinished} | currentLapTime={currentLapTime:F3} | recentLapTime={recentLapTime:F3}");
+            Debug.Log(
+                $"[LapTimer] TryCompleteLap called | isTimerRunning={isTimerRunning} | isRunFinished={isRunFinished} | " +
+                $"currentLapTime={currentLapTime:F3} | recentLapTime={recentLapTime:F3} | hasRecentLapTime={hasRecentLapTime}");
         }
 
         if (!isTimerRunning)
@@ -78,7 +80,9 @@ public class LapTimer : MonoBehaviour
 
         if (verboseDebugLogs)
         {
-            Debug.Log($"[LapTimer] Checkpoint validation result={allCheckpointsVisited} | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : "null")}");
+            Debug.Log(
+                $"[LapTimer] Checkpoint validation result={allCheckpointsVisited} | " +
+                $"checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : "null")}");
         }
 
         if (allCheckpointsVisited)
@@ -92,6 +96,7 @@ public class LapTimer : MonoBehaviour
             {
                 string bestTimesText = string.Join(", ", bestLapTimes.ConvertAll(FormatLapTime));
                 Debug.Log($"[LapTimer] Lap accepted. Recent={FormatLapTime(recentLapTime)} | BestTimes=[{bestTimesText}]");
+                Debug.Log("[LapTimer] Completing run: ResetTimerState -> isRunFinished=true -> checkpoint reset.");
             }
 
             ResetTimerState();
@@ -104,6 +109,7 @@ public class LapTimer : MonoBehaviour
         if (verboseDebugLogs)
         {
             Debug.LogWarning($"[LapTimer] Lap rejected because not all checkpoints were visited. Timer will stop until the scene is restarted.");
+            Debug.Log("[LapTimer] Reject path: ResetTimerState -> isRunFinished=true -> checkpoint reset.");
         }
 
         ResetTimerState();
@@ -142,9 +148,21 @@ public class LapTimer : MonoBehaviour
 
     private void ResetTimerState()
     {
+        if (verboseDebugLogs)
+        {
+            Debug.Log(
+                $"[LapTimer] ResetTimerState before reset | isTimerRunning={isTimerRunning} | " +
+                $"currentLapTime={currentLapTime:F3} | lapStartTime={lapStartTime:F3}");
+        }
+
         isTimerRunning = false;
         currentLapTime = 0f;
         lapStartTime = 0f;
+
+        if (verboseDebugLogs)
+        {
+            Debug.Log("[LapTimer] ResetTimerState completed.");
+        }
     }
 
     public void ResetRunState()

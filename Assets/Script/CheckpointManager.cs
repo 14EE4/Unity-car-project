@@ -15,10 +15,24 @@ public class CheckpointManager : MonoBehaviour
         }
 
         Checkpoints = Checkpoints.OrderBy(cp => cp.gameObject.name, new NaturalComparer()).ToList();
+
+        Debug.Log($"[CheckpointManager] Initialized with {Checkpoints.Count} checkpoints on '{gameObject.name}'.");
+        for (int i = 0; i < Checkpoints.Count; i++)
+        {
+            Debug.Log($"[CheckpointManager] Order {i + 1}/{Checkpoints.Count}: {Checkpoints[i].gameObject.name}");
+        }
     }
 
     public bool ValidateCheckpoint(Checkpoint checkpoint)
     {
+        string expectedName = currentCheckpointIndex < Checkpoints.Count
+            ? Checkpoints[currentCheckpointIndex].gameObject.name
+            : "<none - all visited>";
+
+        Debug.Log(
+            $"[CheckpointManager] Validate request from '{checkpoint.gameObject.name}' | " +
+            $"currentIndex={currentCheckpointIndex}/{Checkpoints.Count} | expected='{expectedName}'");
+
         if (currentCheckpointIndex < Checkpoints.Count && Checkpoints[currentCheckpointIndex] == checkpoint)
         {
             currentCheckpointIndex++;
@@ -35,20 +49,20 @@ public class CheckpointManager : MonoBehaviour
     public bool AllCheckpointsVisited()
     {
         bool allVisited = currentCheckpointIndex >= Checkpoints.Count;
-        if (allVisited)
-        {
-            Debug.Log("All checkpoints have been visited.");
-        }
+        Debug.Log($"[CheckpointManager] AllCheckpointsVisited={allVisited} | currentIndex={currentCheckpointIndex}/{Checkpoints.Count}");
         return allVisited;
     }
 
     public void ResetCheckpoints()
     {
+        Debug.Log($"[CheckpointManager] ResetCheckpoints called. Clearing {Checkpoints.Count} checkpoint visited states.");
         currentCheckpointIndex = 0;
         foreach (var checkpoint in Checkpoints)
         {
             checkpoint.ResetCheckpoint();
         }
+
+        Debug.Log("[CheckpointManager] ResetCheckpoints complete. currentCheckpointIndex=0");
     }
 
     private class NaturalComparer : IComparer<string>
