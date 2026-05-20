@@ -76,6 +76,8 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
 - UI 구현: 조향 표시 바
 - 가면 안되는 길에 주황색 화살표, 주행 방향 초록 화살표로 맵에 추가
 - 체크포인트
+- 초기화 버튼
+
 
 ## 남은 작업
 - 문제
@@ -83,6 +85,8 @@ https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-trac
   - 인게임 - 메뉴 이동 시 메뉴 씬의 0, 1, -10 위치에 있는 카메라가 버튼을 가림
   -> 스크립트 삭제하여 일단 안나오게함 - 해결 - 해결
   - 설정 창 내용 구현 - 창 화면, 전체 화면, 해상도, 키 설정
+  - 랩 타임 기록(메인 화면 가면 사라짐)
+  - 메인 화면 키 가이드가 2번 나옴
 
 - **중기 (2주 — 4주)**
   - 음향 적용: 엔진 RPM 연동 피치 변화, 스키드/환경음 추가
@@ -199,6 +203,14 @@ Unity 6 환경에서 URP 설정 파일의 버전 불일치로 인해 빌드가 �
   - 결과:
     - 출발 직후 결승선 선통과는 무시되고 주행이 계속됨.
     - 체크포인트 5개 완료 후 결승선 재통과 시 `Lap accepted`와 함께 랩 타임이 정상 기록됨.
+
+- 추가 작업 (2026-05-20, 추가)
+  - `FinishLine.cs`에 `public void ResetRaceTimer()` 메서드 추가
+    - 목적: 일시정지 메뉴 등에서 새 시도(새 랩)를 시작할 때 랩 타이머를 안전하게 초기화할 수 있도록 함.
+    - 구현: 내부에서 `LapTimer.ResetRunState()`를 호출해 타이머와 런 상태를 재설정함.
+  - `CameraController.ResetCamera()` 동작 수정
+    - 문제: 리셋 시 씬의 메뉴 카메라 위치(`initialPosition`)로 이동해 플레이어 차량이 아닌 메뉴 카메라로 복귀하던 현상 발생.
+    - 해결: 리셋 시 `firstPersonAnchor`가 설정되어 있으면 우선적으로 그 앵커에 카메라를 부모화하여 `localPosition=0`, `localRotation=Identity`로 고정하도록 변경. 메뉴/씬 초기 위치는 앵커가 없을 때만 사용함.
 
 - 인게임 표시 문자열을 영어로 통일했습니다.
   - `Txt_LapTime`/로딩/키가이드 등 사용자 노출 텍스트에서 한글 문자열을 제거해 TMP 한글 글리프 누락 경고를 방지했습니다.
