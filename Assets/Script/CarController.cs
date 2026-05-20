@@ -33,6 +33,7 @@ public class CarController : MonoBehaviour
     private float appliedBrakeTorque = 0f;
     private float previousForwardSpeed = 0f;
     private float longitudinalAcceleration = 0f;
+    private bool suppressDriveInputUntilRelease = false;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 0;
@@ -76,6 +77,30 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
+        if (suppressDriveInputUntilRelease)
+        {
+            throttleInput = 0f;
+            brakeInput = 0f;
+            handbrakeActive = false;
+            currentSteer = 0f;
+            appliedMotorTorque = 0f;
+            appliedBrakeTorque = 0f;
+
+            bool driveKeysReleased = !Input.GetKey(KeyCode.W)
+                && !Input.GetKey(KeyCode.S)
+                && !Input.GetKey(KeyCode.Space)
+                && !Input.GetKey(KeyCode.Alpha1)
+                && !Input.GetKey(KeyCode.Alpha2);
+
+            if (driveKeysReleased)
+            {
+                suppressDriveInputUntilRelease = false;
+                Debug.Log("[CarController] Drive input lock released after reset.");
+            }
+
+            return;
+        }
+
         // 1. 조향 (마우스 X축 누적)
         currentSteer += Input.GetAxis("Mouse X") * steerSensitivity; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
@@ -141,6 +166,7 @@ public class CarController : MonoBehaviour
         appliedMotorTorque = 0f;
         appliedBrakeTorque = 0f;
         previousForwardSpeed = GetForwardSpeedMps();
+        suppressDriveInputUntilRelease = true;
         
         Debug.Log($"[CarController] Game state reset | pos={carRigidbody.position} rot={carRigidbody.rotation.eulerAngles} gear={currentGear}");
     }
