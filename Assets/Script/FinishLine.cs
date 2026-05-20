@@ -19,7 +19,7 @@ public class FinishLine : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"[FinishLine] Trigger entered by '{other.name}' | tag={other.tag} | playerMatch={other.CompareTag(\"Player\")}");
+        Debug.Log($"[FinishLine] Trigger entered by '{other.name}' | tag={other.tag} | playerMatch={other.CompareTag("Player")}");
 
         if (other.CompareTag("Player"))
         {

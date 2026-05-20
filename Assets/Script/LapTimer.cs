@@ -35,7 +35,7 @@ public class LapTimer : MonoBehaviour
 
         if (verboseDebugLogs)
         {
-            Debug.Log($"[LapTimer] Awake on '{gameObject.name}' | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : \"null\")}");
+            Debug.Log($"[LapTimer] Awake on '{gameObject.name}' | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : "null")}");
         }
     }
 
@@ -78,7 +78,7 @@ public class LapTimer : MonoBehaviour
 
         if (verboseDebugLogs)
         {
-            Debug.Log($"[LapTimer] Checkpoint validation result={allCheckpointsVisited} | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : \"null\")}");
+            Debug.Log($"[LapTimer] Checkpoint validation result={allCheckpointsVisited} | checkpointManager={(checkpointManager != null ? checkpointManager.gameObject.name : "null")}");
         }
 
         if (allCheckpointsVisited)
