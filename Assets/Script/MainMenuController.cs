@@ -2,12 +2,22 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+// 메인 메뉴 UI 제어기
+// - 씬 전환(Play 버튼)
+// - 설정 창(ShowSettings/CloseSettings)
+// - 키 가이드(ShowKeyGuide/CloseKeyGuide)
+// 인스펙터에서 UI 참조(`settingsPanel`, `keyGuidePanel`)를 연결하는 것을 권장합니다.
 public class MainMenuController : MonoBehaviour
 {
     [Tooltip("Scene name to load when Play is pressed")]
     public string mainSceneName = "Main";
     public CanvasGroup settingsPanel;
     public CanvasGroup keyGuidePanel;
+
+    [Tooltip("If true, MainMenuController is allowed to create a KeyGuide at runtime when no reference is assigned. Keep false to enforce editor-assigned references.")]
+    // 런타임에 KeyGuide를 자동 생성할지 여부 (기본 false).
+    // 유지보수를 위해 인스펙터에서 직접 할당하는 것을 권장합니다.
+    public bool allowRuntimeKeyGuideCreation = false;
 
     void OnValidate()
     {
@@ -32,9 +42,11 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
+        // 메인 메뉴 진입 시 커서를 해제하고 표시합니다.
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        // 설정 패널이 에디터에서 연결되어 있으면 초기 상태로 숨깁니다.
         if (settingsPanel != null)
         {
             if (!settingsPanel.gameObject.activeSelf)
@@ -45,54 +57,43 @@ public class MainMenuController : MonoBehaviour
             Debug.Log($"[MainMenuController] settingsPanel initialized activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
         }
 
+        // 키 가이드도 동일하게 초기 숨김 상태로 두되, 참조가 없으면
+        // allowRuntimeKeyGuideCreation가 true인 경우에만 런타임 생성 시도합니다.
         if (keyGuidePanel != null)
         {
             keyGuidePanel.alpha = 0f;
             keyGuidePanel.interactable = false;
             keyGuidePanel.blocksRaycasts = false;
         }
-        else
+        else if (allowRuntimeKeyGuideCreation)
         {
-            // create a runtime key guide so pause/menu buttons can find it
-            var cg = CreateRuntimeKeyGuide();
+            // As an opt-in fallback, create a runtime key guide so pause/menu buttons can find it.
+            var cg = KeyGuideFactory.CreateKeyGuide(null);
             if (cg != null)
             {
                 keyGuidePanel = cg;
+                var overlay = cg.gameObject.transform.parent;
+                if (overlay != null) overlay.gameObject.SetActive(false);
                 Debug.Log($"[MainMenuController] Runtime KeyGuidePanel created in Start (parent={cg.gameObject.transform.parent?.name})");
             }
-        }
-
-        // Defensive: find any Button named like KeyGuide or containing Key/Guide text and bind it to ShowKeyGuide
-        var allButtons = Object.FindObjectsOfType<Button>();
-        foreach (var b in allButtons)
-        {
-            if (b == null || b.onClick == null) continue;
-            var nm = b.gameObject.name.ToLower();
-            bool matchesName = nm.Contains("key") || nm.Contains("guide") || nm.Contains("키") || nm.Contains("가이드");
-            if (!matchesName)
+            else
             {
-                // also check child Text component for label
-                var txt = b.GetComponentInChildren<Text>();
-                if (txt != null)
-                {
-                    var t = txt.text.ToLower();
-                    matchesName = t.Contains("key") || t.Contains("guide") || t.Contains("키") || t.Contains("가이드");
-                }
-            }
-
-            if (matchesName)
-            {
-                Debug.Log($"[MainMenuController] Binding runtime onClick for button '{b.gameObject.name}' to ShowKeyGuide()");
-                b.onClick.AddListener(ShowKeyGuide);
+                Debug.LogWarning("[MainMenuController] allowRuntimeKeyGuideCreation=true but KeyGuideFactory.CreateKeyGuide returned null.");
             }
         }
+
+        // NOTE: Automatic runtime binding of UI buttons has been removed to encourage
+        // editor-time wiring. Use the inspector to assign button onClick handlers
+        // to call `ShowKeyGuide()` and `ShowSettings()` for clearer ownership.
     }
 
+    // Play 버튼 동작: 메인 게임 씬을 로드합니다.
     public void PlayGame()
     {
         LoadingScreenManager.LoadScene(mainSceneName);
     }
 
+    // 설정창 열기: 인스펙터에서 할당된 settingsPanel의 CanvasGroup을 사용해 표시합니다.
     public void ShowSettings()
     {
         Debug.Log($"[MainMenuController] ShowSettings invoked (panel assigned={settingsPanel != null})");
@@ -122,76 +123,57 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    // 키 가이드 표시: 인스펙터에 할당된 패널을 우선 사용하고, 없으면 씬의 기존 KeyGuide를 찾아 재사용하거나
+    // KeyGuideFactory로 런타임 생성합니다. PauseMenuController와 동일한 동작을 하도록 구현되어 있습니다.
     public void ShowKeyGuide()
     {
-        // Ensure Key Guide only shows when explicitly invoked by button
         Debug.Log("[MainMenuController] ShowKeyGuide invoked");
+
+        // 1) 인스펙터에 할당된 CanvasGroup이 있으면 그것을 사용
         if (keyGuidePanel != null)
         {
-            Debug.Log("[MainMenuController] Using stored keyGuidePanel reference");
-            Debug.Log($"[MainMenuController] keyGuidePanel sibling before={keyGuidePanel.transform.GetSiblingIndex()}, activeSelf={keyGuidePanel.gameObject.activeSelf}");
             if (!keyGuidePanel.gameObject.activeSelf)
                 keyGuidePanel.gameObject.SetActive(true);
             keyGuidePanel.alpha = 1f;
             keyGuidePanel.interactable = true;
             keyGuidePanel.blocksRaycasts = true;
             keyGuidePanel.transform.SetAsLastSibling();
-            Debug.Log($"[MainMenuController] keyGuidePanel sibling after={keyGuidePanel.transform.GetSiblingIndex()}");
-            
-            // Also ensure overlay is active
+
             var overlay = keyGuidePanel.gameObject.transform.parent;
             if (overlay != null && !overlay.gameObject.activeSelf)
                 overlay.gameObject.SetActive(true);
             return;
         }
 
-        // Try to find existing KeyGuidePanel in current scene
+        // 2) 씬에서 기존 KeyGuidePanel을 찾고, Factory로 생성된 정상적인 구조인지 확인
         var go = GameObject.Find("KeyGuidePanel");
         if (go != null)
         {
-            var cg = go.GetComponent<CanvasGroup>();
-            if (cg != null)
+            // Factory로 생성된 패널은 부모가 KeyGuideOverlay이어야 함. 아니라면 제거하고 재생성.
+            if (go.transform.parent == null || go.transform.parent.name != "KeyGuideOverlay")
             {
-                Debug.Log("[MainMenuController] Found existing KeyGuidePanel");
-                // Ensure Body text contains the latest control hint (Space: Handbrake)
-                var bodyTf = cg.gameObject.transform.Find("Body");
-                if (bodyTf != null)
+                Debug.Log("[MainMenuController] Found non-factory KeyGuidePanel in scene; removing to enforce factory creation.");
+                Object.Destroy(go);
+            }
+            else
+            {
+                var cg = go.GetComponent<CanvasGroup>();
+                if (cg != null)
                 {
-                    var txt = bodyTf.GetComponent<Text>();
-                    if (txt != null)
-                    {
-                        if (!txt.text.Contains("Space: Handbrake"))
-                        {
-                            txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
-                            Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
-                        }
-                        if (!txt.text.Contains("Use Mouse Wheel to adjust camera distance"))
-                        {
-                            txt.text = txt.text + "\n\nUse Mouse Wheel to adjust camera distance.";
-                            Debug.Log("[MainMenuController] Appended simplified camera note to KeyGuidePanel Body text");
-                        }
-                    }
+                    Debug.Log("[MainMenuController] Found existing KeyGuidePanel created by factory");
+                    if (!cg.gameObject.activeSelf) cg.gameObject.SetActive(true);
+                    var overlay = cg.gameObject.transform.parent;
+                    if (overlay != null && !overlay.gameObject.activeSelf) overlay.gameObject.SetActive(true);
+                    cg.alpha = 1f; cg.interactable = true; cg.blocksRaycasts = true; cg.transform.SetAsLastSibling();
+                    keyGuidePanel = cg;
+                    return;
                 }
-                if (!cg.gameObject.activeSelf)
-                    cg.gameObject.SetActive(true);
-                    
-                // Activate overlay too
-                var overlay = cg.gameObject.transform.parent;
-                if (overlay != null && !overlay.gameObject.activeSelf)
-                    overlay.gameObject.SetActive(true);
-                    
-                cg.alpha = 1f;
-                cg.interactable = true;
-                cg.blocksRaycasts = true;
-                cg.transform.SetAsLastSibling();
-                keyGuidePanel = cg;
-                return;
             }
         }
 
-        // As a fallback, attempt to create a runtime KeyGuide so the button always works
-        Debug.LogWarning("[MainMenuController] KeyGuidePanel missing, attempting runtime creation.");
-        var runtimeCg = CreateRuntimeKeyGuide();
+        // 3) 최종적으로 KeyGuideFactory로 런타임 생성 시도
+        Debug.Log("[MainMenuController] Creating runtime KeyGuidePanel via KeyGuideFactory");
+        var runtimeCg = KeyGuideFactory.CreateKeyGuide(null);
         if (runtimeCg != null)
         {
             Debug.Log("[MainMenuController] Runtime KeyGuidePanel created on-demand.");
@@ -207,157 +189,9 @@ public class MainMenuController : MonoBehaviour
         Debug.LogError("[MainMenuController] ShowKeyGuide: Could not find or create KeyGuidePanel!");
     }
 
-    CanvasGroup CreateRuntimeKeyGuide()
-    {
-        // Prefer a Canvas that exists in the currently active scene.
-        Canvas canvas = null;
-        var allCanvases = Object.FindObjectsOfType<Canvas>();
-        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-        
-        foreach (var c in allCanvases)
-        {
-            if (c.gameObject.scene == activeScene)
-            {
-                canvas = c;
-                break;
-            }
-        }
-        
-        // Fallback: if no canvas found, log warning but continue
-        if (canvas == null)
-        {
-            Debug.LogWarning("[MainMenuController] No Canvas found in active scene! This may cause issues.");
-            // As last resort, try to find any canvas
-            if (allCanvases.Length > 0)
-            {
-                canvas = allCanvases[0];
-                Debug.LogWarning($"[MainMenuController] Using Canvas from different scene: {canvas.gameObject.scene.name}");
-            }
-        }
-        
-        var pm = Object.FindFirstObjectByType<PauseMenuController>();
-        Transform parent = null;
-        
-        // Prefer attaching to the root Canvas in the active scene so the panel appears above other UI
-        if (canvas != null) parent = canvas.transform;
-        else if (pm != null && pm.pausePanel != null) parent = pm.pausePanel.transform;
+    // KeyGuide creation is now centralized in KeyGuideFactory
 
-        if (parent == null)
-        {
-            Debug.LogError("[MainMenuController] Could not find valid parent transform for KeyGuidePanel");
-            return null;
-        }
-
-        // Create a full-screen overlay to dim background
-        var overlayGO = new GameObject("KeyGuideOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-        overlayGO.transform.SetParent(parent, false);
-        var overlayImg = overlayGO.GetComponent<Image>();
-        overlayImg.color = new Color(0f, 0f, 0f, 0.6f);
-        var overlayRect = overlayGO.GetComponent<RectTransform>();
-        overlayRect.anchorMin = Vector2.zero; overlayRect.anchorMax = Vector2.one; overlayRect.offsetMin = Vector2.zero; overlayRect.offsetMax = Vector2.zero;
-        overlayGO.transform.SetAsLastSibling();
-
-        // Create centered panel on top of overlay
-        var panelGO = new GameObject("KeyGuidePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-        panelGO.transform.SetParent(overlayGO.transform, false);
-        var img = panelGO.GetComponent<Image>();
-        img.color = new Color(0f, 0f, 0f, 0.84f);
-        var cg = panelGO.GetComponent<CanvasGroup>();
-        cg.alpha = 0f; cg.interactable = false; cg.blocksRaycasts = false;
-
-        var panelRect = panelGO.GetComponent<RectTransform>();
-        panelRect.pivot = new Vector2(0.5f, 0.5f);
-        // Size relative to parent so panel never exceeds available space
-        var parentRect = overlayGO.GetComponent<RectTransform>();
-        float parentW = parentRect.rect.width;
-        float parentH = parentRect.rect.height;
-        float panelWidth = Mathf.Min(720f, Mathf.Max(200f, parentW - 80f));
-        float panelHeight = Mathf.Min(420f, Mathf.Max(140f, parentH - 80f));
-        panelRect.sizeDelta = new Vector2(panelWidth, panelHeight);
-
-        // If vertical space is tight, anchor panel to top so header and close button remain visible
-        if (panelHeight >= parentH - 40f)
-        {
-            panelRect.anchorMin = new Vector2(0.5f, 1f);
-            panelRect.anchorMax = new Vector2(0.5f, 1f);
-            panelRect.pivot = new Vector2(0.5f, 1f);
-            panelRect.anchoredPosition = new Vector2(0f, -20f);
-        }
-        else
-        {
-            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.anchoredPosition = Vector2.zero;
-        }
-
-        // Title
-        var titleGO = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        titleGO.transform.SetParent(panelGO.transform, false);
-        var title = titleGO.GetComponent<Text>();
-        title.text = "KEY GUIDE";
-        title.alignment = TextAnchor.UpperCenter;
-        title.color = Color.white;
-        title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        title.fontSize = 28;
-        title.fontStyle = FontStyle.Bold;
-        var tRect = titleGO.GetComponent<RectTransform>();
-        tRect.anchorMin = new Vector2(0f, 1f); tRect.anchorMax = new Vector2(1f, 1f);
-        tRect.pivot = new Vector2(0.5f, 1f);
-        tRect.sizeDelta = new Vector2(0f, 48f);
-        tRect.anchoredPosition = new Vector2(0f, -12f);
-
-        // Body
-        var bodyGO = new GameObject("Body", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        bodyGO.transform.SetParent(panelGO.transform, false);
-        var body = bodyGO.GetComponent<Text>();
-            body.text = "W: Accelerate\nS: Brake\nSpace: Handbrake\nMouse X: Steer\n1 / 2: Gear Down / Gear Up\nC: First / Third Person\nEsc: Pause Menu\nR: Reset (if assigned)\n\nNote: Third-person camera no longer auto-pulls forward. Use Mouse Wheel to adjust camera distance.";
-        body.alignment = TextAnchor.MiddleCenter;
-        body.color = Color.white;
-        body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        body.fontSize = 22;
-        body.fontStyle = FontStyle.Bold;
-        body.horizontalOverflow = HorizontalWrapMode.Wrap;
-        body.verticalOverflow = VerticalWrapMode.Overflow;
-        // Allow the text to shrink to fit smaller panels/screens
-        body.resizeTextForBestFit = true;
-        body.resizeTextMinSize = 14;
-        body.resizeTextMaxSize = 22;
-        var bRect = bodyGO.GetComponent<RectTransform>();
-        bRect.anchorMin = new Vector2(0f, 0f); bRect.anchorMax = new Vector2(1f, 1f);
-        bRect.pivot = new Vector2(0.5f, 0.5f);
-        // Increase top inset so body sits further below the title
-        bRect.offsetMin = new Vector2(24f, 60f); bRect.offsetMax = new Vector2(-24f, -96f);
-
-        // Close button
-        var closeBtn = new GameObject("CloseKeyGuideButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-        closeBtn.transform.SetParent(panelGO.transform, false);
-        var closeImg = closeBtn.GetComponent<Image>();
-        closeImg.color = Color.white;
-        var closeRect = closeBtn.GetComponent<RectTransform>();
-        closeRect.anchorMin = new Vector2(1f, 1f);
-        closeRect.anchorMax = new Vector2(1f, 1f);
-        closeRect.pivot = new Vector2(1f, 1f);
-        closeRect.sizeDelta = new Vector2(120f, 40f);
-        closeRect.anchoredPosition = new Vector2(-12f, -12f);
-
-        var closeTextGO = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        closeTextGO.transform.SetParent(closeBtn.transform, false);
-        var closeText = closeTextGO.GetComponent<Text>();
-        closeText.text = "닫기";
-        closeText.alignment = TextAnchor.MiddleCenter;
-        closeText.color = Color.black;
-        closeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        closeText.fontStyle = FontStyle.Bold;
-        var closeTextRect = closeTextGO.GetComponent<RectTransform>();
-        closeTextRect.anchorMin = Vector2.zero; closeTextRect.anchorMax = Vector2.one; closeTextRect.offsetMin = Vector2.zero; closeTextRect.offsetMax = Vector2.zero;
-
-        var btn = closeBtn.GetComponent<Button>();
-        btn.onClick.AddListener(CloseKeyGuide);
-
-        return cg;
-    }
-
+    // 설정창 닫기: CanvasGroup을 사용하여 숨김 처리합니다.
     public void CloseSettings()
     {
         Debug.Log($"[MainMenuController] CloseSettings invoked (panel assigned={settingsPanel != null})");
@@ -374,6 +208,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    // 지정한 Transform부터 상위 계층을 로그로 출력합니다. 디버그 용도입니다.
     void LogHierarchy(Transform start)
     {
         var current = start;
@@ -403,11 +238,9 @@ public class MainMenuController : MonoBehaviour
         }
         
         var overlay = GameObject.Find("KeyGuideOverlay");
-        if (overlay != null) overlay.SetActive(false);  // Changed from Destroy to SetActive(false)
+        if (overlay != null) overlay.SetActive(false);  // Keep reference so it can be reused
         
-        // Reset reference to force recreation on next call
-        keyGuidePanel = null;
-        Debug.Log("[MainMenuController] Closed KeyGuidePanel and reset reference");
+        Debug.Log("[MainMenuController] Closed KeyGuidePanel");
     }
 
     public void QuitGame()

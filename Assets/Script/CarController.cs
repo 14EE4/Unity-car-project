@@ -33,6 +33,7 @@ public class CarController : MonoBehaviour
     private float appliedBrakeTorque = 0f;
     private float previousForwardSpeed = 0f;
     private float longitudinalAcceleration = 0f;
+    private bool suppressDriveInputUntilRelease = false;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 0;
@@ -42,6 +43,10 @@ public class CarController : MonoBehaviour
     private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
 
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
+
+    // 게임 초기화를 위한 초기 위치/회전 저장
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
 
     void Start()
     {
@@ -64,10 +69,38 @@ public class CarController : MonoBehaviour
         previousForwardSpeed = GetForwardSpeedMps();
         // Ensure we start in neutral gear on scene start
         currentGear = 0;
+        
+        // 게임 초기 상태 저장 (리셋용)
+        initialPosition = carRigidbody.position;
+        initialRotation = carRigidbody.rotation;
     }
 
     void Update()
     {
+        if (suppressDriveInputUntilRelease)
+        {
+            throttleInput = 0f;
+            brakeInput = 0f;
+            handbrakeActive = false;
+            currentSteer = 0f;
+            appliedMotorTorque = 0f;
+            appliedBrakeTorque = 0f;
+
+            bool driveKeysReleased = !Input.GetKey(KeyCode.W)
+                && !Input.GetKey(KeyCode.S)
+                && !Input.GetKey(KeyCode.Space)
+                && !Input.GetKey(KeyCode.Alpha1)
+                && !Input.GetKey(KeyCode.Alpha2);
+
+            if (driveKeysReleased)
+            {
+                suppressDriveInputUntilRelease = false;
+                Debug.Log("[CarController] Drive input lock released after reset.");
+            }
+
+            return;
+        }
+
         // 1. 조향 (마우스 X축 누적)
         currentSteer += Input.GetAxis("Mouse X") * steerSensitivity; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
@@ -105,7 +138,69 @@ public class CarController : MonoBehaviour
         }
     }
 
-    
+    /// <summary>
+    /// 게임 상태를 초기값으로 리셋합니다. (위치, 회전, 속도, 기어, 입력)
+    /// </summary>
+    public void ResetGameState()
+    {
+        // 물리 상태를 먼저 멈춘 다음 위치/회전을 되돌린다.
+        carRigidbody.WakeUp();
+        carRigidbody.linearVelocity = Vector3.zero;
+        carRigidbody.angularVelocity = Vector3.zero;
+        carRigidbody.position = initialPosition;
+        carRigidbody.rotation = initialRotation;
+        transform.SetPositionAndRotation(initialPosition, initialRotation);
+        Physics.SyncTransforms();
+
+        ResetWheelState();
+        carRigidbody.linearVelocity = Vector3.zero;
+        carRigidbody.angularVelocity = Vector3.zero;
+        carRigidbody.Sleep();
+        
+        // 기어 및 입력 상태 초기화
+        currentGear = 0;
+        throttleInput = 0f;
+        brakeInput = 0f;
+        handbrakeActive = false;
+        currentSteer = 0f;
+        appliedMotorTorque = 0f;
+        appliedBrakeTorque = 0f;
+        previousForwardSpeed = GetForwardSpeedMps();
+        suppressDriveInputUntilRelease = true;
+        
+        Debug.Log($"[CarController] Game state reset | pos={carRigidbody.position} rot={carRigidbody.rotation.eulerAngles} gear={currentGear}");
+    }
+
+    private void ResetWheelState()
+    {
+        if (frontLeft != null)
+        {
+            frontLeft.motorTorque = 0f;
+            frontLeft.brakeTorque = 0f;
+            frontLeft.steerAngle = 0f;
+        }
+
+        if (frontRight != null)
+        {
+            frontRight.motorTorque = 0f;
+            frontRight.brakeTorque = 0f;
+            frontRight.steerAngle = 0f;
+        }
+
+        if (backLeft != null)
+        {
+            backLeft.motorTorque = 0f;
+            backLeft.brakeTorque = 0f;
+            backLeft.steerAngle = 0f;
+        }
+
+        if (backRight != null)
+        {
+            backRight.motorTorque = 0f;
+            backRight.brakeTorque = 0f;
+            backRight.steerAngle = 0f;
+        }
+    }
 
     void FixedUpdate()
     {
