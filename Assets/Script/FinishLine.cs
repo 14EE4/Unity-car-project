@@ -25,8 +25,18 @@ public class FinishLine : MonoBehaviour
         }
         else
         {
+            if (!finishLineCollider.isTrigger)
+            {
+                finishLineCollider.isTrigger = true;
+                Debug.LogWarning("[FinishLine] Collider was not Trigger. Auto-set isTrigger=true.");
+            }
+
             Debug.Log($"[FinishLine] Collider state | enabled={finishLineCollider.enabled} | isTrigger={finishLineCollider.isTrigger} | layer={gameObject.layer}");
         }
+
+        Debug.Log("[FinishLine] Trigger-only mode. Finish line Rigidbody is not required if the player has a Rigidbody.");
+
+        Debug.Log($"[FinishLine] Transform | position={transform.position} | scale={transform.lossyScale}");
     }
 
     private void OnTriggerEnter(Collider other)
