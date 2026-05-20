@@ -119,6 +119,7 @@ public class CarController : MonoBehaviour
     public void ResetGameState()
     {
         // 물리 상태를 먼저 멈춘 다음 위치/회전을 되돌린다.
+        carRigidbody.WakeUp();
         carRigidbody.linearVelocity = Vector3.zero;
         carRigidbody.angularVelocity = Vector3.zero;
         carRigidbody.position = initialPosition;
@@ -127,6 +128,9 @@ public class CarController : MonoBehaviour
         Physics.SyncTransforms();
 
         ResetWheelState();
+        carRigidbody.linearVelocity = Vector3.zero;
+        carRigidbody.angularVelocity = Vector3.zero;
+        carRigidbody.Sleep();
         
         // 기어 및 입력 상태 초기화
         currentGear = 0;
