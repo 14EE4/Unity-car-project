@@ -31,10 +31,23 @@ public class PauseMenuController : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Debug.Log($"[PauseMenuController] Escape pressed (isPaused={isPaused})");
             TogglePause();
+        }
 
-        if (isPaused && Input.GetKeyDown(KeyCode.R))
+        bool pauseMenuVisible = pausePanel != null && pausePanel.alpha > 0f;
+        bool gameIsPaused = isPaused || Time.timeScale == 0f || pauseMenuVisible;
+
+        if (gameIsPaused && Input.GetKeyDown(KeyCode.R))
+        {
+            Debug.Log($"[PauseMenuController] R pressed while paused (isPaused={isPaused}, timeScale={Time.timeScale}, pauseMenuVisible={pauseMenuVisible}) -> ResetGame()");
             ResetGame();
+        }
+        else if (Input.GetKeyDown(KeyCode.R))
+        {
+            Debug.Log($"[PauseMenuController] R pressed but ignored because isPaused={isPaused}, timeScale={Time.timeScale}, pauseMenuVisible={pauseMenuVisible}");
+        }
     }
 
     public void TogglePause()
@@ -164,11 +177,13 @@ public class PauseMenuController : MonoBehaviour
     public void ResetGame()
     {
         Debug.Log("[PauseMenuController] Resetting game state...");
+        Debug.Log($"[PauseMenuController] ResetGame state snapshot: isPaused={isPaused}, timeScale={Time.timeScale}");
         
         // 1. 차 상태 초기화
         var carController = Object.FindFirstObjectByType<CarController>();
         if (carController != null)
         {
+            Debug.Log("[PauseMenuController] CarController found -> ResetGameState()");
             carController.ResetGameState();
         }
         else
@@ -180,6 +195,7 @@ public class PauseMenuController : MonoBehaviour
         var checkpointManager = Object.FindFirstObjectByType<CheckpointManager>();
         if (checkpointManager != null)
         {
+            Debug.Log("[PauseMenuController] CheckpointManager found -> ResetCheckpoints()");
             checkpointManager.ResetCheckpoints();
         }
         else
@@ -191,6 +207,7 @@ public class PauseMenuController : MonoBehaviour
         var cameraController = Object.FindFirstObjectByType<CameraController>();
         if (cameraController != null)
         {
+            Debug.Log("[PauseMenuController] CameraController found -> ResetCamera()");
             cameraController.ResetCamera();
         }
         else
@@ -202,6 +219,7 @@ public class PauseMenuController : MonoBehaviour
         var finishLine = Object.FindFirstObjectByType<FinishLine>();
         if (finishLine != null)
         {
+            Debug.Log("[PauseMenuController] FinishLine found -> ResetRaceTimer()");
             finishLine.ResetRaceTimer();
         }
         else
