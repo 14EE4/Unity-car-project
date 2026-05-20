@@ -88,8 +88,21 @@ public class CameraController : MonoBehaviour
     {
         firstPerson = true;
         zoomDistance = 0f;
-        ResetCameraToInitial();
-        Debug.Log("[CameraController] Camera reset to initial state (First-Person)");
+        // 우선적으로 차량의 firstPersonAnchor로 카메라를 붙입니다.
+        if (firstPersonAnchor != null)
+        {
+            transform.SetParent(firstPersonAnchor);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+            yaw = firstPersonAnchor.eulerAngles.y;
+            pitch = firstPersonAnchor.eulerAngles.x;
+            Debug.Log("[CameraController] Camera reset and attached to firstPersonAnchor.");
+        }
+        else
+        {
+            ResetCameraToInitial();
+            Debug.Log("[CameraController] Camera reset to initial state (firstPersonAnchor not set)");
+        }
     }
 
     void Update()
