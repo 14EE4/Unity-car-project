@@ -123,13 +123,15 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    // 키 가이드 표시: 에디터에서 할당된 keyGuidePanel을 우선 사용합니다.
+    // 키 가이드 표시: 인스펙터에 할당된 패널을 우선 사용하고, 없으면 씬의 기존 KeyGuide를 찾아 재사용하거나
+    // KeyGuideFactory로 런타임 생성합니다. PauseMenuController와 동일한 동작을 하도록 구현되어 있습니다.
     public void ShowKeyGuide()
     {
         Debug.Log("[MainMenuController] ShowKeyGuide invoked");
+
+        // 1) 인스펙터에 할당된 CanvasGroup이 있으면 그것을 사용
         if (keyGuidePanel != null)
         {
-            // 할당된 CanvasGroup을 사용해 표시 상태로 전환합니다.
             if (!keyGuidePanel.gameObject.activeSelf)
                 keyGuidePanel.gameObject.SetActive(true);
             keyGuidePanel.alpha = 1f;
@@ -143,9 +145,48 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        // 참조가 없는 경우에는 에디터에서 할당하도록 유도합니다. (옵트인으로 런타임 생성 가능)
-        Debug.LogWarning("[MainMenuController] ShowKeyGuide: keyGuidePanel reference is null. Assign in inspector or enable runtime creation.");
-        return;
+        // 2) 씬에서 기존 KeyGuidePanel을 찾고, Factory로 생성된 정상적인 구조인지 확인
+        var go = GameObject.Find("KeyGuidePanel");
+        if (go != null)
+        {
+            // Factory로 생성된 패널은 부모가 KeyGuideOverlay이어야 함. 아니라면 제거하고 재생성.
+            if (go.transform.parent == null || go.transform.parent.name != "KeyGuideOverlay")
+            {
+                Debug.Log("[MainMenuController] Found non-factory KeyGuidePanel in scene; removing to enforce factory creation.");
+                Object.Destroy(go);
+            }
+            else
+            {
+                var cg = go.GetComponent<CanvasGroup>();
+                if (cg != null)
+                {
+                    Debug.Log("[MainMenuController] Found existing KeyGuidePanel created by factory");
+                    if (!cg.gameObject.activeSelf) cg.gameObject.SetActive(true);
+                    var overlay = cg.gameObject.transform.parent;
+                    if (overlay != null && !overlay.gameObject.activeSelf) overlay.gameObject.SetActive(true);
+                    cg.alpha = 1f; cg.interactable = true; cg.blocksRaycasts = true; cg.transform.SetAsLastSibling();
+                    keyGuidePanel = cg;
+                    return;
+                }
+            }
+        }
+
+        // 3) 최종적으로 KeyGuideFactory로 런타임 생성 시도
+        Debug.Log("[MainMenuController] Creating runtime KeyGuidePanel via KeyGuideFactory");
+        var runtimeCg = KeyGuideFactory.CreateKeyGuide(null);
+        if (runtimeCg != null)
+        {
+            Debug.Log("[MainMenuController] Runtime KeyGuidePanel created on-demand.");
+            runtimeCg.gameObject.SetActive(true);
+            runtimeCg.alpha = 1f;
+            runtimeCg.interactable = true;
+            runtimeCg.blocksRaycasts = true;
+            runtimeCg.transform.SetAsLastSibling();
+            keyGuidePanel = runtimeCg;
+            return;
+        }
+
+        Debug.LogError("[MainMenuController] ShowKeyGuide: Could not find or create KeyGuidePanel!");
     }
 
     // KeyGuide creation is now centralized in KeyGuideFactory

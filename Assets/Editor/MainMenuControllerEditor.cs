@@ -42,17 +42,32 @@ public class MainMenuControllerEditor : Editor
         CanvasGroup foundSettings = null;
         CanvasGroup foundKeyGuide = null;
 
-        // 씬의 모든 CanvasGroup을 검색하여 이름 기반 후보를 찾습니다.
-        foreach (var cg in Object.FindObjectsOfType<CanvasGroup>())
+        // 씬의 모든 CanvasGroup을 검색하여 후보를 찾습니다.
+        // 이름 매칭이 실패할 수 있어, 이름뿐만 아니라 KeyGuide 구조(Title/Body 자식)도 확인합니다.
+        var all = Object.FindObjectsOfType<CanvasGroup>();
+        Debug.Log($"[MainMenuControllerEditor] Found {all.Length} CanvasGroup(s) in scene for auto-assign check.");
+        foreach (var cg in all)
         {
             var name = cg.gameObject.name.ToLower();
-            if (foundSettings == null && name.Contains("setting"))
+            var normalized = name.Replace('_', ' ').Replace('-', ' ');
+
+            // Settings 후보: 이름에 'setting' 포함
+            if (foundSettings == null && normalized.Contains("setting"))
             {
                 foundSettings = cg;
+                Debug.Log($"[MainMenuControllerEditor] Candidate for settingsPanel: {cg.gameObject.name}");
+                continue;
             }
-            if (foundKeyGuide == null && (name.Contains("keyguide") || name.Contains("key_guide") || name.Contains("key guide")))
+
+            // KeyGuide 후보 판단: 다양한 케이스를 허용
+            bool nameLooksLikeKeyGuide = normalized.Contains("keyguide") || (normalized.Contains("key") && normalized.Contains("guide")) || normalized.Contains("guide");
+            bool hasKeyGuideChildren = cg.gameObject.transform.Find("Body") != null && cg.gameObject.transform.Find("Title") != null;
+
+            if (foundKeyGuide == null && (nameLooksLikeKeyGuide || hasKeyGuideChildren))
             {
                 foundKeyGuide = cg;
+                Debug.Log($"[MainMenuControllerEditor] Candidate for keyGuidePanel: {cg.gameObject.name} (nameMatch={nameLooksLikeKeyGuide}, hasChildren={hasKeyGuideChildren})");
+                continue;
             }
         }
 
