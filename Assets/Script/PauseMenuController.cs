@@ -251,6 +251,52 @@ public class PauseMenuController : MonoBehaviour
         LoadingScreenManager.LoadScene(mainMenuSceneName);
     }
 
+    /// <summary>
+    /// 게임을 초기 상태로 리셋합니다. (차 위치, 체크포인트, 카메라, 랩타임은 보존)
+    /// </summary>
+    public void ResetGame()
+    {
+        Debug.Log("[PauseMenuController] Resetting game state...");
+        
+        // 1. 차 상태 초기화
+        var carController = Object.FindFirstObjectByType<CarController>();
+        if (carController != null)
+        {
+            carController.ResetGameState();
+        }
+        else
+        {
+            Debug.LogWarning("[PauseMenuController] CarController not found");
+        }
+        
+        // 2. 체크포인트 초기화 (방문 상태만 리셋, 기록된 랩타임은 보존)
+        var checkpointManager = Object.FindFirstObjectByType<CheckpointManager>();
+        if (checkpointManager != null)
+        {
+            checkpointManager.ResetCheckpoints();
+        }
+        else
+        {
+            Debug.LogWarning("[PauseMenuController] CheckpointManager not found");
+        }
+        
+        // 3. 카메라 리셋
+        var cameraController = Object.FindFirstObjectByType<CameraController>();
+        if (cameraController != null)
+        {
+            cameraController.ResetCamera();
+        }
+        else
+        {
+            Debug.LogWarning("[PauseMenuController] CameraController not found");
+        }
+        
+        // 4. 게임 재개 (일시정지 해제)
+        Resume();
+        
+        Debug.Log("[PauseMenuController] Game reset complete! (Lap times preserved)");
+    }
+
     void HidePanelImmediate()
     {
         pausePanel.alpha = 0f;

@@ -43,6 +43,10 @@ public class CarController : MonoBehaviour
 
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
 
+    // 게임 초기화를 위한 초기 위치/회전 저장
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
+
     void Start()
     {
         // 마우스 커서를 게임 화면 중앙에 고정 (정교한 조작을 위해 필수)
@@ -64,6 +68,10 @@ public class CarController : MonoBehaviour
         previousForwardSpeed = GetForwardSpeedMps();
         // Ensure we start in neutral gear on scene start
         currentGear = 0;
+        
+        // 게임 초기 상태 저장 (리셋용)
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
     }
 
     void Update()
@@ -105,7 +113,31 @@ public class CarController : MonoBehaviour
         }
     }
 
-    
+    /// <summary>
+    /// 게임 상태를 초기값으로 리셋합니다. (위치, 회전, 속도, 기어, 입력)
+    /// </summary>
+    public void ResetGameState()
+    {
+        // 위치와 회전 초기화
+        transform.position = initialPosition;
+        transform.rotation = initialRotation;
+        
+        // 속도와 각속도 초기화
+        carRigidbody.linearVelocity = Vector3.zero;
+        carRigidbody.angularVelocity = Vector3.zero;
+        
+        // 기어 및 입력 상태 초기화
+        currentGear = 0;
+        throttleInput = 0f;
+        brakeInput = 0f;
+        handbrakeActive = false;
+        currentSteer = 0f;
+        appliedMotorTorque = 0f;
+        appliedBrakeTorque = 0f;
+        previousForwardSpeed = GetForwardSpeedMps();
+        
+        Debug.Log("[CarController] Game state reset to initial position and rotation");
+    }
 
     void FixedUpdate()
     {

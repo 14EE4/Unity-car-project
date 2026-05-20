@@ -80,6 +80,18 @@ public class CameraController : MonoBehaviour
         pitch = initialRotation.x;
         yaw = initialRotation.y;
     }
+
+    /// <summary>
+    /// 카메라를 초기 상태로 리셋합니다. (1인칭, 초기 위치/각도)
+    /// </summary>
+    public void ResetCamera()
+    {
+        firstPerson = true;
+        zoomDistance = 0f;
+        ResetCameraToInitial();
+        Debug.Log("[CameraController] Camera reset to initial state (First-Person)");
+    }
+
     void Update()
     {
         if (Input.GetKeyDown(toggleKey))
