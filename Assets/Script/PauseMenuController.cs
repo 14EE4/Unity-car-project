@@ -4,8 +4,6 @@ using UnityEngine.UI;
 
 public class PauseMenuController : MonoBehaviour
 {
-    [Tooltip("CanvasGroup used for the pause panel UI. Assign the panel's CanvasGroup in Inspector.")]
-    public CanvasGroup pausePanel;
     [Tooltip("Scene name for the main menu to return to")]
     public string mainMenuSceneName = "MainMenu";
 
@@ -13,11 +11,21 @@ public class PauseMenuController : MonoBehaviour
     public bool showKeyGuideOnPause = false;
 
     bool isPaused = false;
+    CanvasGroup pausePanel;
+
+    // 다른 스크립트에서 pausePanel 참조용 공개 프로퍼티
+    public CanvasGroup GetPausePanel => pausePanel;
 
     void Start()
     {
-        if (pausePanel != null)
-            HidePanelImmediate();
+        // pausePanel은 이 스크립트가 붙어있는 GameObject의 CanvasGroup
+        pausePanel = GetComponent<CanvasGroup>();
+        if (pausePanel == null)
+        {
+            Debug.LogError("[PauseMenuController] This script must be attached to a GameObject with a CanvasGroup component!");
+            return;
+        }
+        HidePanelImmediate();
     }
 
     void Update()

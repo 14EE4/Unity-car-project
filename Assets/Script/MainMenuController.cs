@@ -240,7 +240,7 @@ public class MainMenuController : MonoBehaviour
         
         // Prefer attaching to the root Canvas in the active scene so the panel appears above other UI
         if (canvas != null) parent = canvas.transform;
-        else if (pm != null && pm.pausePanel != null) parent = pm.pausePanel.transform;
+        else if (pm != null && pm.GetPausePanel != null) parent = pm.GetPausePanel.transform;
 
         if (parent == null)
         {
