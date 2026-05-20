@@ -36,17 +36,11 @@ public class PauseMenuController : MonoBehaviour
             TogglePause();
         }
 
-        bool pauseMenuVisible = pausePanel != null && pausePanel.alpha > 0f;
-        bool gameIsPaused = isPaused || Time.timeScale == 0f || pauseMenuVisible;
-
-        if (gameIsPaused && Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.R))
         {
-            Debug.Log($"[PauseMenuController] R pressed while paused (isPaused={isPaused}, timeScale={Time.timeScale}, pauseMenuVisible={pauseMenuVisible}) -> ResetGame()");
+            bool pauseMenuVisible = pausePanel != null && pausePanel.alpha > 0f;
+            Debug.Log($"[PauseMenuController] R pressed -> ResetGame() (isPaused={isPaused}, timeScale={Time.timeScale}, pauseMenuVisible={pauseMenuVisible})");
             ResetGame();
-        }
-        else if (Input.GetKeyDown(KeyCode.R))
-        {
-            Debug.Log($"[PauseMenuController] R pressed but ignored because isPaused={isPaused}, timeScale={Time.timeScale}, pauseMenuVisible={pauseMenuVisible}");
         }
     }
 
