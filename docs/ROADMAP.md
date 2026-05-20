@@ -1,48 +1,49 @@
 
+
 [Back to README](../README.md)
 
-# ROADMAP
+# 로드맵
 
-전체 진행 상황: **40% complete** (완료 항목 대비 전체 작업 비율 — 자세한 현황은 TODO 리스트와 연동 필요)
-
----
-
-## Summary
-
-- Completed: 8+ items (see `docs/DEVELOPMENT_LOG.md`)
-- Remaining: short/medium/long term tasks listed below
+전체 진행 상황: **40% 완료** (완료 항목 대비 전체 작업 비율 - 자세한 현황은 TODO 리스트와 연동 필요)
 
 ---
 
-## Short-term / Urgent (단기 / 긴급)
+## 요약
 
-- [ ] Fix lap time persistence (랩 타임 영속성 저장 및 메인 화면 복귀 시 Recent/Best 복원) — 구현 방식: `PlayerPrefs` 또는 파일 저장
-- [ ] Implement Settings window details (설정 창: 해상도, fullscreen, graphics/sound toggles, key bindings)
-- [ ] Fix main screen image / camera linkage (메인씬 카메라 직결 문제 해결 또는 안정적 캡처 대체)
-- [ ] Fix duplicate main screen key guide (중복 표시 근원 제거)
-- [ ] Verify tire prefab connections across all scenes and prefabs (프리팹 연결 검증)
+- 완료: 8개 이상 (자세한 내용은 [docs/DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) 참고)
+- 남은 작업: 아래의 단기 / 중기 / 장기 항목
 
 ---
 
-## Mid-term (2주–4주)
+## 단기 / 긴급
 
-- [ ] Audio system: engine RPM pitch shifting, skid & ambient SFX, mixing levels
-- [ ] Multiple vehicle selection (data-driven prefabs / vehicle list UI)
-- [ ] Add additional tracks / integrate new maps
-
----
-
-## Long-term (4주–최종)
-
-- [ ] Race flow: start lights countdown, checkpoint order validation, penalties & re-trigger rules
-- [ ] Finalize track and improve off-track slip handling (enhanced traction/slip model)
-- [ ] Long-term lap time storage & query system (persistent DB/file or `PlayerPrefs` + UI querying/sorting)
-- [ ] Build pipeline and produce distributable builds
-- [ ] Prepare submission-ready documentation (한/영, 스크린샷, quick start)
+- [ ] 랩 타임 영속성 저장 및 메인 화면 복귀 시 Recent / Best 복원 - 구현 방식: `PlayerPrefs` 또는 파일 저장
+- [ ] 설정 창 세부 기능 구현 - 해상도, 전체 화면, 그래픽 / 사운드 토글, 키 바인딩
+- [ ] 메인 화면 이미지 / 카메라 연결 문제 해결 - 메인 씬 카메라 직결 문제를 수정하거나 안정적인 캡처 방식으로 대체
+- [ ] 메인 화면 키 가이드 중복 표시 해결 - 중복 표시의 근원 제거
+- [ ] 모든 씬과 프리팹에서 타이어 프리팹 연결 검증
 
 ---
 
-### Notes
+## 중기 (2주 - 4주)
+
+- [ ] 오디오 시스템: 엔진 RPM 피치 변화, 스키드 및 주변 환경 효과음, 믹싱 레벨
+- [ ] 다중 차량 선택 기능 - 데이터 기반 프리팹 / 차량 목록 UI
+- [ ] 추가 트랙 추가 / 새 맵 통합
+
+---
+
+## 장기 (4주 - 최종)
+
+- [ ] 레이스 흐름: 출발 신호 카운트다운, 체크포인트 순서 검증, 페널티 및 재트리거 규칙
+- [ ] 트랙 마감 및 오프 트랙 미끄러짐 처리 개선 - 향상된 접지 / 슬립 모델 적용
+- [ ] 장기 랩 타임 저장 및 조회 시스템 - 영구 DB / 파일 또는 `PlayerPrefs` + UI 조회 / 정렬
+- [ ] 빌드 파이프라인 정리 및 배포용 빌드 생성
+- [ ] 제출용 문서 정비 - 한 / 영, 스크린샷, 빠른 시작 안내
+
+---
+
+### 참고
 
 - 기술 명칭은 영문 유지(예: `Linear Damping`, `PlayerPrefs`)하고 설명은 한글로 작성했습니다.
-- 우선순위 변경 또는 세부 작업 분할을 원하시면 항목별로 예상 소요(인력/시간)를 추가하겠습니다.
+- 우선순위 변경 또는 세부 작업 분할을 원하시면 항목별로 예상 소요(인력 / 시간)를 추가하겠습니다.
