@@ -2,12 +2,22 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+// 메인 메뉴 UI 제어기
+// - 씬 전환(Play 버튼)
+// - 설정 창(ShowSettings/CloseSettings)
+// - 키 가이드(ShowKeyGuide/CloseKeyGuide)
+// 인스펙터에서 UI 참조(`settingsPanel`, `keyGuidePanel`)를 연결하는 것을 권장합니다.
 public class MainMenuController : MonoBehaviour
 {
     [Tooltip("Scene name to load when Play is pressed")]
     public string mainSceneName = "Main";
     public CanvasGroup settingsPanel;
     public CanvasGroup keyGuidePanel;
+
+    [Tooltip("If true, MainMenuController is allowed to create a KeyGuide at runtime when no reference is assigned. Keep false to enforce editor-assigned references.")]
+    // 런타임에 KeyGuide를 자동 생성할지 여부 (기본 false).
+    // 유지보수를 위해 인스펙터에서 직접 할당하는 것을 권장합니다.
+    public bool allowRuntimeKeyGuideCreation = false;
 
     void OnValidate()
     {
@@ -32,9 +42,11 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
+        // 메인 메뉴 진입 시 커서를 해제하고 표시합니다.
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        // 설정 패널이 에디터에서 연결되어 있으면 초기 상태로 숨깁니다.
         if (settingsPanel != null)
         {
             if (!settingsPanel.gameObject.activeSelf)
@@ -45,91 +57,43 @@ public class MainMenuController : MonoBehaviour
             Debug.Log($"[MainMenuController] settingsPanel initialized activeSelf={settingsPanel.gameObject.activeSelf}, activeInHierarchy={settingsPanel.gameObject.activeInHierarchy}");
         }
 
+        // 키 가이드도 동일하게 초기 숨김 상태로 두되, 참조가 없으면
+        // allowRuntimeKeyGuideCreation가 true인 경우에만 런타임 생성 시도합니다.
         if (keyGuidePanel != null)
         {
             keyGuidePanel.alpha = 0f;
             keyGuidePanel.interactable = false;
             keyGuidePanel.blocksRaycasts = false;
         }
-        else
+        else if (allowRuntimeKeyGuideCreation)
         {
-            // If a non-factory KeyGuidePanel exists in the scene (created previously
-            // without the overlay), remove it so we always use KeyGuideFactory.
-            var existing = GameObject.Find("KeyGuidePanel");
-            if (existing != null && (existing.transform.parent == null || existing.transform.parent.name != "KeyGuideOverlay"))
-            {
-                Debug.Log("[MainMenuController] Found non-factory KeyGuidePanel in scene; removing to enforce factory creation.");
-                Object.Destroy(existing);
-            }
-
-            // create a runtime key guide so pause/menu buttons can find it
+            // As an opt-in fallback, create a runtime key guide so pause/menu buttons can find it.
             var cg = KeyGuideFactory.CreateKeyGuide(null);
             if (cg != null)
             {
                 keyGuidePanel = cg;
-                // Hide overlay by default so it doesn't block the main menu
                 var overlay = cg.gameObject.transform.parent;
                 if (overlay != null) overlay.gameObject.SetActive(false);
                 Debug.Log($"[MainMenuController] Runtime KeyGuidePanel created in Start (parent={cg.gameObject.transform.parent?.name})");
             }
-        }
-
-        // Defensive: find any Button named like KeyGuide or containing Key/Guide text and bind it to ShowKeyGuide
-        var allButtons = Object.FindObjectsOfType<Button>();
-        foreach (var b in allButtons)
-        {
-            if (b == null || b.onClick == null) continue;
-            var nm = b.gameObject.name.ToLower();
-            bool matchesName = nm.Contains("key") || nm.Contains("guide");
-            if (!matchesName)
+            else
             {
-                // also check child Text component for label
-                var txt = b.GetComponentInChildren<Text>();
-                if (txt != null)
-                {
-                    var t = txt.text.ToLower();
-                    matchesName = t.Contains("key") || t.Contains("guide");
-                }
-            }
-
-            if (matchesName)
-            {
-                // Don't add a runtime listener if a persistent listener to ShowKeyGuide
-                // already exists (prevents double invocation when inspector bindings are present).
-                bool hasPersistentShow = false;
-                try
-                {
-                    int pc = b.onClick.GetPersistentEventCount();
-                    for (int i = 0; i < pc; i++)
-                    {
-                        var method = b.onClick.GetPersistentMethodName(i);
-                        if (!string.IsNullOrEmpty(method) && method.Contains("ShowKeyGuide"))
-                        {
-                            hasPersistentShow = true;
-                            break;
-                        }
-                    }
-                }
-                catch { /* Some platforms may not expose persistent info; ignore and continue binding. */ }
-
-                if (hasPersistentShow)
-                {
-                    Debug.Log($"[MainMenuController] Skipping auto-bind for button '{b.gameObject.name}' because a persistent ShowKeyGuide listener exists.");
-                }
-                else
-                {
-                    Debug.Log($"[MainMenuController] Binding runtime onClick for button '{b.gameObject.name}' to ShowKeyGuide()");
-                    b.onClick.AddListener(ShowKeyGuide);
-                }
+                Debug.LogWarning("[MainMenuController] allowRuntimeKeyGuideCreation=true but KeyGuideFactory.CreateKeyGuide returned null.");
             }
         }
+
+        // NOTE: Automatic runtime binding of UI buttons has been removed to encourage
+        // editor-time wiring. Use the inspector to assign button onClick handlers
+        // to call `ShowKeyGuide()` and `ShowSettings()` for clearer ownership.
     }
 
+    // Play 버튼 동작: 메인 게임 씬을 로드합니다.
     public void PlayGame()
     {
         LoadingScreenManager.LoadScene(mainSceneName);
     }
 
+    // 설정창 열기: 인스펙터에서 할당된 settingsPanel의 CanvasGroup을 사용해 표시합니다.
     public void ShowSettings()
     {
         Debug.Log($"[MainMenuController] ShowSettings invoked (panel assigned={settingsPanel != null})");
@@ -159,75 +123,56 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    // 키 가이드 표시: 인스펙터에 할당된 패널을 우선 사용하고, 없으면 씬의 기존 KeyGuide를 찾아 재사용하거나
+    // KeyGuideFactory로 런타임 생성합니다. PauseMenuController와 동일한 동작을 하도록 구현되어 있습니다.
     public void ShowKeyGuide()
     {
-        // Ensure Key Guide only shows when explicitly invoked by button
         Debug.Log("[MainMenuController] ShowKeyGuide invoked");
+
+        // 1) 인스펙터에 할당된 CanvasGroup이 있으면 그것을 사용
         if (keyGuidePanel != null)
         {
-            Debug.Log("[MainMenuController] Using stored keyGuidePanel reference");
-            Debug.Log($"[MainMenuController] keyGuidePanel sibling before={keyGuidePanel.transform.GetSiblingIndex()}, activeSelf={keyGuidePanel.gameObject.activeSelf}");
             if (!keyGuidePanel.gameObject.activeSelf)
                 keyGuidePanel.gameObject.SetActive(true);
             keyGuidePanel.alpha = 1f;
             keyGuidePanel.interactable = true;
             keyGuidePanel.blocksRaycasts = true;
             keyGuidePanel.transform.SetAsLastSibling();
-            Debug.Log($"[MainMenuController] keyGuidePanel sibling after={keyGuidePanel.transform.GetSiblingIndex()}");
-            
-            // Also ensure overlay is active
+
             var overlay = keyGuidePanel.gameObject.transform.parent;
             if (overlay != null && !overlay.gameObject.activeSelf)
                 overlay.gameObject.SetActive(true);
             return;
         }
 
-        // Try to find existing KeyGuidePanel in current scene
+        // 2) 씬에서 기존 KeyGuidePanel을 찾고, Factory로 생성된 정상적인 구조인지 확인
         var go = GameObject.Find("KeyGuidePanel");
         if (go != null)
         {
-            var cg = go.GetComponent<CanvasGroup>();
-            if (cg != null)
+            // Factory로 생성된 패널은 부모가 KeyGuideOverlay이어야 함. 아니라면 제거하고 재생성.
+            if (go.transform.parent == null || go.transform.parent.name != "KeyGuideOverlay")
             {
-                Debug.Log("[MainMenuController] Found existing KeyGuidePanel");
-                // Ensure Body text contains the latest control hint (Space: Handbrake)
-                var bodyTf = cg.gameObject.transform.Find("Body");
-                if (bodyTf != null)
+                Debug.Log("[MainMenuController] Found non-factory KeyGuidePanel in scene; removing to enforce factory creation.");
+                Object.Destroy(go);
+            }
+            else
+            {
+                var cg = go.GetComponent<CanvasGroup>();
+                if (cg != null)
                 {
-                    var txt = bodyTf.GetComponent<Text>();
-                    if (txt != null)
-                    {
-                        if (!txt.text.Contains("Space: Handbrake"))
-                        {
-                            txt.text = txt.text.Replace("S: Brake\n", "S: Brake\nSpace: Handbrake\n");
-                            Debug.Log("[MainMenuController] Updated KeyGuidePanel Body text to include Space: Handbrake");
-                        }
-                        if (!txt.text.Contains("Use Mouse Wheel to adjust camera distance"))
-                        {
-                            txt.text = txt.text + "\n\nUse Mouse Wheel to adjust camera distance.";
-                            Debug.Log("[MainMenuController] Appended simplified camera note to KeyGuidePanel Body text");
-                        }
-                    }
+                    Debug.Log("[MainMenuController] Found existing KeyGuidePanel created by factory");
+                    if (!cg.gameObject.activeSelf) cg.gameObject.SetActive(true);
+                    var overlay = cg.gameObject.transform.parent;
+                    if (overlay != null && !overlay.gameObject.activeSelf) overlay.gameObject.SetActive(true);
+                    cg.alpha = 1f; cg.interactable = true; cg.blocksRaycasts = true; cg.transform.SetAsLastSibling();
+                    keyGuidePanel = cg;
+                    return;
                 }
-                if (!cg.gameObject.activeSelf)
-                    cg.gameObject.SetActive(true);
-                    
-                // Activate overlay too
-                var overlay = cg.gameObject.transform.parent;
-                if (overlay != null && !overlay.gameObject.activeSelf)
-                    overlay.gameObject.SetActive(true);
-                    
-                cg.alpha = 1f;
-                cg.interactable = true;
-                cg.blocksRaycasts = true;
-                cg.transform.SetAsLastSibling();
-                keyGuidePanel = cg;
-                return;
             }
         }
 
-        // As a fallback, attempt to create a runtime KeyGuide so the button always works
-        Debug.LogWarning("[MainMenuController] KeyGuidePanel missing, attempting runtime creation.");
+        // 3) 최종적으로 KeyGuideFactory로 런타임 생성 시도
+        Debug.Log("[MainMenuController] Creating runtime KeyGuidePanel via KeyGuideFactory");
         var runtimeCg = KeyGuideFactory.CreateKeyGuide(null);
         if (runtimeCg != null)
         {
@@ -246,6 +191,7 @@ public class MainMenuController : MonoBehaviour
 
     // KeyGuide creation is now centralized in KeyGuideFactory
 
+    // 설정창 닫기: CanvasGroup을 사용하여 숨김 처리합니다.
     public void CloseSettings()
     {
         Debug.Log($"[MainMenuController] CloseSettings invoked (panel assigned={settingsPanel != null})");
@@ -262,6 +208,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    // 지정한 Transform부터 상위 계층을 로그로 출력합니다. 디버그 용도입니다.
     void LogHierarchy(Transform start)
     {
         var current = start;
