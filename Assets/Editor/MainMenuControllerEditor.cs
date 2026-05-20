@@ -1,6 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 
+// MainMenuController 전용 에디터 검사기
+// - 씬에서 적절한 CanvasGroup을 찾아 `settingsPanel`/`keyGuidePanel`에 할당하는 단축 버튼을 제공합니다.
+// - 런타임 생성 대신 에디터에서 참조를 정리하도록 돕습니다.
 [CustomEditor(typeof(MainMenuController))]
 public class MainMenuControllerEditor : Editor
 {
@@ -11,21 +14,21 @@ public class MainMenuControllerEditor : Editor
         MainMenuController t = (MainMenuController)target;
 
         EditorGUILayout.Space();
-        EditorGUILayout.HelpBox("Use the buttons below to auto-assign UI CanvasGroup references from the current scene. Prefer assigning references in the inspector for stable behavior.", MessageType.Info);
+        EditorGUILayout.HelpBox("씬에서 CanvasGroup을 찾아 자동 할당하거나, 할당된 객체를 핑할 수 있는 도구입니다. 인스펙터 직접 연결을 우선하세요.", MessageType.Info);
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Auto-assign Panels from Scene"))
+        if (GUILayout.Button("씬에서 패널 자동 할당"))
         {
             AutoAssignPanels(t);
         }
-        if (GUILayout.Button("Ping Assigned Objects"))
+        if (GUILayout.Button("할당된 객체 핑"))
         {
             PingAssigned(t);
         }
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
-        EditorGUILayout.HelpBox("If you enable 'allowRuntimeKeyGuideCreation' the controller may create a KeyGuide at runtime when no reference is assigned. Prefer leaving it disabled and assign the reference in the scene.", MessageType.Warning);
+        EditorGUILayout.HelpBox("'allowRuntimeKeyGuideCreation'을 활성화하면 참조가 없을 때 런타임 생성 시도합니다. 기본적으로 비활성화하고 에디터에서 할당하세요.", MessageType.Warning);
 
         if (GUI.changed)
         {
@@ -39,6 +42,7 @@ public class MainMenuControllerEditor : Editor
         CanvasGroup foundSettings = null;
         CanvasGroup foundKeyGuide = null;
 
+        // 씬의 모든 CanvasGroup을 검색하여 이름 기반 후보를 찾습니다.
         foreach (var cg in Object.FindObjectsOfType<CanvasGroup>())
         {
             var name = cg.gameObject.name.ToLower();
@@ -63,7 +67,7 @@ public class MainMenuControllerEditor : Editor
         }
         else
         {
-            Debug.LogWarning("[MainMenuControllerEditor] No candidate Settings panel (CanvasGroup with 'setting' in name) found in scene.");
+            Debug.LogWarning("[MainMenuControllerEditor] 씬에서 'setting'을 이름에 포함한 Settings 패널 후보를 찾지 못했습니다.");
         }
 
         if (foundKeyGuide != null)
@@ -74,7 +78,7 @@ public class MainMenuControllerEditor : Editor
         }
         else
         {
-            Debug.LogWarning("[MainMenuControllerEditor] No candidate KeyGuide panel (CanvasGroup with 'keyguide' in name) found in scene.");
+            Debug.LogWarning("[MainMenuControllerEditor] 씬에서 'keyguide'를 이름에 포함한 KeyGuide 패널 후보를 찾지 못했습니다.");
         }
 
         if (changed)
