@@ -15,6 +15,8 @@
 - 리셋 직후 남는 전진 관성 제거: `Rigidbody` 위치/회전/속도 초기화 및 `Sleep()` 적용
 - 리셋 직후 가속 키가 눌린 상태로 남는 문제 방지: 드라이브 입력 해제 전까지 입력 잠금 추가
 - `PauseMenuController` / `CarController`에 디버그 로그를 추가해 리셋 흐름과 입력 상태 추적 가능하도록 정리
+ - 에디터 유틸 추가: `MainMenuControllerEditor`에 "KeyGuide 생성 및 할당" 버튼 추가 — 씬에서 `Title`/`Body` `Text`를 찾아 재사용하고 `KeyGuideFactory.CreateKeyGuide(...)`로 오버레이/패널을 생성한 뒤 `MainMenuController.keyGuidePanel`에 안전하게 할당(Undo/씬 더티 처리 포함). 오버레이는 생성 시 초기 비활성화됨.
+ - `MainMenuController` 리팩터 및 동작 변경: 인스펙터 우선 UI 참조(`settingsPanel`, `keyGuidePanel`)를 사용하도록 변경하고, 런타임 자동 버튼 바인딩을 제거해 명시적 인스펙터 연결을 권장합니다. `allowRuntimeKeyGuideCreation` 플래그를 옵트인으로 추가해 런타임 생성 동작을 제어하며, `ShowKeyGuide()`는 (1) 인스펙터 참조 사용 → (2) 씬에서 재사용 가능한 Factory 생성물 검색 → (3) `KeyGuideFactory` 런타임 생성의 순서로 동작합니다. `CloseKeyGuide()`는 오버레이와 패널을 안전하게 숨기도록 수정했습니다. 클래스에 한국어 주석을 추가해 에디터 작업을 돕습니다.
 
 ### 2026-05-20
 
