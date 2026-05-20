@@ -70,8 +70,8 @@ public class CarController : MonoBehaviour
         currentGear = 0;
         
         // 게임 초기 상태 저장 (리셋용)
-        initialPosition = transform.position;
-        initialRotation = transform.rotation;
+        initialPosition = carRigidbody.position;
+        initialRotation = carRigidbody.rotation;
     }
 
     void Update()
@@ -118,13 +118,15 @@ public class CarController : MonoBehaviour
     /// </summary>
     public void ResetGameState()
     {
-        // 위치와 회전 초기화
-        transform.position = initialPosition;
-        transform.rotation = initialRotation;
-        
-        // 속도와 각속도 초기화
+        // 물리 상태를 먼저 멈춘 다음 위치/회전을 되돌린다.
         carRigidbody.linearVelocity = Vector3.zero;
         carRigidbody.angularVelocity = Vector3.zero;
+        carRigidbody.position = initialPosition;
+        carRigidbody.rotation = initialRotation;
+        transform.SetPositionAndRotation(initialPosition, initialRotation);
+        Physics.SyncTransforms();
+
+        ResetWheelState();
         
         // 기어 및 입력 상태 초기화
         currentGear = 0;
@@ -136,7 +138,38 @@ public class CarController : MonoBehaviour
         appliedBrakeTorque = 0f;
         previousForwardSpeed = GetForwardSpeedMps();
         
-        Debug.Log("[CarController] Game state reset to initial position and rotation");
+        Debug.Log($"[CarController] Game state reset | pos={carRigidbody.position} rot={carRigidbody.rotation.eulerAngles} gear={currentGear}");
+    }
+
+    private void ResetWheelState()
+    {
+        if (frontLeft != null)
+        {
+            frontLeft.motorTorque = 0f;
+            frontLeft.brakeTorque = 0f;
+            frontLeft.steerAngle = 0f;
+        }
+
+        if (frontRight != null)
+        {
+            frontRight.motorTorque = 0f;
+            frontRight.brakeTorque = 0f;
+            frontRight.steerAngle = 0f;
+        }
+
+        if (backLeft != null)
+        {
+            backLeft.motorTorque = 0f;
+            backLeft.brakeTorque = 0f;
+            backLeft.steerAngle = 0f;
+        }
+
+        if (backRight != null)
+        {
+            backRight.motorTorque = 0f;
+            backRight.brakeTorque = 0f;
+            backRight.steerAngle = 0f;
+        }
     }
 
     void FixedUpdate()
