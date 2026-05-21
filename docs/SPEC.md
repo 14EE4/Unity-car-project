@@ -167,3 +167,30 @@ carRigidbody.AddForce(dragForce);
 
 ---
 *참고: 프로젝트의 최종 런타임 값은 "씬 오버라이드"(인스펙터에서 씬에 저장된 값)가 우선 적용됩니다. 문서와 씬/스크립트 값에 차이가 있을 경우, 어느 쪽을 기준으로 삼을지(문서 우선 또는 씬 우선) 알려주시면 일괄 정리해드리겠습니다.*
+
+## Final Drive (최종 감속비)
+
+`final drive`는 변속기(기어) 출력과 바퀴 사이에 있는 추가 감속비(보통 디퍼렌셜의 기어비)를 의미합니다. 전체 최종 감속비는 일반적으로 다음과 같이 표현합니다:
+
+$$overallRatio = gearRatio \times finalDrive$$
+
+따라서 바퀴에 전달되는 토크 식은 확장되어 다음과 같이 됩니다:
+
+$$T_{wheel} = T_{engine} \times gearRatio \times finalDrive$$
+
+그리고 선형 가속 공식은:
+
+$$a = \frac{T_{engine} \times gearRatio \times finalDrive}{r \times m}$$
+
+문서(또는 인스펙)만 업데이트하고 스크립트는 나중에 수정하려면 다음을 권장합니다:
+
+- 문서에 `finalDrive` 기본값(예: `finalDrive = 3.5` 또는 프로젝트 요구치)을 기록하세요. 그러면 나중에 스크립트를 변경할 때 참조하기 쉽습니다.
+- 스크립트 변경 가이드(나중에 개발자가 적용할 단계):
+  1. `CarController`에 `public float finalDrive = 1.0f;` 필드 추가
+  2. 토크 계산부(`appliedMotorTorque` 산정 코드)에서 `GetCurrentGearRatio()`의 반환값 대신 `GetCurrentGearRatio() * finalDrive`를 곱하도록 변경
+  3. 문서의 `overallRatio` 공식을 코드 주석으로 추가
+  4. 에디터에서 다양한 `finalDrive` 값을 실험하여 가속/최고속 특성을 튜닝
+
+- 주의 사항: 기존 코드가 기어별 `speedRatio`로 토크를 제한하는 로직을 사용하므로(`speedRatio` 곱셈), `finalDrive`를 추가하면 동일한 최고속에서 엔진 회전수(RPM)와 토크 분포가 달라질 수 있습니다. 테스트 후 `gearMaxSpeeds` 조정이 필요할 수 있습니다.
+
+원하시면 지금 문서에 예시값을 추가하거나, 나중에 적용할 패치 스니펫(C#)을 제가 만들어 드리겠습니다(코드는 사용자의 요청 없이는 적용하지 않음). 
