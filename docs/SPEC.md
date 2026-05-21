@@ -58,6 +58,54 @@ $$a = \frac{F}{m} = \frac{T_{engine} \times G}{r \times m}$$
   - `driveDrag` = 0.6
   - `brakeDrag` = 1.8
 
+### 감속(브레이크 · 저항) 상세
+
+이 프로젝트에서 감속은 크게 세 요소로 처리됩니다: (1) 브레이크 토크, (2) 롤링 저항/엔진 브레이크, (3) Rigidbody의 선형 감쇠(Linear damping). 아래는 각 요소의 역할과 기본 수식입니다.
+
+1) 브레이크 토크 -> 선형 감속
+
+브레이크에서 설정한 토크는 바퀴에 적용된 토크로서 휠 반지름 $r$에 의해 선형 제동력으로 변환됩니다:
+
+$$F_{brake} = \frac{T_{brake}}{r}$$
+
+따라서 차량에 작용하는 감속도는:
+
+$$a_{brake} = \frac{F_{brake}}{m} = \frac{T_{brake}}{r\,m}$$
+
+코드에서는 전/후륜에 각각 `brakeTorque` 또는 `handbrakeTorque`를 직접 할당합니다(예: 정지 시 `frontLeft.brakeTorque = brakeTorque`).
+
+2) 롤링 저항 및 엔진 브레이크
+
+롤링 저항은 일반적으로 다음과 같이 모델링할 수 있습니다:
+
+$$F_{rr} = C_{rr} \times N \approx C_{rr} \times m \times g$$
+
+여기서 $C_{rr}$은 롤링 저항 계수, $N$은 수직항력(근사: $m g$)입니다. 엔진 브레이크는 `engineBrakeTorque`로서 저속/드라이브 상태에서 작은 상수 브레이크 토크처럼 동작하며, 코드에서는 `currentGear == 0 ? rollingResistanceBrake : engineBrakeTorque` 로 분기해서 적용합니다.
+
+3) Rigidbody 선형 감쇠 (Linear damping)
+
+Unity의 `Rigidbody.linearDamping`는 속도에 비례하는 감쇄항을 모델링합니다(사실상 속도에 비례하는 저항력 $F_{drag} = -c v$와 유사함). 코드에서는 입력 상태에 따라 다음 값을 적용합니다:
+
+- 가속중: `throttleDrag` (작음)
+- 브레이크중: `brakeDrag` (큼)
+- 중립: `neutralDrag`
+- 주행(드라이브): `driveDrag`
+
+이 항을 단순화하면 선형저항으로써 가속도에 미치는 영향은 다음과 같이 근사됩니다:
+
+$$F_{damping} \approx -c \times v$$
+$$a_{damping} = \frac{F_{damping}}{m} = -\frac{c}{m} v$$
+
+종합적으로, 차량에 작용하는 총 가속도(감속을 음수로 표기)는:
+
+$$a_{total} = a_{drive} - a_{brake} - a_{rr} - a_{damping}$$
+
+여기서 $a_{drive}$는 엔진이 바퀴에 제공하는 양의 가속도 항입니다. 코드 상의 실제 값은 `appliedMotorTorque`, `appliedBrakeTorque`, `rollingResistanceBrake`, 그리고 `carRigidbody.linearDamping`의 조합으로 결정됩니다.
+
+실무 팁:
+- 휠 잠김(lockup)을 방지하려면 브레이크 토크를 휠 RPM/슬립과 연동해 조절하세요.
+- `linearDamping`는 물리적 사실성과 직관적 튜닝 편의성 사이의 타협입니다. 물리 기반 저항(공기저항: $\propto v^2$, 롤링저항: 상수)에 더해 라이트한 선형항을 두어 안정된 동작을 만들 수 있습니다.
+
 ## 바퀴 / 슬립 관련
 - `forwardSlip` / `sidewaysSlip`: `WheelCollider.GetGroundHit()`의 `WheelHit.forwardSlip` 및 `WheelHit.sidewaysSlip` 값을 `CarController.GetWheelSlipText()`에서 포맷해 디버그 로그에 출력합니다.
 - Wheel friction: `WheelCollider.forwardFriction` / `WheelCollider.sidewaysFriction` 설정을 확인하세요(씬/프리팹에서 개별 설정 가능).
