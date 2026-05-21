@@ -106,6 +106,41 @@ $$a_{total} = a_{drive} - a_{brake} - a_{rr} - a_{damping}$$
 - 휠 잠김(lockup)을 방지하려면 브레이크 토크를 휠 RPM/슬립과 연동해 조절하세요.
 - `linearDamping`는 물리적 사실성과 직관적 튜닝 편의성 사이의 타협입니다. 물리 기반 저항(공기저항: $\propto v^2$, 롤링저항: 상수)에 더해 라이트한 선형항을 두어 안정된 동작을 만들 수 있습니다.
 
+### 공기저항(항력)
+
+공기저항은 속도의 제곱에 비례하는 항력으로, 고속에서 차량의 가속과 최고속에 큰 영향을 줍니다. 항력의 기본 모델은 다음과 같습니다:
+
+$$F_{drag} = \tfrac{1}{2} \rho C_d A v^2$$
+
+여기서
+- $\rho$ : 공기 밀도(해수면 기준 약 $1.225\ \mathrm{kg/m^3}$)
+- $C_d$ : 항력 계수 (무차원)
+- $A$ : 투영면적(단위: $\mathrm{m^2}$)
+- $v$ : 차량의 속도(단위: $\mathrm{m/s}$)
+
+항력에 의한 감속은 질량 $m$으로 나누어 계산합니다:
+
+$$a_{drag} = \frac{F_{drag}}{m} = \frac{1}{2m} \rho C_d A v^2$$
+
+실무 팁 및 Unity 적용 방법:
+- 실제 차량의 $C_d A$(종종 "CdA"로 표기) 값은 차종에 따라 다릅니다(스포츠카 약 0.6~0.8, 세단 약 0.6~0.9 등). 필요하면 테스트 주행에서 속도-가속 데이터를 기록해 역으로 추정할 수 있습니다.
+- `CarController`는 현재 선형 감쇠(`linearDamping`)를 사용해 간단히 저항을 표현합니다. 보다 정확한 항력 모델을 적용하려면 `FixedUpdate()`에서 속도 벡터를 읽어 다음과 같이 항력력을 직접 추가하세요:
+
+```csharp
+Vector3 v = carRigidbody.velocity;
+float speed = v.magnitude;
+Vector3 dragForce = -0.5f * airDensity * Cd * area * speed * speed * v.normalized;
+carRigidbody.AddForce(dragForce);
+```
+
+- 또는 항력의 크기만 사용해 가속 항에서 차감할 수도 있습니다(프로젝트의 물리 설계에 따라 선택).
+- 고속에서의 최고속 제한은 항력과 엔진 토크의 균형으로 결정됩니다. 따라서 `gearMaxSpeeds` 및 `speedRatio` 기반 토크 제한과 함께 항력을 고려해 튜닝하면 더 현실적인 속도 곡선을 얻습니다.
+
+간단한 튜닝 팁:
+- 초기값으로 해수면 공기밀도 $\rho=1.225$를 사용하세요.
+- 예시: 스포츠카에 대해 `CdA = 0.7`을 적용하면 항력 크기를 빠르게 체감할 수 있습니다.
+- 항력과 관련된 파라미터는 주행 로그(속도별 가속도)로 역추정하면 가장 정확합니다.
+
 ## 바퀴 / 슬립 관련
 - `forwardSlip` / `sidewaysSlip`: `WheelCollider.GetGroundHit()`의 `WheelHit.forwardSlip` 및 `WheelHit.sidewaysSlip` 값을 `CarController.GetWheelSlipText()`에서 포맷해 디버그 로그에 출력합니다.
 - Wheel friction: `WheelCollider.forwardFriction` / `WheelCollider.sidewaysFriction` 설정을 확인하세요(씬/프리팹에서 개별 설정 가능).
