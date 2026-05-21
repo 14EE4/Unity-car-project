@@ -9,8 +9,18 @@
 - `engineBrakeTorque`: 10 (스크립트 기본값, `CarController.engineBrakeTorque`). 2026-05-15 조정: 60 → 10
 
 ## 기어 비율 및 최고 속도
-- 기어비 (스크립트 기본값 `CarController.forwardGearRatios`): 1단 4.0, 2단 2.8, 3단 1.9, 4단 1.4, 5단 1.0
-- 각 기어별 최고속 (`CarController.gearMaxSpeeds`): 1단 50 km/h, 2단 85 km/h, 3단 130 km/h, 4단 160 km/h, 5단 200 km/h
+- 기어비 (스크립트 기본값 `CarController.forwardGearRatios`):
+  - 1단: 4.0
+  - 2단: 2.8
+  - 3단: 1.9
+  - 4단: 1.4
+  - 5단: 1.0
+- 각 기어별 최고속 (`CarController.gearMaxSpeeds`):
+  - 1단: 50 km/h
+  - 2단: 85 km/h
+  - 3단: 130 km/h
+  - 4단: 160 km/h
+  - 5단: 200 km/h
 
 ## 핸들링 / 스티어
 - `maxSteerAngle`: 30 (스크립트 기본값 `CarController.maxSteerAngle`)
