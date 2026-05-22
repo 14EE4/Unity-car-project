@@ -54,6 +54,8 @@ public class CarEngineAudio : MonoBehaviour
     private float previousEngineRpm = 0f;
     private float previousThrottleInput = 0f;
     private bool previousMaxRpmState = false;
+    private bool warnedMissingLoopClip;
+    private bool warnedMasterVolumeZero;
 
     private void Awake()
     {
@@ -64,7 +66,7 @@ public class CarEngineAudio : MonoBehaviour
         engineAudioSource.dopplerLevel = 0f;
         engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         engineAudioSource.minDistance = 2f;
-        engineAudioSource.maxDistance = 35f;
+        engineAudioSource.maxDistance = 100f;
         // create separate loop audio sources for crossfading
         loopSources = new AudioSource[5];
         for (int i = 0; i < loopSources.Length; i++)
@@ -78,7 +80,7 @@ public class CarEngineAudio : MonoBehaviour
             src.dopplerLevel = 0f;
             src.rolloffMode = AudioRolloffMode.Logarithmic;
             src.minDistance = 2f;
-            src.maxDistance = 35f;
+            src.maxDistance = 100f;
             loopSources[i] = src;
         }
     }
@@ -94,11 +96,17 @@ public class CarEngineAudio : MonoBehaviour
     private void SetupLoopSources()
     {
         // assign clips if present; sources are started but volumes will be controlled by UpdateEngineAudio
-        AssignLoopClip(0, idleLoopClip);
-        AssignLoopClip(1, lowLoopClip);
-        AssignLoopClip(2, medLoopClip);
-        AssignLoopClip(3, highLoopClip);
-        AssignLoopClip(4, maxLoopClip);
+        AssignLoopClip(0, ResolveLoopClip(0));
+        AssignLoopClip(1, ResolveLoopClip(1));
+        AssignLoopClip(2, ResolveLoopClip(2));
+        AssignLoopClip(3, ResolveLoopClip(3));
+        AssignLoopClip(4, ResolveLoopClip(4));
+
+        if (!warnedMissingLoopClip && (idleLoopClip == null || lowLoopClip == null || medLoopClip == null || highLoopClip == null || maxLoopClip == null))
+        {
+            warnedMissingLoopClip = true;
+            Debug.LogWarning("[CarEngineAudio] Some loop clips are missing in the Inspector. Fallback clips will be used to avoid silence.");
+        }
 
         for (int i = 0; i < loopSources.Length; i++)
         {
@@ -108,6 +116,25 @@ public class CarEngineAudio : MonoBehaviour
                 s.volume = 0f;
                 s.Play();
             }
+        }
+    }
+
+    private AudioClip ResolveLoopClip(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                return idleLoopClip ?? lowLoopClip ?? medLoopClip ?? highLoopClip ?? maxLoopClip;
+            case 1:
+                return lowLoopClip ?? idleLoopClip ?? medLoopClip ?? highLoopClip ?? maxLoopClip;
+            case 2:
+                return medLoopClip ?? lowLoopClip ?? highLoopClip ?? idleLoopClip ?? maxLoopClip;
+            case 3:
+                return highLoopClip ?? medLoopClip ?? maxLoopClip ?? lowLoopClip ?? idleLoopClip;
+            case 4:
+                return maxLoopClip ?? highLoopClip ?? medLoopClip ?? lowLoopClip ?? idleLoopClip;
+            default:
+                return idleLoopClip ?? lowLoopClip ?? medLoopClip ?? highLoopClip ?? maxLoopClip;
         }
     }
 
@@ -192,6 +219,12 @@ public class CarEngineAudio : MonoBehaviour
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.pitch = pitch;
         engineAudioSource.volume = 1f;
+
+        if (!warnedMasterVolumeZero && AudioListener.volume <= 0.001f)
+        {
+            warnedMasterVolumeZero = true;
+            Debug.LogWarning("[CarEngineAudio] AudioListener.volume is near zero. Check the master volume slider or saved settings.");
+        }
 
         // Crossfade loop sources based on rpmNorm (triangular blend between band thresholds)
         float[] weights = ComputeBandWeights(rpmNorm);
