@@ -39,7 +39,7 @@ public class CarEngineAudio : MonoBehaviour
     private int[] bandSourceIndex = new int[5];
     [Header("Debug / Gain")]
     public float masterGain = 1f;
-    public bool force2DForTesting = false;
+    public bool force2DForTesting = true;
     
     private float currentSpeedKmh;
     private float currentThrottleInput;
@@ -62,7 +62,7 @@ public class CarEngineAudio : MonoBehaviour
         engineAudioSource = GetComponent<AudioSource>();
         engineAudioSource.playOnAwake = false;
         engineAudioSource.loop = true;
-        engineAudioSource.spatialBlend = 1f;
+        engineAudioSource.spatialBlend = force2DForTesting ? 0f : 1f;
         engineAudioSource.dopplerLevel = 0f;
         engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         engineAudioSource.minDistance = 2f;
