@@ -5,6 +5,7 @@ public class CarEngineAudio : MonoBehaviour
 {
     [Header("Clips")]
     public AudioClip startupClip;
+    public AudioClip idleClip;
     public AudioClip lowOnClip;
     public AudioClip lowOffClip;
     public AudioClip medOnClip;
@@ -62,6 +63,10 @@ public class CarEngineAudio : MonoBehaviour
     private void Start()
     {
         PlayStartupSound();
+        if (idleClip != null)
+        {
+            PlayOneShotClip(idleClip);
+        }
     }
 
     public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear)
@@ -226,6 +231,7 @@ public class CarEngineAudio : MonoBehaviour
         switch (nextBand)
         {
             case 0:
+                PlayOneShotClip(idleClip);
                 if (previousBand == 1) PlayOneShotClip(lowOffClip);
                 else if (previousBand == 2) PlayOneShotClip(medOffClip);
                 else if (previousBand == 3) PlayOneShotClip(highOffClip);
