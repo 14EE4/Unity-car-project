@@ -10,11 +10,10 @@
 
 ### 2026-05-22
 
-- `CarController`에 엔진 사운드 재생 로직 추가: 런타임에 `AudioSource`를 자동 생성/설정하고, `engineLoopClip`을 주행 중 루프로 재생하도록 연결
-- 시동/기어 변속/손브레이크 전환용 `AudioClip` 슬롯 추가(`engineStartClip`, `gearShiftUpClip`, `gearShiftDownClip`, `handbrakeOnClip`, `handbrakeOffClip`)
-- 속도와 스로틀에 따라 엔진 루프의 `pitch`/`volume`이 변하도록 조정해 단순 반복음보다 주행감이 나도록 정리
-- `CarControllerEditor` 추가: 인스펙터 상단에 오디오 할당 섹션과 엔진 튜닝 항목을 따로 보여서 클립 연결이 바로 보이도록 개선
-- 에디터 작업 메모: `SportCar_1 Variant` 프리팹의 `CarController` 인스펙터에 위 클립들을 할당하고, 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
+- 오디오 로직을 `CarController`에서 분리해 `CarEngineAudio` 컴포넌트로 이동: 엔진 루프, 시동, 기어 변속, 손브레이크 효과음을 전담하도록 정리
+- `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 `pitch`/`volume`을 조절하도록 변경
+- `CarEngineAudio`는 인스펙터에 클립 슬롯이 바로 보이도록 구성하고, `CarControllerEditor`는 제거
+- 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 함께 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 클립을 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
 
 ### 2026-05-21
 

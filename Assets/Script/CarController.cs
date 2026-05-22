@@ -9,19 +9,6 @@ public class CarController : MonoBehaviour
     public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
-    [Header("Audio")]
-    public AudioClip engineStartClip;
-    public AudioClip engineLoopClip;
-    public AudioClip gearShiftUpClip;
-    public AudioClip gearShiftDownClip;
-    public AudioClip handbrakeOnClip;
-    public AudioClip handbrakeOffClip;
-    public float engineMinPitch = 0.85f;
-    public float engineMaxPitch = 1.6f;
-    public float engineMinVolume = 0.18f;
-    public float engineMaxVolume = 0.85f;
-    public float engineFullPitchSpeedKmh = 140f;
-
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 30f; 
     public float steerSensitivity = 1f;
@@ -47,7 +34,7 @@ public class CarController : MonoBehaviour
     private float previousForwardSpeed = 0f;
     private float longitudinalAcceleration = 0f;
     private bool suppressDriveInputUntilRelease = false;
-    private AudioSource engineAudioSource;
+    private CarEngineAudio engineAudio;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 0;
@@ -88,8 +75,11 @@ public class CarController : MonoBehaviour
         initialPosition = carRigidbody.position;
         initialRotation = carRigidbody.rotation;
 
-        InitializeEngineAudio();
-        PlayEngineStartSound();
+        engineAudio = GetComponent<CarEngineAudio>();
+        if (engineAudio == null)
+        {
+            Debug.LogWarning("[CarController] CarEngineAudio component is missing. Add it to this car object to enable engine sounds.");
+        }
     }
 
     void Update()
@@ -115,7 +105,10 @@ public class CarController : MonoBehaviour
                 Debug.Log("[CarController] Drive input lock released after reset.");
             }
 
-            UpdateEngineAudio();
+            if (engineAudio != null)
+            {
+                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
+            }
 
             return;
         }
@@ -136,11 +129,6 @@ public class CarController : MonoBehaviour
         brakeInput = Input.GetKey(KeyCode.S) ? 1f : 0f;
         // Space: Handbrake (side / emergency brake)
         handbrakeActive = Input.GetKey(KeyCode.Space);
-        if (handbrakeActive != previousHandbrakeActive)
-        {
-            PlayOneShotClip(handbrakeActive ? handbrakeOnClip : handbrakeOffClip);
-            previousHandbrakeActive = handbrakeActive;
-        }
 
         // 기어 변속: 2는 업시프트, 1은 다운시프트
         if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -153,7 +141,10 @@ public class CarController : MonoBehaviour
             ShiftDown();
         }
 
-        UpdateEngineAudio();
+        if (engineAudio != null)
+        {
+            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
+        }
 
         debugLogTimer += Time.deltaTime;
         if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
@@ -188,7 +179,6 @@ public class CarController : MonoBehaviour
         throttleInput = 0f;
         brakeInput = 0f;
         handbrakeActive = false;
-        previousHandbrakeActive = false;
         currentSteer = 0f;
         appliedMotorTorque = 0f;
         appliedBrakeTorque = 0f;
@@ -327,7 +317,10 @@ public class CarController : MonoBehaviour
         if (currentGear < forwardGearRatios.Length)
         {
             currentGear++;
-            PlayOneShotClip(gearShiftUpClip);
+            if (engineAudio != null)
+            {
+                engineAudio.PlayGearShiftUp();
+            }
         }
     }
 
@@ -336,7 +329,10 @@ public class CarController : MonoBehaviour
         if (currentGear > -1)
         {
             currentGear--;
-            PlayOneShotClip(gearShiftDownClip);
+            if (engineAudio != null)
+            {
+                engineAudio.PlayGearShiftDown();
+            }
         }
     }
 
@@ -447,77 +443,5 @@ public class CarController : MonoBehaviour
         }
 
         return carRigidbody.linearVelocity.magnitude * 3.6f;
-    }
-
-    private void InitializeEngineAudio()
-    {
-        engineAudioSource = GetComponent<AudioSource>();
-        if (engineAudioSource == null)
-        {
-            engineAudioSource = gameObject.AddComponent<AudioSource>();
-        }
-
-        engineAudioSource.playOnAwake = false;
-        engineAudioSource.loop = true;
-        engineAudioSource.spatialBlend = 1f;
-        engineAudioSource.dopplerLevel = 0f;
-        engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-        engineAudioSource.minDistance = 2f;
-        engineAudioSource.maxDistance = 35f;
-
-        if (engineLoopClip != null)
-        {
-            engineAudioSource.clip = engineLoopClip;
-            if (!engineAudioSource.isPlaying)
-            {
-                engineAudioSource.Play();
-            }
-        }
-    }
-
-    private void UpdateEngineAudio()
-    {
-        if (engineAudioSource == null || engineLoopClip == null)
-        {
-            return;
-        }
-
-        if (engineAudioSource.clip != engineLoopClip)
-        {
-            engineAudioSource.clip = engineLoopClip;
-        }
-
-        if (!engineAudioSource.isPlaying)
-        {
-            engineAudioSource.Play();
-        }
-
-        float speedKmh = GetCurrentSpeedKmh();
-        float speedBlend = Mathf.Clamp01(speedKmh / Mathf.Max(1f, engineFullPitchSpeedKmh));
-        float throttleBlend = Mathf.Clamp01(throttleInput);
-        float loadBlend = Mathf.Max(speedBlend, throttleBlend);
-
-        engineAudioSource.pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, loadBlend);
-        engineAudioSource.volume = Mathf.Lerp(engineMinVolume, engineMaxVolume, loadBlend);
-    }
-
-    private void PlayEngineStartSound()
-    {
-        if (engineAudioSource == null || engineStartClip == null)
-        {
-            return;
-        }
-
-        engineAudioSource.PlayOneShot(engineStartClip);
-    }
-
-    private void PlayOneShotClip(AudioClip clip)
-    {
-        if (engineAudioSource == null || clip == null)
-        {
-            return;
-        }
-
-        engineAudioSource.PlayOneShot(clip);
     }
 }
