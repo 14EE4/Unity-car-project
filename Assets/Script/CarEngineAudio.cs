@@ -25,6 +25,7 @@ public class CarEngineAudio : MonoBehaviour
     public float lowBand = 0.35f;
     public float medBand = 0.62f;
     public float highBand = 0.85f;
+
     [Header("RPM Settings")]
     public float rpmIdle = 800f;
     public float rpmRedline = 7000f;
@@ -34,102 +35,67 @@ public class CarEngineAudio : MonoBehaviour
     public float gear4MaxSpeedKmh = 160f;
     public float gear5MaxSpeedKmh = 200f;
     public float reverseMaxSpeedKmh = 40f;
-    private AudioSource engineAudioSource;
-    private AudioSource[,] bandSources; // [band, 0..1] ping-pong sources
-    private int[] bandSourceIndex = new int[5];
-    [Header("Debug / Gain")]
+
+    [Header("Playback")]
+    public float minRepeatInterval = 0.12f; // seconds
+    [Range(0.0f, 0.9f)]
+    public float overlapFactor = 0.5f; // fraction of clip length to overlap
     public float masterGain = 1f;
-    public bool force2DForTesting = true;
-    
+    public bool force2D = true;
+
+    private AudioSource engineAudioSource;
     private float currentSpeedKmh;
     private float currentThrottleInput;
     private bool currentHandbrakeActive;
     private int currentGear;
     private float currentEngineRpm;
-    private int currentBand = 0;
-    private bool previousHandbrakeActive;
-    private int previousGear = 0;
-    private float previousThrottleInput = 0f;
-    private bool previousMaxRpmState = false;
-    private bool warnedMasterVolumeZero;
-    // last play time per band to support repeating one-shots while throttle held
+    private int currentBand = -1;
     private float[] lastPlayTime = new float[5];
-    // last scheduled dsp time per band for PlayScheduled
-    private double[] lastScheduledDsp = new double[5];
-    // minimum repeat interval when holding throttle (seconds)
-    public float minRepeatInterval = 0.25f;
-    // overlap factor when scheduling next clip (0-1): fraction of clip length to overlap
-    public float overlapFactor = 0.5f;
+    private bool previousHandbrakeActive;
+    private float previousThrottleInput;
 
-    private void Awake()
+    void Awake()
     {
         engineAudioSource = GetComponent<AudioSource>();
         engineAudioSource.playOnAwake = false;
-        engineAudioSource.loop = true;
-        engineAudioSource.spatialBlend = force2DForTesting ? 0f : 1f;
+        engineAudioSource.loop = false;
+        engineAudioSource.spatialBlend = force2D ? 0f : 1f;
         engineAudioSource.dopplerLevel = 0f;
         engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
-        engineAudioSource.minDistance = 2f;
-        engineAudioSource.maxDistance = 100f;
-        // create paired sources for bands (0..4) to allow ping-pong playback without loop files
-        bandSources = new AudioSource[5, 2];
-        for (int band = 0; band < 5; band++)
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                var go = new GameObject($"EngineBand_{band}_Src_{i}");
-                go.transform.SetParent(transform, false);
-                var src = go.AddComponent<AudioSource>();
-                src.playOnAwake = false;
-                src.loop = false;
-                src.spatialBlend = force2DForTesting ? 0f : 1f;
-                src.dopplerLevel = 0f;
-                src.rolloffMode = AudioRolloffMode.Logarithmic;
-                src.minDistance = 2f;
-                src.maxDistance = 100f;
-                bandSources[band, i] = src;
-            }
-            bandSourceIndex[band] = 0;
-        }
+        engineAudioSource.minDistance = 1f;
+        engineAudioSource.maxDistance = 500f;
     }
 
-    private void Start()
+    void Start()
     {
-        PlayStartupSound();
+        PlayOneShotClip(startupClip);
         if (idleClip != null)
         {
-            PlayBandClip(0, idleClip);
+            PlayOneShotClip(idleClip);
         }
+        currentBand = -1;
     }
 
     public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear)
     {
-        // store previous values first
         previousThrottleInput = currentThrottleInput;
-        previousGear = currentGear;
+        previousHandbrakeActive = currentHandbrakeActive;
 
         currentSpeedKmh = speedKmh;
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
         currentGear = gear;
-        currentEngineRpm = EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
 
+        currentEngineRpm = EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
         UpdateEngineAudio();
         HandleHandbrakeTransition();
     }
 
     private void UpdateEngineAudio()
     {
-        if (lowOnClip == null && lowOffClip == null && medOnClip == null && medOffClip == null && highOnClip == null && highOffClip == null && maxRpmClip == null)
-        {
-            return;
-        }
-
-
         // Determine idle from actual stopped state
         bool isIdle = currentSpeedKmh < 1f || currentGear == 0;
 
-        // Use RPM to determine bands (low/med/high) and maxRPM only at peak when rpm stops rising
         float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
         rpmNorm = Mathf.Clamp01(rpmNorm);
 
@@ -137,95 +103,72 @@ public class CarEngineAudio : MonoBehaviour
 
         int nextBand = 0;
         if (isIdle)
-        {
             nextBand = 0;
-        }
         else if (atRedlineAndStalled)
-        {
             nextBand = 4;
-        }
         else
-        {
             nextBand = GetBand(rpmNorm);
-        }
 
-        // If band changed, play the corresponding on/off clip
         if (nextBand != currentBand)
         {
             PlayBandTransition(currentBand, nextBand);
             currentBand = nextBand;
         }
 
-        double nowDsp = AudioSettings.dspTime;
-
-        // While idle, repeat the idle one-shot with overlap to simulate continuous idle without loops
-        if (nextBand == 0)
+        // While inside a band, repeat the appropriate On/Off clip to simulate continuity without loops
+        if (currentBand >= 1 && currentBand <= 3)
         {
-            AudioClip desiredIdle = idleClip;
-            if (desiredIdle != null)
-            {
-                double last = lastScheduledDsp[0];
-                double interval = Mathf.Max(desiredIdle.length * overlapFactor, minRepeatInterval);
-                if (nowDsp - last > interval)
-                {
-                    PlayBandClip(0, desiredIdle);
-                    // lastScheduledDsp updated in PlayBandClip
-                }
-            }
-        }
-
-        // While in low/med/high bands, if throttle is held play the "On" clip repeatedly;
-        // if throttle not held play the "Off" clip repeatedly. This simulates continuous
-        // on/off behavior without layered loop sources.
-        if (nextBand >= 1 && nextBand <= 3)
-        {
-            AudioClip desired = currentThrottleInput > 0f ? GetOnClipForBand(nextBand) : GetOffClipForBand(nextBand);
+            AudioClip desired = currentThrottleInput > 0f ? GetOnClipForBand(currentBand) : GetOffClipForBand(currentBand);
             if (desired != null)
             {
-                double last = lastScheduledDsp[nextBand];
-                double interval = Mathf.Max(desired.length * overlapFactor, minRepeatInterval);
-                if (nowDsp - last > interval)
+                float last = lastPlayTime[currentBand];
+                float interval = Mathf.Max(desired.length * (1f - overlapFactor), minRepeatInterval);
+                if (Time.time - last > interval)
                 {
-                    PlayBandClip(nextBand, desired);
-                    // lastScheduledDsp updated in PlayBandClip
+                    PlayOneShotClip(desired);
+                    lastPlayTime[currentBand] = Time.time;
+                }
+            }
+        }
+        else if (currentBand == 0)
+        {
+            // idle repetition
+            if (idleClip != null)
+            {
+                float last = lastPlayTime[0];
+                float interval = Mathf.Max(idleClip.length * (1f - overlapFactor), minRepeatInterval);
+                if (Time.time - last > interval)
+                {
+                    PlayOneShotClip(idleClip);
+                    lastPlayTime[0] = Time.time;
                 }
             }
         }
 
+        // pitch control via engineAudioSource so one-shots played via PlayOneShot will be affected by pitch when played
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.pitch = pitch;
 
-
-        if (!warnedMasterVolumeZero && AudioListener.volume <= 0.001f)
+        if (currentBand == 4 && atRedlineAndStalled)
         {
-            warnedMasterVolumeZero = true;
-            Debug.LogWarning("[CarEngineAudio] AudioListener.volume is near zero. Check the master volume slider or saved settings.");
+            // ensure max rpm clip plays on redline entry
+            PlayOneShotClip(maxRpmClip);
         }
-
-        if (atRedlineAndStalled && !previousMaxRpmState)
-        {
-            PlayBandClip(4, maxRpmClip);
-        }
-
-        previousMaxRpmState = atRedlineAndStalled;
     }
 
     private float EstimateEngineRpm(float speedKmh, float throttleInput, int gear)
     {
-        // If in neutral or nearly stopped, let throttle raise RPM so sound changes when pressing accelerator
         if (gear == 0 || speedKmh < 1f)
         {
+            // allow throttle to raise idle revs when in neutral/standstill
             float t = Mathf.Clamp01(throttleInput);
-            // cap neutral revs to a conservative portion of redline to avoid instant full-redline
-            float neutralCap = Mathf.Lerp(rpmIdle, rpmRedline, 0.6f);
+            float neutralCap = Mathf.Lerp(rpmIdle, rpmRedline, 0.4f);
             return Mathf.Lerp(rpmIdle, neutralCap, t);
         }
 
         float maxSpeedKmh = GetGearMaxSpeedKmh(gear);
         if (maxSpeedKmh <= 0f)
-        {
             return 0f;
-        }
 
         float speedRatio = Mathf.Clamp01(speedKmh / maxSpeedKmh);
         return Mathf.Lerp(rpmIdle, rpmRedline, speedRatio);
@@ -233,11 +176,7 @@ public class CarEngineAudio : MonoBehaviour
 
     private float GetGearMaxSpeedKmh(int gear)
     {
-        if (gear < 0)
-        {
-            return reverseMaxSpeedKmh;
-        }
-
+        if (gear < 0) return reverseMaxSpeedKmh;
         switch (gear)
         {
             case 1: return gear1MaxSpeedKmh;
@@ -249,141 +188,72 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
-
-
     private bool IsAtMaxRpm()
     {
-        if (currentThrottleInput <= 0f)
-        {
-            return false;
-        }
-
+        if (currentThrottleInput <= 0f) return false;
         float maxSpeedKmh = GetGearMaxSpeedKmh(currentGear);
-        if (maxSpeedKmh <= 0f)
-        {
-            return false;
-        }
-
+        if (maxSpeedKmh <= 0f) return false;
         return currentSpeedKmh >= maxSpeedKmh * 0.99f;
     }
 
     private int GetBand(float loadBlend)
     {
-        if (loadBlend < idleBand)
-        {
-            return 0;
-        }
-
-        if (loadBlend < lowBand)
-        {
-            return 1;
-        }
-
-        if (loadBlend < medBand)
-        {
-            return 2;
-        }
-
-        if (loadBlend < highBand)
-        {
-            return 3;
-        }
-
+        if (loadBlend < idleBand) return 0;
+        if (loadBlend < lowBand) return 1;
+        if (loadBlend < medBand) return 2;
+        if (loadBlend < highBand) return 3;
         return 4;
-    }
-
-    private void PlayStartupSound()
-    {
-        PlayOneShotClip(startupClip);
     }
 
     private void PlayBandTransition(int previousBand, int nextBand)
     {
+        // avoid negative previous band on first call
         if (previousBand < 0)
         {
+            // just play next band's entry sound
+            switch (nextBand)
+            {
+                case 0: PlayOneShotClip(idleClip); lastPlayTime[0] = Time.time; break;
+                case 1: PlayOneShotClip(lowOnClip); lastPlayTime[1] = Time.time; break;
+                case 2: PlayOneShotClip(medOnClip); lastPlayTime[2] = Time.time; break;
+                case 3: PlayOneShotClip(highOnClip); lastPlayTime[3] = Time.time; break;
+                case 4: PlayOneShotClip(maxRpmClip); lastPlayTime[4] = Time.time; break;
+            }
             return;
         }
-        // When band changes, play only the appropriate clip for the current throttle state
-        // and avoid playing a previous band's off clip followed immediately by a new band's on clip.
+
+        // If throttle state changed to released, prefer previous band's Off
+        if (previousThrottleInput > 0f && currentThrottleInput <= 0f)
+        {
+            if (previousBand == 1) PlayOneShotClip(lowOffClip);
+            else if (previousBand == 2) PlayOneShotClip(medOffClip);
+            else if (previousBand == 3) PlayOneShotClip(highOffClip);
+        }
+
+        // Play entry sound for next band according to throttle state
         switch (nextBand)
         {
             case 0:
-                // If throttle was just released (was on, now off), play the previous band's off clip.
-                if (previousThrottleInput > 0f && currentThrottleInput <= 0f)
-                {
-                    if (previousBand == 1) PlayBandClip(1, lowOffClip);
-                    else if (previousBand == 2) PlayBandClip(2, medOffClip);
-                    else if (previousBand == 3) PlayBandClip(3, highOffClip);
-                }
-                // Play idle only when not throttling
-                if (currentThrottleInput <= 0f)
-                {
-                    PlayBandClip(0, idleClip);
-                    lastPlayTime[0] = Time.time;
-                }
+                if (currentThrottleInput <= 0f) PlayOneShotClip(idleClip);
+                lastPlayTime[0] = Time.time;
                 break;
             case 1:
-                if (currentThrottleInput > 0f)
-                {
-                    PlayBandClip(1, lowOnClip);
-                }
-                else
-                {
-                    PlayBandClip(1, lowOffClip);
-                }
+                PlayOneShotClip(currentThrottleInput > 0f ? lowOnClip : lowOffClip);
                 lastPlayTime[1] = Time.time;
                 break;
             case 2:
-                if (currentThrottleInput > 0f)
-                {
-                    PlayBandClip(2, medOnClip);
-                }
-                else
-                {
-                    PlayBandClip(2, medOffClip);
-                }
+                PlayOneShotClip(currentThrottleInput > 0f ? medOnClip : medOffClip);
                 lastPlayTime[2] = Time.time;
                 break;
             case 3:
-                if (currentThrottleInput > 0f)
-                {
-                    PlayBandClip(3, highOnClip);
-                }
-                else
-                {
-                    PlayBandClip(3, highOffClip);
-                }
+                PlayOneShotClip(currentThrottleInput > 0f ? highOnClip : highOffClip);
                 lastPlayTime[3] = Time.time;
                 break;
             case 4:
-                PlayBandClip(4, maxRpmClip);
+                PlayOneShotClip(maxRpmClip);
                 lastPlayTime[4] = Time.time;
                 break;
         }
-    }
-
-    private void PlayBandClip(int band, AudioClip clip)
-    {
-        if (clip == null) return;
-        if (band < 0 || band > 4) return;
-        int nextIdx = 1 - bandSourceIndex[band];
-        var src = bandSources[band, nextIdx];
-        if (src == null) return;
-        src.clip = clip;
-        src.pitch = engineAudioSource.pitch;
-        src.volume = 1f;
-        // schedule precise playback using DSP time to avoid timing jitter
-        double now = AudioSettings.dspTime;
-        double suggestedNext = lastScheduledDsp[band] + clip.length * (1.0 - overlapFactor);
-        double start = System.Math.Max(suggestedNext, now + 0.02); // small safety offset
-        // diagnostic log (distance may affect perceived level)
-        var listener = FindObjectOfType<AudioListener>();
-        float dist = listener != null ? Vector3.Distance(listener.transform.position, src.transform.position) : -1f;
-        Debug.LogFormat("[CarEngineAudio] PlayBandClip band={0} clip={1} scheduled={2:F3} masterGain={3} listenerVol={4} dist={5}", band, clip.name, start, masterGain, AudioListener.volume, dist);
-        src.SetScheduledStartTime(start);
-        src.PlayScheduled(start);
-        bandSourceIndex[band] = nextIdx;
-        lastScheduledDsp[band] = start;
     }
 
     private AudioClip GetOnClipForBand(int band)
@@ -408,27 +278,16 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
-
-
     private void HandleHandbrakeTransition()
     {
-        if (currentHandbrakeActive == previousHandbrakeActive)
-        {
-            return;
-        }
-
+        if (currentHandbrakeActive == previousHandbrakeActive) return;
         PlayOneShotClip(currentHandbrakeActive ? twoCV6HandbrakeOnClip : twoCV6HandbrakeOffClip);
         previousHandbrakeActive = currentHandbrakeActive;
     }
 
     private void PlayOneShotClip(AudioClip clip)
     {
-        if (clip == null)
-        {
-            return;
-        }
-
+        if (clip == null) return;
         engineAudioSource.PlayOneShot(clip, masterGain);
-        Debug.LogFormat("[CarEngineAudio] PlayOneShot clip={0} masterGain={1} listenerVol={2}", clip.name, masterGain, AudioListener.volume);
     }
 }
