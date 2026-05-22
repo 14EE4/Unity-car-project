@@ -253,18 +253,18 @@ MonoBehaviour:
   maxTorque: 1500
   maxSteerAngle: 30
   steerSensitivity: 1
-  brakeTorque: 3000
-  handbrakeTorque: 2000
+  brakeTorque: 1000
+  handbrakeTorque: 500
   rollingResistanceBrake: 10
-  engineBrakeTorque: 60
+  engineBrakeTorque: 5
   throttleDrag: 0.03
   neutralDrag: 0.08
   driveDrag: 0.6
   brakeDrag: 1.8
   debugLogInterval: 0.25
   detailedWheelDebug: 1
-  currentGear: 1
-  EnableSpeedLogs: 1
+  currentGear: 0
+  EnableSpeedLogs: 0
 --- !u!65 &5425068724996265905
 BoxCollider:
   m_ObjectHideFlags: 0
