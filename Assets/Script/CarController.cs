@@ -136,6 +136,11 @@ public class CarController : MonoBehaviour
         brakeInput = Input.GetKey(KeyCode.S) ? 1f : 0f;
         // Space: Handbrake (side / emergency brake)
         handbrakeActive = Input.GetKey(KeyCode.Space);
+        if (handbrakeActive != previousHandbrakeActive)
+        {
+            PlayOneShotClip(handbrakeActive ? handbrakeOnClip : handbrakeOffClip);
+            previousHandbrakeActive = handbrakeActive;
+        }
 
         // 기어 변속: 2는 업시프트, 1은 다운시프트
         if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -183,6 +188,7 @@ public class CarController : MonoBehaviour
         throttleInput = 0f;
         brakeInput = 0f;
         handbrakeActive = false;
+        previousHandbrakeActive = false;
         currentSteer = 0f;
         appliedMotorTorque = 0f;
         appliedBrakeTorque = 0f;
