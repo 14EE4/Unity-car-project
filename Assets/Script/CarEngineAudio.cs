@@ -136,7 +136,9 @@ public class CarEngineAudio : MonoBehaviour
             if (desired != null)
             {
                 float last = lastPlayTime[nextBand];
-                float interval = Mathf.Max(desired.length * 0.9f, minRepeatInterval);
+                // play the next one-shot before the previous finishes to create overlap
+                float overlapFactor = 0.5f; // play next at 50% of clip length
+                float interval = Mathf.Max(desired.length * overlapFactor, minRepeatInterval);
                 if (Time.time - last > interval)
                 {
                     PlayOneShotClip(desired);
