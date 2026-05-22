@@ -41,6 +41,8 @@ public class CarEngineAudio : MonoBehaviour
     private float currentEngineRpm;
     private int currentBand = 0;
     private bool previousHandbrakeActive;
+    private float previousEngineRpm = 0f;
+    private float previousThrottleInput = 0f;
 
     private void Awake()
     {
@@ -112,6 +114,10 @@ public class CarEngineAudio : MonoBehaviour
         currentEngineRpm = engineRpm;
         UpdateEngineAudio();
         HandleHandbrakeTransition();
+
+        // save previous values for next update
+        previousThrottleInput = currentThrottleInput;
+        previousEngineRpm = currentEngineRpm;
     }
 
     private void UpdateEngineAudio()
@@ -124,17 +130,56 @@ public class CarEngineAudio : MonoBehaviour
         // Ensure engine loop is playing so pitch changes and band transitions are audible
         StartEngineLoop();
 
-        // Use RPM to determine bands (low/med/high) and maxRPM only at peak
+
+        // Determine idle (rpm == 0) explicitly
+        bool isIdle = currentEngineRpm <= 1f;
+
+        // Use RPM to determine bands (low/med/high) and maxRPM only at peak when rpm stops rising
         float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
         rpmNorm = Mathf.Clamp01(rpmNorm);
 
-        bool atRedline = currentEngineRpm >= rpmRedline * 0.99f;
-        int nextBand = atRedline ? 4 : GetBand(rpmNorm);
+        bool atRedlineAndStalled = false;
+        if (currentEngineRpm >= rpmRedline * 0.99f)
+        {
+            // consider 'stalled at redline' when RPM is near redline and no longer increasing
+            float deltaRpm = Mathf.Abs(currentEngineRpm - previousEngineRpm);
+            if (deltaRpm < 1.0f)
+            {
+                atRedlineAndStalled = true;
+            }
+        }
 
+        int nextBand = 0;
+        if (isIdle)
+        {
+            nextBand = 0;
+        }
+        else if (atRedlineAndStalled)
+        {
+            nextBand = 4;
+        }
+        else
+        {
+            nextBand = GetBand(rpmNorm);
+        }
+
+        // If band changed, play appropriate on/off based on whether throttle is pressed
         if (nextBand != currentBand)
         {
             PlayBandTransition(currentBand, nextBand);
             currentBand = nextBand;
+        }
+
+        // If throttle toggled within same band, play corresponding on/off
+        if (Mathf.Approximately(previousThrottleInput, 0f) && currentThrottleInput > 0f)
+        {
+            // throttle pressed
+            PlayOnForBand(currentBand);
+        }
+        else if (previousThrottleInput > 0f && Mathf.Approximately(currentThrottleInput, 0f))
+        {
+            // throttle released
+            PlayOffForBand(currentBand);
         }
 
         // Pitch now driven by RPM normalization
@@ -251,40 +296,49 @@ public class CarEngineAudio : MonoBehaviour
         {
             return;
         }
-
-        if (nextBand > previousBand)
+        // When band changes, play on/off depending on whether throttle is pressed
+        switch (nextBand)
         {
-            if (nextBand == 1)
-            {
-                PlayOneShotClip(lowOnClip);
-            }
-            else if (nextBand == 2)
-            {
-                PlayOneShotClip(medOnClip);
-            }
-            else if (nextBand == 3)
-            {
-                PlayOneShotClip(highOnClip);
-            }
-            else
-            {
+            case 0:
+                // entering idle: play lowOff if coming from low/med/high
+                if (previousBand == 1) PlayOneShotClip(lowOffClip);
+                else if (previousBand == 2) PlayOneShotClip(medOffClip);
+                else if (previousBand == 3) PlayOneShotClip(highOffClip);
+                break;
+            case 1:
+                PlayOneShotClip(currentThrottleInput > 0f ? lowOnClip : lowOffClip);
+                break;
+            case 2:
+                PlayOneShotClip(currentThrottleInput > 0f ? medOnClip : medOffClip);
+                break;
+            case 3:
+                PlayOneShotClip(currentThrottleInput > 0f ? highOnClip : highOffClip);
+                break;
+            case 4:
+                // max rpm: play max clip only when truly at max
                 PlayOneShotClip(maxRpmClip);
-            }
+                break;
+        }
+    }
 
-            return;
+    private void PlayOnForBand(int band)
+    {
+        switch (band)
+        {
+            case 1: PlayOneShotClip(lowOnClip); break;
+            case 2: PlayOneShotClip(medOnClip); break;
+            case 3: PlayOneShotClip(highOnClip); break;
+            case 4: PlayOneShotClip(maxRpmClip); break;
         }
+    }
 
-        if (nextBand == 0)
+    private void PlayOffForBand(int band)
+    {
+        switch (band)
         {
-            PlayOneShotClip(lowOffClip);
-        }
-        else if (nextBand == 1)
-        {
-            PlayOneShotClip(medOffClip);
-        }
-        else if (nextBand == 2)
-        {
-            PlayOneShotClip(highOffClip);
+            case 1: PlayOneShotClip(lowOffClip); break;
+            case 2: PlayOneShotClip(medOffClip); break;
+            case 3: PlayOneShotClip(highOffClip); break;
         }
     }
 
