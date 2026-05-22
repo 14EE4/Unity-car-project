@@ -10,24 +10,13 @@
 
 ### 2026-05-22
 
-- `Car Engine Sound - i6 German Free`의 실제 파일명에 맞춰 `CarEngineAudio`를 RPM 구간형으로 재구성: `startup.wav`, `idle.wav`, `low_on.wav`, `low_off.wav`, `med_on.wav`, `med_off.wav`, `high_on.wav`, `high_off.wav`, `maxRPM.wav`
-- 내부 폴더의 `int_*.wav`는 이번 구현에서는 사용하지 않고, 바깥 폴더의 기본 파일만 사용하도록 정리
-- `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 루프 클립과 전환 효과를 고르는 방식으로 변경
-- `Car and transportation sounds collection` 대신 `2CV6` 계열로 보조음을 정리: `2CV6EngineWarming`, `2CV6EngineOff`, `2CV6FirstGear`, `2CV6SecondGear`, `2CV6ThirdGear`, `2CV6HandbrakeOn`, `2CV6HandbrakeOff`
-- 기본 조향 한도(`maxSteerAngle`)를 `30` → `45`로 넓혀 더 크게 꺾이도록 조정
-- 수평 마우스 입력의 조향 반응을 높이기 위해 `steerInputMultiplier`를 추가하고 기본값을 `2`로 설정
-- `SteeringIndicatorUI`는 내부에 가상 조향각(좌우 1.5바퀴)을 유지하고, 화면 표시는 수평 이동만 하도록 정리
-- 설정 패널에 `SettingsAudioPanel` 추가: `AudioListener.volume`를 `PlayerPrefs`로 저장/복원하는 마스터 볼륨 슬라이더를 연결 가능하게 정리
-- 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 위 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
-
-- 추가 작업 (2026-05-22, 후속)
-	- 조향: 목표 기반 LERP 시도를 적용했으나 사용자의 요청으로 즉시 반응 방식으로 되돌리고, 마우스 정지 시 자동 중앙 복귀가 되지 않도록 유지하도록 변경 (`Assets/Script/CarController.cs`).
-	- 오디오: `CarEngineAudio`에서 2CV6 보조음들을 제거하고 핸드브레이크 온/오프 클립(`twoCV6HandbrakeOnClip`, `twoCV6HandbrakeOffClip`)만 남김 (`Assets/Script/CarEngineAudio.cs`).
-	- RPM 기반 소리: `CarController`에 간단한 엔진 RPM 추정기(`EstimateEngineRpm`)를 추가하고, `SetDriveState` 호출에 추정 RPM을 전달하도록 변경; `CarEngineAudio`는 전달된 RPM을 사용해 오디오 피치를 간단히 매핑함 (`Assets/Script/CarController.cs`, `Assets/Script/CarEngineAudio.cs`).
-	- 변경 파일 요약:
-		- `Assets/Script/CarController.cs` — 조향 로직 변경(즉시/hold-on-zero) 및 `finalDrive`/`idleRpm`/`redlineRpm` 필드, `EstimateEngineRpm()` 추가
-		- `Assets/Script/CarEngineAudio.cs` — 2CV6 트림(핸드브레이크 제외) 및 `SetDriveState(..., engineRpm)` 확장, RPM → pitch 매핑 구현
-	- 앞으로 이 파일(`DEVELOPMENT_LOG.md`)에 변경 내역을 계속 기록하겠습니다.
+- 사운드 책임을 다시 `CarEngineAudio.cs`로 통합: `CarController.cs`는 속도/스로틀/핸드브레이크/기어 상태만 전달하고, 오디오 재생·RPM 추정·변속음은 `CarEngineAudio`가 담당하도록 정리.
+- `CarEngineAudio.cs`는 자체적으로 RPM을 추정하고, 시동/루프/밴드 전환/기어 변속/핸드브레이크 효과음을 모두 처리하도록 유지.
+- `CarController.cs`에서 엔진 사운드 관련 필드와 RPM 추정 로직을 제거해 차량 물리와 입력만 담당하게 정리.
+- 조향: 목표 기반 LERP 시도를 적용했으나 사용자의 요청으로 즉시 반응 방식으로 되돌리고, 마우스 정지 시 자동 중앙 복귀가 되지 않도록 유지하도록 변경 (`Assets/Script/CarController.cs`).
+- 오디오: `CarEngineAudio`에서 2CV6 보조음들을 제거하고 핸드브레이크 온/오프 클립(`twoCV6HandbrakeOnClip`, `twoCV6HandbrakeOffClip`)만 남김 (`Assets/Script/CarEngineAudio.cs`).
+- `CarEngineAudio`는 속도 구간별 원샷(`low/med/high on/off`)과 레드라인 정지 시 `maxRpmClip` 재생 로직, 그리고 기어 변속 시 `gearShiftUpClip` / `gearShiftDownClip` 재생을 담당.
+- 앞으로 이 파일(`DEVELOPMENT_LOG.md`)에 변경 내역을 계속 기록하겠습니다.
 
 ### 2026-05-21
 

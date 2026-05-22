@@ -17,6 +17,8 @@ public class CarEngineAudio : MonoBehaviour
     public AudioClip highOnClip;
     public AudioClip highOffClip;
     public AudioClip maxRpmClip;
+    public AudioClip gearShiftUpClip;
+    public AudioClip gearShiftDownClip;
 
     [Header("2CV6 Accents")]
     public AudioClip twoCV6HandbrakeOnClip;
@@ -32,17 +34,26 @@ public class CarEngineAudio : MonoBehaviour
     [Header("RPM Settings")]
     public float rpmIdle = 800f;
     public float rpmRedline = 7000f;
+    public float gear1MaxSpeedKmh = 50f;
+    public float gear2MaxSpeedKmh = 85f;
+    public float gear3MaxSpeedKmh = 130f;
+    public float gear4MaxSpeedKmh = 160f;
+    public float gear5MaxSpeedKmh = 200f;
+    public float reverseMaxSpeedKmh = 40f;
 
     private AudioSource engineAudioSource;
     private AudioSource[] loopSources; // 0:idle,1:low,2:med,3:high,4:max
     private float currentSpeedKmh;
     private float currentThrottleInput;
     private bool currentHandbrakeActive;
+    private int currentGear;
     private float currentEngineRpm;
     private int currentBand = 0;
     private bool previousHandbrakeActive;
+    private int previousGear = 0;
     private float previousEngineRpm = 0f;
     private float previousThrottleInput = 0f;
+    private bool previousMaxRpmState = false;
 
     private void Awake()
     {
@@ -106,18 +117,21 @@ public class CarEngineAudio : MonoBehaviour
         loopSources[idx].clip = clip;
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, float engineRpm)
+    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear)
     {
         // store previous values first
         previousThrottleInput = currentThrottleInput;
         previousEngineRpm = currentEngineRpm;
+        previousGear = currentGear;
 
         currentSpeedKmh = speedKmh;
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
-        currentEngineRpm = engineRpm;
+        currentGear = gear;
+        currentEngineRpm = EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
 
         UpdateEngineAudio();
+        HandleGearShiftTransition();
         HandleHandbrakeTransition();
     }
 
@@ -139,16 +153,7 @@ public class CarEngineAudio : MonoBehaviour
         float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
         rpmNorm = Mathf.Clamp01(rpmNorm);
 
-        bool atRedlineAndStalled = false;
-        if (currentEngineRpm >= rpmRedline * 0.99f)
-        {
-            // consider 'stalled at redline' when RPM is near redline and no longer increasing
-            float deltaRpm = Mathf.Abs(currentEngineRpm - previousEngineRpm);
-            if (deltaRpm < 1.0f)
-            {
-                atRedlineAndStalled = true;
-            }
-        }
+        bool atRedlineAndStalled = IsAtMaxRpm();
 
         int nextBand = 0;
         if (isIdle)
@@ -198,6 +203,64 @@ public class CarEngineAudio : MonoBehaviour
             src.volume = w; // master volume assumed 1.0; adjust if needed
             src.pitch = pitch;
         }
+
+        if (atRedlineAndStalled && !previousMaxRpmState)
+        {
+            PlayOneShotClip(maxRpmClip);
+        }
+
+        previousMaxRpmState = atRedlineAndStalled;
+    }
+
+    private float EstimateEngineRpm(float speedKmh, float throttleInput, int gear)
+    {
+        if (throttleInput <= 0f || gear == 0)
+        {
+            return 0f;
+        }
+
+        float maxSpeedKmh = GetGearMaxSpeedKmh(gear);
+        if (maxSpeedKmh <= 0f)
+        {
+            return 0f;
+        }
+
+        float speedRatio = Mathf.Clamp01(speedKmh / maxSpeedKmh);
+        return Mathf.Lerp(rpmIdle, rpmRedline, speedRatio);
+    }
+
+    private float GetGearMaxSpeedKmh(int gear)
+    {
+        if (gear < 0)
+        {
+            return reverseMaxSpeedKmh;
+        }
+
+        switch (gear)
+        {
+            case 1: return gear1MaxSpeedKmh;
+            case 2: return gear2MaxSpeedKmh;
+            case 3: return gear3MaxSpeedKmh;
+            case 4: return gear4MaxSpeedKmh;
+            case 5: return gear5MaxSpeedKmh;
+            default: return 0f;
+        }
+    }
+
+    private bool IsAtMaxRpm()
+    {
+        if (currentThrottleInput <= 0f)
+        {
+            return false;
+        }
+
+        float maxSpeedKmh = GetGearMaxSpeedKmh(currentGear);
+        if (maxSpeedKmh <= 0f)
+        {
+            return false;
+        }
+
+        return currentSpeedKmh >= maxSpeedKmh * 0.99f;
     }
 
     // Returns weights for bands [idle, low, med, high, max] summing to <=1
@@ -352,6 +415,16 @@ public class CarEngineAudio : MonoBehaviour
 
         PlayOneShotClip(currentHandbrakeActive ? twoCV6HandbrakeOnClip : twoCV6HandbrakeOffClip);
         previousHandbrakeActive = currentHandbrakeActive;
+    }
+
+    private void HandleGearShiftTransition()
+    {
+        if (currentGear == previousGear)
+        {
+            return;
+        }
+
+        PlayOneShotClip(currentGear > previousGear ? gearShiftUpClip : gearShiftDownClip);
     }
 
     private void PlayOneShotClip(AudioClip clip)
