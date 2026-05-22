@@ -10,7 +10,7 @@ public class CarController : MonoBehaviour
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
-    public float maxSteerAngle = 30f; 
+    public float maxSteerAngle = 45f; 
     public float steerSensitivity = 1f;
     public float brakeTorque = 3000f; 
     public float handbrakeTorque = 2000f;
