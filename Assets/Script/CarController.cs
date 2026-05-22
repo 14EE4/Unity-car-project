@@ -447,6 +447,12 @@ public class CarController : MonoBehaviour
 
     private float EstimateEngineRpm()
     {
+        // If throttle is not pressed, treat as idle marker per user's request (rpm == 0 -> idle)
+        if (throttleInput <= 0f)
+        {
+            return 0f;
+        }
+
         // Neutral gear: approximate from idle + throttle
         if (currentGear == 0)
         {

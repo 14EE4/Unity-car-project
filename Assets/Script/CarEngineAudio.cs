@@ -108,16 +108,17 @@ public class CarEngineAudio : MonoBehaviour
 
     public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, float engineRpm)
     {
+        // store previous values first
+        previousThrottleInput = currentThrottleInput;
+        previousEngineRpm = currentEngineRpm;
+
         currentSpeedKmh = speedKmh;
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
         currentEngineRpm = engineRpm;
+
         UpdateEngineAudio();
         HandleHandbrakeTransition();
-
-        // save previous values for next update
-        previousThrottleInput = currentThrottleInput;
-        previousEngineRpm = currentEngineRpm;
     }
 
     private void UpdateEngineAudio()
