@@ -346,7 +346,7 @@ public class CarController : MonoBehaviour
             return;
         }
 
-        float speedMps = carRigidbody.velocity.magnitude;
+        float speedMps = carRigidbody.linearVelocity.magnitude;
         float downforce = downforceCoeff * speedMps * speedMps;
         carRigidbody.AddForce(-transform.up * downforce);
     }
