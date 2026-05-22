@@ -43,6 +43,7 @@
 
 - 변경 파일:
 	- `Assets/Script/CarController.cs` — 다운포스 및 속도 의존 그립 조정, 마우스 정지 시 각도 유지 등 조향 입력 개선, 스로틀/기어 처리 개선, 선형 속도 사용 관련 버그 수정.
+	- 추가 변경: `CarController.cs`에 `public float finalDrive` 필드 추가 및 토크 산정부에 최종 감속비를 곱하도록 변경(`overallRatio = gearRatio * finalDrive` 적용). 에디터에서 `finalDrive` 값으로 가속/최고속 튜닝 필요.
 	- `Assets/Prefabs/SportCar_1 Variant.prefab` — 물리 및 오디오 파라미터 반영(휠 마찰 기본값, 오디오 컴포넌트 기본값)으로 업데이트.
 	- `Assets/Script/UI/SettingsAudioPanel.cs` — 마스터 볼륨 슬라이더 처리 추가, 초기화 로그 및 설정 영속화 지원 추가.
 	- `Assets/Script/UI/SteeringIndicatorUI.cs` — 조향 UI 반응성 개선.
@@ -151,6 +152,44 @@
 - 디버그 로그: `Motor`, `BrakeTorque`, `Slope`, 휠별 RPM 및 슬립 출력 추가
 - `linearDamping`(Linear Damping) 조정: 엑셀 해제 시 자연스러운 감속을 위해 값 감소
 - `engineBrakeTorque` 조정: `60` → `10`
+
+### Final Drive (최종 감속비)
+
+`finalDrive`는 변속기 출력과 바퀴 사이의 추가 감속비(보통 디퍼렌셜 기어비)를 의미합니다. 전체 전달비는 다음과 같이 정의됩니다:
+
+$$overallRatio = gearRatio \times finalDrive$$
+
+이에 따라 바퀴에 전달되는 토크는:
+
+$$T_{wheel} = T_{engine} \times gearRatio \times finalDrive$$
+
+선형 가속은 다음과 같이 표현할 수 있습니다:
+
+$$a = \frac{T_{engine} \times gearRatio \times finalDrive}{r \times m}$$
+
+권장 문서화 및 적용 가이드:
+
+- **기본값**: `finalDrive = 3.5` (프로젝트 요구에 따라 조정)
+- **문서화**: 위 기본값과 공식을 개발 문서에 기록해 두세요.
+- **나중에 스크립트 변경 시 단계**:
+	1. `CarController`에 `public float finalDrive = 1.0f;` 필드 추가
+	2. 토크 계산부에서 `GetCurrentGearRatio()` 대신 `GetCurrentGearRatio() * finalDrive`를 곱하도록 변경
+	3. 코드 주석에 `overallRatio` 공식을 추가하여 참조성을 높임
+	4. 에디터에서 다양한 `finalDrive` 값을 실험해 가속/최고속 성능을 튜닝
+
+- **주의**: 기존 코드가 `speedRatio` 같은 기어별 `speed` 제한 로직을 사용하면, `finalDrive`를 추가했을 때 동일한 최고속에서 엔진 RPM과 토크 분포가 바뀔 수 있습니다. 변경 후 `gearMaxSpeeds`나 관련 제한치를 재조정해야 할 수 있습니다.
+
+간단한 예시(참고용, 실제 위치는 코드와 다를 수 있음):
+
+```csharp
+// CarController.cs
+public float finalDrive = 3.5f; // 문서에 기입한 기본값
+
+float overall = GetCurrentGearRatio() * finalDrive;
+float appliedMotorTorque = engineTorque * overall * someTorqueModifier;
+```
+
+문서 업데이트만 우선 적용했으며, 원하시면 제가 `CarController`에 대한 코드 패치(또는 PR용 분기)를 만들어 드리겠습니다.
 
 ---
 
