@@ -4,10 +4,12 @@ using UnityEngine;
 public class CarEngineAudio : MonoBehaviour
 {
     [Header("Clips")]
-    public AudioClip engineStartClip;
-    public AudioClip engineLoopClip;
-    public AudioClip gearShiftUpClip;
-    public AudioClip gearShiftDownClip;
+    public AudioClip ignitionClip;
+    public AudioClip engineWarmingLoopClip;
+    public AudioClip engineOffClip;
+    public AudioClip firstGearClip;
+    public AudioClip secondGearClip;
+    public AudioClip thirdGearClip;
     public AudioClip handbrakeOnClip;
     public AudioClip handbrakeOffClip;
 
@@ -38,7 +40,7 @@ public class CarEngineAudio : MonoBehaviour
 
     private void Start()
     {
-        PlayEngineStartSound();
+        PlayIgnitionSound();
         StartEngineLoop();
     }
 
@@ -51,19 +53,31 @@ public class CarEngineAudio : MonoBehaviour
         HandleHandbrakeTransition();
     }
 
-    public void PlayGearShiftUp()
+    public void PlayGearChange(int gear)
     {
-        PlayOneShotClip(gearShiftUpClip);
-    }
+        if (gear <= 0)
+        {
+            return;
+        }
 
-    public void PlayGearShiftDown()
-    {
-        PlayOneShotClip(gearShiftDownClip);
+        if (gear == 1)
+        {
+            PlayOneShotClip(firstGearClip);
+            return;
+        }
+
+        if (gear == 2)
+        {
+            PlayOneShotClip(secondGearClip);
+            return;
+        }
+
+        PlayOneShotClip(thirdGearClip);
     }
 
     private void UpdateEngineAudio()
     {
-        if (engineLoopClip == null)
+        if (engineWarmingLoopClip == null)
         {
             return;
         }
@@ -89,21 +103,21 @@ public class CarEngineAudio : MonoBehaviour
         previousHandbrakeActive = currentHandbrakeActive;
     }
 
-    private void PlayEngineStartSound()
+    private void PlayIgnitionSound()
     {
-        PlayOneShotClip(engineStartClip);
+        PlayOneShotClip(ignitionClip);
     }
 
     private void StartEngineLoop()
     {
-        if (engineLoopClip == null)
+        if (engineWarmingLoopClip == null)
         {
             return;
         }
 
-        if (engineAudioSource.clip != engineLoopClip)
+        if (engineAudioSource.clip != engineWarmingLoopClip)
         {
-            engineAudioSource.clip = engineLoopClip;
+            engineAudioSource.clip = engineWarmingLoopClip;
         }
 
         if (!engineAudioSource.isPlaying)
@@ -120,5 +134,13 @@ public class CarEngineAudio : MonoBehaviour
         }
 
         engineAudioSource.PlayOneShot(clip);
+    }
+
+    private void OnDisable()
+    {
+        if (engineAudioSource != null && engineOffClip != null)
+        {
+            engineAudioSource.PlayOneShot(engineOffClip);
+        }
     }
 }

@@ -10,10 +10,10 @@
 
 ### 2026-05-22
 
-- 오디오 로직을 `CarController`에서 분리해 `CarEngineAudio` 컴포넌트로 이동: 엔진 루프, 시동, 기어 변속, 손브레이크 효과음을 전담하도록 정리
+- `Car and transportation sounds collection`의 실제 파일명에 맞춰 `CarEngineAudio` 슬롯을 정리: `2CV6Ignition`, `2CV6EngineWarming`, `2CV6EngineOff`, `2CV6FirstGear`, `2CV6SecondGear`, `2CV6ThirdGear`, `2CV6HandbrakeOn`, `2CV6HandbrakeOff`
 - `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 `pitch`/`volume`을 조절하도록 변경
-- `CarEngineAudio`는 인스펙터에 클립 슬롯이 바로 보이도록 구성하고, `CarControllerEditor`는 제거
-- 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 함께 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 클립을 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
+- 현재 프로젝트에서 직접 연결하는 용도로는 시동, 엔진 루프, 기어 변화, 손브레이크 전환만 사용하고, 나머지 컬렉션 파일은 보류
+- 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 해당 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
 
 ### 2026-05-21
 

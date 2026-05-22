@@ -319,7 +319,7 @@ public class CarController : MonoBehaviour
             currentGear++;
             if (engineAudio != null)
             {
-                engineAudio.PlayGearShiftUp();
+                engineAudio.PlayGearChange(currentGear);
             }
         }
     }
@@ -331,7 +331,7 @@ public class CarController : MonoBehaviour
             currentGear--;
             if (engineAudio != null)
             {
-                engineAudio.PlayGearShiftDown();
+                engineAudio.PlayGearChange(currentGear);
             }
         }
     }
