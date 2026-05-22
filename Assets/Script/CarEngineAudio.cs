@@ -52,7 +52,6 @@ public class CarEngineAudio : MonoBehaviour
     private void Start()
     {
         PlayStartupSound();
-        StartEngineLoop();
     }
 
     public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, float engineRpm)
@@ -72,12 +71,26 @@ public class CarEngineAudio : MonoBehaviour
             return;
         }
 
-        StartEngineLoop();
+        // Idle loop only when throttle is pressed (user requested)
+        if (currentThrottleInput > 0f)
+        {
+            StartEngineLoop();
+        }
+        else
+        {
+            // stop idle loop if not throttling
+            if (engineAudioSource.clip == idleLoopClip && engineAudioSource.isPlaying)
+            {
+                engineAudioSource.Stop();
+            }
+        }
 
-        float throttleBlend = Mathf.Clamp01(currentThrottleInput);
-        float speedBlend = Mathf.Clamp01(currentSpeedKmh / 160f);
-        float loadBlend = Mathf.Max(speedBlend, throttleBlend);
-        int nextBand = GetBand(loadBlend);
+        // Use RPM to determine bands (low/med/high) and maxRPM only at peak
+        float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
+        rpmNorm = Mathf.Clamp01(rpmNorm);
+
+        bool atRedline = currentEngineRpm >= rpmRedline * 0.99f;
+        int nextBand = atRedline ? 4 : GetBand(rpmNorm);
 
         if (nextBand != currentBand)
         {
@@ -85,9 +98,7 @@ public class CarEngineAudio : MonoBehaviour
             currentBand = nextBand;
         }
 
-        // Simple RPM-based pitch mapping
-        float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
-        rpmNorm = Mathf.Clamp01(rpmNorm);
+        // Pitch now driven by RPM normalization
         engineAudioSource.pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.volume = 1f;
     }
