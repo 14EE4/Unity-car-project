@@ -114,10 +114,13 @@ public class CarController : MonoBehaviour
             return;
         }
 
-        // 1. 조향 (마우스 X축 즉시 매핑 — 즉시 반응하도록 설정)
+        // 1. 조향 (마우스 X축: 움직일 때만 각도 변경 — 멈추면 현재 각도 유지)
         float mouseX = Input.GetAxis("Mouse X");
-        float desiredSteer = mouseX * maxSteerAngle * steerInputMultiplier * steerSensitivity;
-        currentSteer = Mathf.Clamp(desiredSteer, -maxSteerAngle, maxSteerAngle);
+        if (Mathf.Abs(mouseX) > 0.0001f)
+        {
+            currentSteer += mouseX * steerSensitivity * steerInputMultiplier;
+            currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
+        }
 
         // Update steering indicator UI (normalized -1..1)
         if (steeringUi != null)

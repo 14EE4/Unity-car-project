@@ -436,7 +436,7 @@ MonoBehaviour:
   axisName: Horizontal
   handle: {fileID: 1806641995}
   smoothTime: 0.05
-  maxOffset: 200
+  maxOffset: 240
   maxVirtualAngle: 540
   fillImage: {fileID: 0}
   fillMinAlpha: 0.2
