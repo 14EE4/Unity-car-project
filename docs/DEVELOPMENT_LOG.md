@@ -43,6 +43,7 @@
 
 - 변경 파일:
 	- `Assets/Script/CarController.cs` — 다운포스 및 속도 의존 그립 조정, 마우스 정지 시 각도 유지 등 조향 입력 개선, 스로틀/기어 처리 개선, 선형 속도 사용 관련 버그 수정.
+	- 추가 변경: `CarController.cs`에 `public float finalDrive` 필드 추가 및 토크 산정부에 최종 감속비를 곱하도록 변경(`overallRatio = gearRatio * finalDrive` 적용). 에디터에서 `finalDrive` 값으로 가속/최고속 튜닝 필요.
 	- `Assets/Prefabs/SportCar_1 Variant.prefab` — 물리 및 오디오 파라미터 반영(휠 마찰 기본값, 오디오 컴포넌트 기본값)으로 업데이트.
 	- `Assets/Script/UI/SettingsAudioPanel.cs` — 마스터 볼륨 슬라이더 처리 추가, 초기화 로그 및 설정 영속화 지원 추가.
 	- `Assets/Script/UI/SteeringIndicatorUI.cs` — 조향 UI 반응성 개선.
