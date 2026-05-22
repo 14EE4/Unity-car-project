@@ -27,3 +27,15 @@
 ## 주의 및 권장사항
 - 프리팹 경로와 이름을 변경하면 관련 씬과 `Inspector`의 참조가 끊어집니다. 변경 시 경로를 문서에 반영하세요.
 - 주행 안내 화살표(주황/초록)는 현재 씬 오브젝트로 구현되어 있거나 런타임에 생성될 수 있습니다. 해당 프리팹을 찾을 수 없으면 `Assets/Prefabs/Arrows/` 같은 경로에 프리팹을 하나 만들어 씬에 연결하세요.
+
+## 오디오 에셋 및 사용
+
+- 엔진 음원(원샷 기반, 루프 없음): `Assets/Script/CarEngineAudio.cs` 컴포넌트에서 관리합니다. 오디오 클립(Idle / Low On/Off / Med On/Off / High On/Off / MaxRpm)을 인스펙터에 할당하세요.
+- 권장 에셋:
+  - Skril Studio - i6 German - Free Engine Sound Pack — 엔진 온/오프 원샷 클립으로 사용하기 적합합니다.
+  - Juggernaut Realm - Car and transportation sounds collection — 보조 효과음(핸드브레이크 등)으로 사용합니다.
+- 디버그 방법:
+  1. 씬에서 플레이어 차량의 `CarEngineAudio` 컴포넌트를 선택합니다.
+  2. `force2DForTesting`를 켜서 거리 감쇠를 비활성화하고 `AudioListener.volume`을 1.0으로 설정한 뒤 소리를 확인하세요.
+  3. `overlapFactor`와 `minRepeatInterval`로 재생 중첩 및 빈도를 조절해 끊김을 완화합니다.
+

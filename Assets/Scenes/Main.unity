@@ -435,10 +435,9 @@ MonoBehaviour:
   readFromAxis: 0
   axisName: Horizontal
   handle: {fileID: 1806641995}
-  maxOffset: 120
   smoothTime: 0.05
-  rotateHandle: 1
-  maxRotation: 20
+  maxOffset: 240
+  maxVirtualAngle: 540
   fillImage: {fileID: 0}
   fillMinAlpha: 0.2
 --- !u!114 &33482923

@@ -49,3 +49,5 @@
 
 - 사용자에게 보이는 텍스트는 영어로 유지하는 편이 TMP 글리프 이슈를 줄이는 데 유리합니다.
 - 상세한 구현 변경 기록은 [Development Log](DEVELOPMENT_LOG.md)에서 확인할 수 있습니다.
+
+- 오디오 구현 메모: 엔진 사운드는 루프 파일을 사용하지 않는 "loopless on/off" 방식으로 구현되어 있습니다. 재생은 밴드별(On/Off 원샷 반복)로 처리되며, 끊김 완화를 위해 `overlapFactor`와 `minRepeatInterval` 인스펙터 조절이 가능합니다. 자세한 이력 및 테스트 지침은 [Development Log](DEVELOPMENT_LOG.md)를 참고하세요.

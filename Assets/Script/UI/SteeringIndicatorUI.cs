@@ -9,10 +9,9 @@ public class SteeringIndicatorUI : MonoBehaviour
 
     [Header("Handle")]
     public RectTransform handle;
-    public float maxOffset = 120f; // pixels left/right from center
     public float smoothTime = 0.05f;
-    public bool rotateHandle = true;
-    public float maxRotation = 20f; // degrees
+    public float maxOffset = 120f; // pixels left/right from center
+    public float maxVirtualAngle = 540f; // degrees from center to one side (1.5 turns)
 
     [Header("Optional Fill")]
     public Image fillImage; // set Image.Type = Filled to use fillAmount
@@ -21,6 +20,7 @@ public class SteeringIndicatorUI : MonoBehaviour
     float targetSteer;
     float currentSteer;
     float steerVelocity;
+    float currentVirtualAngle;
 
     static bool IsInvalid(float value)
     {
@@ -76,25 +76,21 @@ public class SteeringIndicatorUI : MonoBehaviour
 
         if (handle != null)
         {
+            currentVirtualAngle = steer * maxVirtualAngle;
+            if (IsInvalid(currentVirtualAngle))
+            {
+                currentVirtualAngle = 0f;
+            }
+
             var pos = handle.anchoredPosition;
-            pos.x = steer * maxOffset;
+            pos.x = Mathf.Clamp(currentVirtualAngle / Mathf.Max(0.0001f, maxVirtualAngle), -1f, 1f) * maxOffset;
             if (IsInvalid(pos.x))
             {
                 pos.x = 0f;
             }
 
             handle.anchoredPosition = pos;
-
-            if (rotateHandle)
-            {
-                float rotationZ = -steer * maxRotation;
-                if (IsInvalid(rotationZ))
-                {
-                    rotationZ = 0f;
-                }
-
-                handle.localEulerAngles = new Vector3(0f, 0f, rotationZ);
-            }
+            handle.localRotation = Quaternion.identity;
         }
 
         if (fillImage != null)

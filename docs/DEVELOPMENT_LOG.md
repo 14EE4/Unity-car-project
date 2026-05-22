@@ -1,3 +1,31 @@
+# 2026-05-23 — 루프 없는 On/Off 엔진 사운드 (구현 완료)
+
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — 이전에 잘 동작하던 루프리스 구현으로 복원하고, 들리는 끊김을 줄이도록 튜닝했습니다.
+
+- 변경 사항:
+	- 루프 레이어 재생을 제거하고 `AudioSource.loop = false`로 설정해 루프 클립 사용을 없앴습니다.
+	- 밴드별로 원샷을 반복 재생하여 스로틀을 누르는 동안 `On`이 지속 재생되고, 해제 시 `Off`가 재생되도록 구현했습니다.
+	- 재생 중첩 기반의 반복 로직(`overlapFactor`)을 추가하고 `minRepeatInterval`을 단축해 원샷 간 인지적 간극을 줄였습니다.
+	- 재생 음량 제어용 `masterGain`과 테스트용으로 거리 감쇠를 끄는 `force2DForTesting`를 추가했습니다.
+	- `PlayOneShot`이 `masterGain`을 사용하도록 수정했고, 정지(idle) 상태에서도 반복 재생되도록 하여 무음 상태를 방지했습니다.
+
+- 튜닝 파라미터(인스펙터):
+	- `overlapFactor` (기본 0.6) — 값이 클수록 더 많이 겹쳐 재생되어 부드럽지만 재생 밀도가 높아집니다.
+	- `minRepeatInterval` (기본 0.12초) — 값이 작을수록 더 자주 재생됩니다.
+	- `masterGain` — 각 클립 재생 음량에 곱해지는 계수입니다.
+	- `force2DForTesting` — 테스트 중 3D 거리 감쇠를 비활성화합니다.
+
+- 빠른 테스트 절차:
+	1. 에디터에서 마스터 볼륨(`AudioListener.volume`)을 1.0으로 설정합니다.
+	2. 차량의 `CarEngineAudio` 컴포넌트에 필요한 클립이 할당되어 있는지 확인합니다.
+	3. 플레이 후 스로틀을 누르고 있으면 On 클립이 연속 재생되는지, 놓으면 Off 클립이 반복 재생되는지 확인합니다.
+	4. `force2DForTesting`를 토글해 거리 감쇠 차이를 비교합니다.
+
+- 참고 / 다음 단계:
+	- 여전히 끊김이 느껴지면 `overlapFactor`를 0.7~0.9로 올리거나 `minRepeatInterval`을 조금 더 줄여보세요.
+	- 사용자 요청에 따라 루프 파일은 재도입하지 않습니다. 필요 시 DSP 예약(PlayScheduled) 방식으로 보완하는 방안을 검토할 수 있습니다.
+
 ---
 
 [Back to README](../README.md)
@@ -7,6 +35,36 @@
 이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
 
 ## Revision History (latest first)
+
+### 2026-05-22
+
+
+### 2026-05-23 — 기타 변경: 물리 · 조향 · 프리팹 · UI
+
+- 변경 파일:
+	- `Assets/Script/CarController.cs` — 다운포스 및 속도 의존 그립 조정, 마우스 정지 시 각도 유지 등 조향 입력 개선, 스로틀/기어 처리 개선, 선형 속도 사용 관련 버그 수정.
+	- `Assets/Prefabs/SportCar_1 Variant.prefab` — 물리 및 오디오 파라미터 반영(휠 마찰 기본값, 오디오 컴포넌트 기본값)으로 업데이트.
+	- `Assets/Script/UI/SettingsAudioPanel.cs` — 마스터 볼륨 슬라이더 처리 추가, 초기화 로그 및 설정 영속화 지원 추가.
+	- `Assets/Script/UI/SteeringIndicatorUI.cs` — 조향 UI 반응성 개선.
+	- `Assets/Scenes/Main.unity` — 조향 및 프리팹 변경 내용 반영을 위한 씬 수정.
+
+- 변경 이유:
+	- 조작감 개선: 마우스 이동 시 조향이 누적되고 마우스 정지 시 각도가 유지되도록 변경하여 보다 부드러운 조작감을 제공합니다.
+	- 물리 현실성: 다운포스와 속도 의존 그립을 추가해 고속 주행에서의 핸들링을 개선합니다.
+	- 오디오 연동: 프리팹 및 UI를 루프리스 엔진 오디오 흐름과 마스터 볼륨 제어에 맞게 조정했습니다.
+
+- 로컬 검증 방법:
+	1. `Assets/Scenes/Main.unity`를 열고 씬을 재생합니다.
+	2. 조향 확인: 마우스로 조향하고 멈추면 각도가 유지되는지 확인합니다.
+	3. 그립/다운포스 확인: 저속·고속에서 그립 변화가 느껴지는지 테스트합니다.
+	4. 마스터 볼륨 확인: 설정 패널에서 슬라이더를 조작하고 `AudioListener.volume` 로그 반영을 확인합니다.
+
+- 메모 / 후속 작업:
+	- 조작감이 과도하게 민감하면 `CarController` 인스펙터에서 `steerSensitivity`와 `steerInputMultiplier` 값을 조정하세요.
+	- 프리팹 업데이트 후 휠 마찰이 변경되면 기본 마찰 곡선을 캡처하고 `tireGripBase` / `tireGripMax` 값을 조정해야 할 수 있습니다.
+
+- `CarEngineAudio`는 속도 구간별 원샷(`low/med/high on/off`)과 레드라인 정지 시 `maxRpmClip` 재생 로직, 그리고 기어 변속 시 `gearShiftUpClip` / `gearShiftDownClip` 재생을 담당.
+- 앞으로 이 파일(`DEVELOPMENT_LOG.md`)에 변경 내역을 계속 기록하겠습니다.
 
 ### 2026-05-21
 
