@@ -15,7 +15,7 @@
 - `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 루프 클립과 전환 효과를 고르는 방식으로 변경
 - 기본 조향 한도(`maxSteerAngle`)를 `30` → `45`로 넓혀 더 크게 꺾이도록 조정
 - 수평 마우스 입력의 조향 반응을 높이기 위해 `steerInputMultiplier`를 추가하고 기본값을 `2`로 설정
-- `SteeringIndicatorUI` 핸들은 회전하지 않고 X축 이동만 하도록 수정해 바 형태로 보이게 정리
+- `SteeringIndicatorUI` 핸들은 실제 스티어링휠처럼 중앙 기준 좌우 1.5바퀴(총 3바퀴) 회전하도록 복원
 - 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 위 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
 
 ### 2026-05-21

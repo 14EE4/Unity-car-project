@@ -9,8 +9,8 @@ public class SteeringIndicatorUI : MonoBehaviour
 
     [Header("Handle")]
     public RectTransform handle;
-    public float maxOffset = 120f; // pixels left/right from center
     public float smoothTime = 0.05f;
+    public float maxRotation = 540f; // degrees from center to one side (1.5 turns)
 
     [Header("Optional Fill")]
     public Image fillImage; // set Image.Type = Filled to use fillAmount
@@ -74,15 +74,13 @@ public class SteeringIndicatorUI : MonoBehaviour
 
         if (handle != null)
         {
-            var pos = handle.anchoredPosition;
-            pos.x = steer * maxOffset;
-            if (IsInvalid(pos.x))
+            float rotationZ = -steer * maxRotation;
+            if (IsInvalid(rotationZ))
             {
-                pos.x = 0f;
+                rotationZ = 0f;
             }
 
-            handle.anchoredPosition = pos;
-            handle.localRotation = Quaternion.identity;
+            handle.localEulerAngles = new Vector3(0f, 0f, rotationZ);
         }
 
         if (fillImage != null)
