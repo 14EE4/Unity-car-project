@@ -8,6 +8,13 @@
 
 ## Revision History (latest first)
 
+### 2026-05-22
+
+- `CarController`에 엔진 사운드 재생 로직 추가: 런타임에 `AudioSource`를 자동 생성/설정하고, `engineLoopClip`을 주행 중 루프로 재생하도록 연결
+- 시동/기어 변속/손브레이크 전환용 `AudioClip` 슬롯 추가(`engineStartClip`, `gearShiftUpClip`, `gearShiftDownClip`, `handbrakeOnClip`, `handbrakeOffClip`)
+- 속도와 스로틀에 따라 엔진 루프의 `pitch`/`volume`이 변하도록 조정해 단순 반복음보다 주행감이 나도록 정리
+- 에디터 작업 메모: `SportCar_1 Variant` 프리팹의 `CarController` 인스펙터에 위 클립들을 할당하고, 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
+
 ### 2026-05-21
 
 - 랩 타임 기록을 씬 메모리에서 `Application.persistentDataPath/lap_times.json`로 이동해 메인 화면 복귀 후에도 Recent / Best가 유지되도록 수정
