@@ -107,7 +107,7 @@ public class CarController : MonoBehaviour
 
             if (engineAudio != null)
             {
-                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
+                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput);
             }
 
             return;
@@ -143,7 +143,7 @@ public class CarController : MonoBehaviour
 
         if (engineAudio != null)
         {
-            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
+            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput);
         }
 
         debugLogTimer += Time.deltaTime;
@@ -317,10 +317,6 @@ public class CarController : MonoBehaviour
         if (currentGear < forwardGearRatios.Length)
         {
             currentGear++;
-            if (engineAudio != null)
-            {
-                engineAudio.PlayGearChange(currentGear);
-            }
         }
     }
 
@@ -329,10 +325,6 @@ public class CarController : MonoBehaviour
         if (currentGear > -1)
         {
             currentGear--;
-            if (engineAudio != null)
-            {
-                engineAudio.PlayGearChange(currentGear);
-            }
         }
     }
 

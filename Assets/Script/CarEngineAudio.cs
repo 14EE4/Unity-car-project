@@ -4,27 +4,28 @@ using UnityEngine;
 public class CarEngineAudio : MonoBehaviour
 {
     [Header("Clips")]
-    public AudioClip ignitionClip;
-    public AudioClip engineWarmingLoopClip;
-    public AudioClip engineOffClip;
-    public AudioClip firstGearClip;
-    public AudioClip secondGearClip;
-    public AudioClip thirdGearClip;
-    public AudioClip handbrakeOnClip;
-    public AudioClip handbrakeOffClip;
+    public AudioClip startupClip;
+    public AudioClip idleLoopClip;
+    public AudioClip lowOnClip;
+    public AudioClip lowOffClip;
+    public AudioClip medOnClip;
+    public AudioClip medOffClip;
+    public AudioClip highOnClip;
+    public AudioClip highOffClip;
+    public AudioClip maxRpmClip;
 
     [Header("Tuning")]
-    public float engineMinPitch = 0.85f;
-    public float engineMaxPitch = 1.6f;
-    public float engineMinVolume = 0.18f;
-    public float engineMaxVolume = 0.85f;
-    public float engineFullPitchSpeedKmh = 140f;
+    public float engineMinPitch = 0.9f;
+    public float engineMaxPitch = 1.35f;
+    public float idleBand = 0.12f;
+    public float lowBand = 0.35f;
+    public float medBand = 0.62f;
+    public float highBand = 0.85f;
 
     private AudioSource engineAudioSource;
-    private bool previousHandbrakeActive;
     private float currentSpeedKmh;
     private float currentThrottleInput;
-    private bool currentHandbrakeActive;
+    private int currentBand = -1;
 
     private void Awake()
     {
@@ -40,89 +41,124 @@ public class CarEngineAudio : MonoBehaviour
 
     private void Start()
     {
-        PlayIgnitionSound();
+        PlayStartupSound();
         StartEngineLoop();
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive)
+    public void SetDriveState(float speedKmh, float throttleInput)
     {
         currentSpeedKmh = speedKmh;
         currentThrottleInput = throttleInput;
-        currentHandbrakeActive = handbrakeActive;
         UpdateEngineAudio();
-        HandleHandbrakeTransition();
-    }
-
-    public void PlayGearChange(int gear)
-    {
-        if (gear <= 0)
-        {
-            return;
-        }
-
-        if (gear == 1)
-        {
-            PlayOneShotClip(firstGearClip);
-            return;
-        }
-
-        if (gear == 2)
-        {
-            PlayOneShotClip(secondGearClip);
-            return;
-        }
-
-        PlayOneShotClip(thirdGearClip);
     }
 
     private void UpdateEngineAudio()
     {
-        if (engineWarmingLoopClip == null)
+        if (idleLoopClip == null)
         {
             return;
         }
 
         StartEngineLoop();
 
-        float speedBlend = Mathf.Clamp01(currentSpeedKmh / Mathf.Max(1f, engineFullPitchSpeedKmh));
         float throttleBlend = Mathf.Clamp01(currentThrottleInput);
+        float speedBlend = Mathf.Clamp01(currentSpeedKmh / 160f);
         float loadBlend = Mathf.Max(speedBlend, throttleBlend);
+        int nextBand = GetBand(loadBlend);
 
-        engineAudioSource.pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, loadBlend);
-        engineAudioSource.volume = Mathf.Lerp(engineMinVolume, engineMaxVolume, loadBlend);
-    }
-
-    private void HandleHandbrakeTransition()
-    {
-        if (currentHandbrakeActive == previousHandbrakeActive)
+        if (nextBand != currentBand)
         {
-            return;
+            PlayBandTransition(currentBand, nextBand);
+            currentBand = nextBand;
         }
 
-        PlayOneShotClip(currentHandbrakeActive ? handbrakeOnClip : handbrakeOffClip);
-        previousHandbrakeActive = currentHandbrakeActive;
+        engineAudioSource.pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, loadBlend);
+        engineAudioSource.volume = 1f;
     }
 
-    private void PlayIgnitionSound()
+    private int GetBand(float loadBlend)
     {
-        PlayOneShotClip(ignitionClip);
+        if (loadBlend < idleBand)
+        {
+            return 0;
+        }
+
+        if (loadBlend < lowBand)
+        {
+            return 1;
+        }
+
+        if (loadBlend < medBand)
+        {
+            return 2;
+        }
+
+        if (loadBlend < highBand)
+        {
+            return 3;
+        }
+
+        return 4;
     }
 
     private void StartEngineLoop()
     {
-        if (engineWarmingLoopClip == null)
+        if (idleLoopClip == null)
         {
             return;
         }
 
-        if (engineAudioSource.clip != engineWarmingLoopClip)
+        if (engineAudioSource.clip != idleLoopClip)
         {
-            engineAudioSource.clip = engineWarmingLoopClip;
+            engineAudioSource.clip = idleLoopClip;
         }
 
         if (!engineAudioSource.isPlaying)
         {
             engineAudioSource.Play();
+        }
+    }
+
+    private void PlayStartupSound()
+    {
+        PlayOneShotClip(startupClip);
+    }
+
+    private void PlayBandTransition(int previousBand, int nextBand)
+    {
+        if (nextBand > previousBand)
+        {
+            if (nextBand == 1)
+            {
+                PlayOneShotClip(lowOnClip);
+            }
+            else if (nextBand == 2)
+            {
+                PlayOneShotClip(medOnClip);
+            }
+            else if (nextBand == 3)
+            {
+                PlayOneShotClip(highOnClip);
+            }
+            else
+            {
+                PlayOneShotClip(maxRpmClip);
+            }
+
+            return;
+        }
+
+        if (nextBand == 0)
+        {
+            PlayOneShotClip(lowOffClip);
+        }
+        else if (nextBand == 1)
+        {
+            PlayOneShotClip(medOffClip);
+        }
+        else if (nextBand == 2)
+        {
+            PlayOneShotClip(highOffClip);
         }
     }
 
@@ -134,13 +170,5 @@ public class CarEngineAudio : MonoBehaviour
         }
 
         engineAudioSource.PlayOneShot(clip);
-    }
-
-    private void OnDisable()
-    {
-        if (engineAudioSource != null && engineOffClip != null)
-        {
-            engineAudioSource.PlayOneShot(engineOffClip);
-        }
     }
 }

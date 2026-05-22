@@ -10,10 +10,10 @@
 
 ### 2026-05-22
 
-- `Car and transportation sounds collection`의 실제 파일명에 맞춰 `CarEngineAudio` 슬롯을 정리: `2CV6Ignition`, `2CV6EngineWarming`, `2CV6EngineOff`, `2CV6FirstGear`, `2CV6SecondGear`, `2CV6ThirdGear`, `2CV6HandbrakeOn`, `2CV6HandbrakeOff`
-- `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 `pitch`/`volume`을 조절하도록 변경
-- 현재 프로젝트에서 직접 연결하는 용도로는 시동, 엔진 루프, 기어 변화, 손브레이크 전환만 사용하고, 나머지 컬렉션 파일은 보류
-- 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 해당 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
+- `Car Engine Sound - i6 German Free`의 실제 파일명에 맞춰 `CarEngineAudio`를 RPM 구간형으로 재구성: `startup.wav`, `idle.wav`, `low_on.wav`, `low_off.wav`, `med_on.wav`, `med_off.wav`, `high_on.wav`, `high_off.wav`, `maxRPM.wav`
+- 내부 폴더의 `int_*.wav`는 이번 구현에서는 사용하지 않고, 바깥 폴더의 기본 파일만 사용하도록 정리
+- `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 루프 클립과 전환 효과를 고르는 방식으로 변경
+- 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 위 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
 
 ### 2026-05-21
 
