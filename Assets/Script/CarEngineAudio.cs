@@ -14,6 +14,16 @@ public class CarEngineAudio : MonoBehaviour
     public AudioClip highOffClip;
     public AudioClip maxRpmClip;
 
+    [Header("Transport Pack Accents")]
+    public AudioClip tramIdleLoopClip;
+    public AudioClip tramAcceleratingClip;
+    public AudioClip tramAcceleratingAndDeceleratingClip;
+    public AudioClip tramAcceleratingFasterClip;
+    public AudioClip tramAccelerating2Clip;
+    public AudioClip tramDeceleratingClip;
+    public AudioClip tramDecelerating2Clip;
+    public AudioClip tramTurningClip;
+
     [Header("Tuning")]
     public float engineMinPitch = 0.9f;
     public float engineMaxPitch = 1.35f;
@@ -25,7 +35,7 @@ public class CarEngineAudio : MonoBehaviour
     private AudioSource engineAudioSource;
     private float currentSpeedKmh;
     private float currentThrottleInput;
-    private int currentBand = -1;
+    private int currentBand = 0;
 
     private void Awake()
     {
@@ -54,7 +64,7 @@ public class CarEngineAudio : MonoBehaviour
 
     private void UpdateEngineAudio()
     {
-        if (idleLoopClip == null)
+        if (idleLoopClip == null && tramIdleLoopClip == null)
         {
             return;
         }
@@ -103,14 +113,15 @@ public class CarEngineAudio : MonoBehaviour
 
     private void StartEngineLoop()
     {
-        if (idleLoopClip == null)
+        AudioClip loopClip = idleLoopClip != null ? idleLoopClip : tramIdleLoopClip;
+        if (loopClip == null)
         {
             return;
         }
 
-        if (engineAudioSource.clip != idleLoopClip)
+        if (engineAudioSource.clip != loopClip)
         {
-            engineAudioSource.clip = idleLoopClip;
+            engineAudioSource.clip = loopClip;
         }
 
         if (!engineAudioSource.isPlaying)
@@ -126,23 +137,32 @@ public class CarEngineAudio : MonoBehaviour
 
     private void PlayBandTransition(int previousBand, int nextBand)
     {
+        if (previousBand < 0)
+        {
+            return;
+        }
+
         if (nextBand > previousBand)
         {
             if (nextBand == 1)
             {
                 PlayOneShotClip(lowOnClip);
+                PlayOneShotClip(tramAcceleratingClip);
             }
             else if (nextBand == 2)
             {
                 PlayOneShotClip(medOnClip);
+                PlayOneShotClip(tramAcceleratingAndDeceleratingClip);
             }
             else if (nextBand == 3)
             {
                 PlayOneShotClip(highOnClip);
+                PlayOneShotClip(tramAcceleratingFasterClip);
             }
             else
             {
                 PlayOneShotClip(maxRpmClip);
+                PlayOneShotClip(tramAccelerating2Clip);
             }
 
             return;
@@ -151,14 +171,17 @@ public class CarEngineAudio : MonoBehaviour
         if (nextBand == 0)
         {
             PlayOneShotClip(lowOffClip);
+            PlayOneShotClip(tramDeceleratingClip);
         }
         else if (nextBand == 1)
         {
             PlayOneShotClip(medOffClip);
+            PlayOneShotClip(tramDecelerating2Clip);
         }
         else if (nextBand == 2)
         {
             PlayOneShotClip(highOffClip);
+            PlayOneShotClip(tramTurningClip);
         }
     }
 

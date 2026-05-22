@@ -13,6 +13,7 @@
 - `Car Engine Sound - i6 German Free`의 실제 파일명에 맞춰 `CarEngineAudio`를 RPM 구간형으로 재구성: `startup.wav`, `idle.wav`, `low_on.wav`, `low_off.wav`, `med_on.wav`, `med_off.wav`, `high_on.wav`, `high_off.wav`, `maxRPM.wav`
 - 내부 폴더의 `int_*.wav`는 이번 구현에서는 사용하지 않고, 바깥 폴더의 기본 파일만 사용하도록 정리
 - `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 루프 클립과 전환 효과를 고르는 방식으로 변경
+- `Car and transportation sounds collection`의 `TramIdleLoop`, `TramAccelerating*`, `TramDecelerating*`, `TramTurning`을 보조 레이어로 섞어 i6 팩에 없는 rpm 전환/가감속 질감을 보강
 - 기본 조향 한도(`maxSteerAngle`)를 `30` → `45`로 넓혀 더 크게 꺾이도록 조정
 - 수평 마우스 입력의 조향 반응을 높이기 위해 `steerInputMultiplier`를 추가하고 기본값을 `2`로 설정
 - `SteeringIndicatorUI` 핸들은 실제 스티어링휠처럼 중앙 기준 좌우 1.5바퀴(총 3바퀴) 회전하도록 복원
