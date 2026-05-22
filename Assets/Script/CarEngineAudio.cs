@@ -275,27 +275,60 @@ public class CarEngineAudio : MonoBehaviour
         {
             return;
         }
-        // When band changes, play the matching on/off clip only
+        // When band changes, play only the appropriate clip for the current throttle state
+        // and avoid playing a previous band's off clip followed immediately by a new band's on clip.
         switch (nextBand)
         {
             case 0:
-                PlayOneShotClip(idleClip);
-                lastPlayTime[0] = Time.time;
-                if (previousBand == 1) PlayOneShotClip(lowOffClip);
-                else if (previousBand == 2) PlayOneShotClip(medOffClip);
-                else if (previousBand == 3) PlayOneShotClip(highOffClip);
+                // If throttle was just released (was on, now off), play the previous band's off clip.
+                if (previousThrottleInput > 0f && currentThrottleInput <= 0f)
+                {
+                    if (previousBand == 1) PlayOneShotClip(lowOffClip);
+                    else if (previousBand == 2) PlayOneShotClip(medOffClip);
+                    else if (previousBand == 3) PlayOneShotClip(highOffClip);
+                }
+                // Play idle only when not throttling
+                if (currentThrottleInput <= 0f)
+                {
+                    PlayOneShotClip(idleClip);
+                    lastPlayTime[0] = Time.time;
+                }
                 break;
             case 1:
-                PlayOneShotClip(currentThrottleInput > 0f ? lowOnClip : lowOffClip);
-                lastPlayTime[1] = Time.time;
+                if (currentThrottleInput > 0f)
+                {
+                    PlayOneShotClip(lowOnClip);
+                    lastPlayTime[1] = Time.time;
+                }
+                else
+                {
+                    PlayOneShotClip(lowOffClip);
+                    lastPlayTime[1] = Time.time;
+                }
                 break;
             case 2:
-                PlayOneShotClip(currentThrottleInput > 0f ? medOnClip : medOffClip);
-                lastPlayTime[2] = Time.time;
+                if (currentThrottleInput > 0f)
+                {
+                    PlayOneShotClip(medOnClip);
+                    lastPlayTime[2] = Time.time;
+                }
+                else
+                {
+                    PlayOneShotClip(medOffClip);
+                    lastPlayTime[2] = Time.time;
+                }
                 break;
             case 3:
-                PlayOneShotClip(currentThrottleInput > 0f ? highOnClip : highOffClip);
-                lastPlayTime[3] = Time.time;
+                if (currentThrottleInput > 0f)
+                {
+                    PlayOneShotClip(highOnClip);
+                    lastPlayTime[3] = Time.time;
+                }
+                else
+                {
+                    PlayOneShotClip(highOffClip);
+                    lastPlayTime[3] = Time.time;
+                }
                 break;
             case 4:
                 PlayOneShotClip(maxRpmClip);
