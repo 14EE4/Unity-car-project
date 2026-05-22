@@ -12,6 +12,7 @@ public class CarController : MonoBehaviour
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
     public float maxSteerAngle = 45f; 
     public float steerSensitivity = 1f;
+    public float steerInputMultiplier = 2f;
     public float brakeTorque = 3000f; 
     public float handbrakeTorque = 2000f;
     public float rollingResistanceBrake = 10f;
@@ -114,7 +115,7 @@ public class CarController : MonoBehaviour
         }
 
         // 1. 조향 (마우스 X축 누적)
-        currentSteer += Input.GetAxis("Mouse X") * steerSensitivity; 
+        currentSteer += Input.GetAxis("Mouse X") * steerSensitivity * steerInputMultiplier; 
         currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
 
         // Update steering indicator UI (normalized -1..1)

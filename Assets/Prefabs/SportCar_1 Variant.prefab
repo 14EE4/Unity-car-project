@@ -257,7 +257,7 @@ MonoBehaviour:
   hud: {fileID: 0}
   steeringUi: {fileID: 0}
   maxTorque: 1500
-  maxSteerAngle: 30
+  maxSteerAngle: 90
   steerSensitivity: 1
   brakeTorque: 1000
   handbrakeTorque: 500
