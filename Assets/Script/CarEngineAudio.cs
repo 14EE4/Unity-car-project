@@ -39,6 +39,7 @@ public class CarEngineAudio : MonoBehaviour
     private int[] bandSourceIndex = new int[5];
     [Header("Debug / Gain")]
     public float masterGain = 1f;
+    public bool force2DForTesting = false;
     
     private float currentSpeedKmh;
     private float currentThrottleInput;
@@ -73,11 +74,11 @@ public class CarEngineAudio : MonoBehaviour
             for (int i = 0; i < 2; i++)
             {
                 var go = new GameObject($"EngineBand_{band}_Src_{i}");
-                go.transform.SetParent(transform);
+                go.transform.SetParent(transform, false);
                 var src = go.AddComponent<AudioSource>();
                 src.playOnAwake = false;
                 src.loop = false;
-                src.spatialBlend = 1f;
+                src.spatialBlend = force2DForTesting ? 0f : 1f;
                 src.dopplerLevel = 0f;
                 src.rolloffMode = AudioRolloffMode.Logarithmic;
                 src.minDistance = 2f;
