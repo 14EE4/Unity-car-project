@@ -50,14 +50,18 @@ public class CarEngineAudio : MonoBehaviour
     // last play time per band to support repeating one-shots while throttle held
     private float[] lastPlayTime = new float[5];
     // minimum repeat interval when holding throttle (seconds)
-    public float minRepeatInterval = 0.25f;
+    public float minRepeatInterval = 0.12f;
+    [Range(0f, 0.95f)]
+    public float overlapFactor = 0.6f; // fraction of clip length to overlap when repeating
+    public float masterGain = 1f;
+    public bool force2DForTesting = true;
 
     private void Awake()
     {
         engineAudioSource = GetComponent<AudioSource>();
         engineAudioSource.playOnAwake = false;
-        engineAudioSource.loop = true;
-        engineAudioSource.spatialBlend = 1f;
+        engineAudioSource.loop = false;
+        engineAudioSource.spatialBlend = force2DForTesting ? 0f : 1f;
         engineAudioSource.dopplerLevel = 0f;
         engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         engineAudioSource.minDistance = 2f;
@@ -136,7 +140,7 @@ public class CarEngineAudio : MonoBehaviour
             if (desired != null)
             {
                 float last = lastPlayTime[nextBand];
-                float interval = Mathf.Max(desired.length * 0.9f, minRepeatInterval);
+                float interval = Mathf.Max(desired.length * (1f - overlapFactor), minRepeatInterval);
                 if (Time.time - last > interval)
                 {
                     PlayOneShotClip(desired);
@@ -144,7 +148,20 @@ public class CarEngineAudio : MonoBehaviour
                 }
             }
         }
-
+        else if (nextBand == 0)
+        {
+            // idle repetition to avoid gaps while stopped
+            if (idleClip != null)
+            {
+                float last = lastPlayTime[0];
+                float interval = Mathf.Max(idleClip.length * (1f - overlapFactor), minRepeatInterval);
+                if (Time.time - last > interval)
+                {
+                    PlayOneShotClip(idleClip);
+                    lastPlayTime[0] = Time.time;
+                }
+            }
+        }
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.pitch = pitch;
 
@@ -322,6 +339,6 @@ public class CarEngineAudio : MonoBehaviour
             return;
         }
 
-        engineAudioSource.PlayOneShot(clip);
+        engineAudioSource.PlayOneShot(clip, masterGain);
     }
 }
