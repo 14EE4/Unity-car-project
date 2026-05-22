@@ -20,6 +20,15 @@
 - 설정 패널에 `SettingsAudioPanel` 추가: `AudioListener.volume`를 `PlayerPrefs`로 저장/복원하는 마스터 볼륨 슬라이더를 연결 가능하게 정리
 - 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 위 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
 
+- 추가 작업 (2026-05-22, 후속)
+	- 조향: 목표 기반 LERP 시도를 적용했으나 사용자의 요청으로 즉시 반응 방식으로 되돌리고, 마우스 정지 시 자동 중앙 복귀가 되지 않도록 유지하도록 변경 (`Assets/Script/CarController.cs`).
+	- 오디오: `CarEngineAudio`에서 2CV6 보조음들을 제거하고 핸드브레이크 온/오프 클립(`twoCV6HandbrakeOnClip`, `twoCV6HandbrakeOffClip`)만 남김 (`Assets/Script/CarEngineAudio.cs`).
+	- RPM 기반 소리: `CarController`에 간단한 엔진 RPM 추정기(`EstimateEngineRpm`)를 추가하고, `SetDriveState` 호출에 추정 RPM을 전달하도록 변경; `CarEngineAudio`는 전달된 RPM을 사용해 오디오 피치를 간단히 매핑함 (`Assets/Script/CarController.cs`, `Assets/Script/CarEngineAudio.cs`).
+	- 변경 파일 요약:
+		- `Assets/Script/CarController.cs` — 조향 로직 변경(즉시/hold-on-zero) 및 `finalDrive`/`idleRpm`/`redlineRpm` 필드, `EstimateEngineRpm()` 추가
+		- `Assets/Script/CarEngineAudio.cs` — 2CV6 트림(핸드브레이크 제외) 및 `SetDriveState(..., engineRpm)` 확장, RPM → pitch 매핑 구현
+	- 앞으로 이 파일(`DEVELOPMENT_LOG.md`)에 변경 내역을 계속 기록하겠습니다.
+
 ### 2026-05-21
 
 - 랩 타임 기록을 씬 메모리에서 `Application.persistentDataPath/lap_times.json`로 이동해 메인 화면 복귀 후에도 Recent / Best가 유지되도록 수정
