@@ -37,6 +37,8 @@ public class CarEngineAudio : MonoBehaviour
     private AudioSource engineAudioSource;
     private AudioSource[,] bandSources; // [band, 0..1] ping-pong sources
     private int[] bandSourceIndex = new int[5];
+    [Header("Debug / Gain")]
+    public float masterGain = 1f;
     
     private float currentSpeedKmh;
     private float currentThrottleInput;
@@ -365,7 +367,11 @@ public class CarEngineAudio : MonoBehaviour
         if (src == null) return;
         src.clip = clip;
         src.pitch = engineAudioSource.pitch;
-        src.volume = 1f;
+        src.volume = Mathf.Clamp01(masterGain);
+        // diagnostic log
+        var listener = FindObjectOfType<AudioListener>();
+        float dist = listener != null ? Vector3.Distance(listener.transform.position, src.transform.position) : -1f;
+        Debug.LogFormat("[CarEngineAudio] PlayBandClip band={0} clip={1} srcVol={2} masterGain={3} listenerVol={4} dist={5}", band, clip.name, src.volume, masterGain, AudioListener.volume, dist);
         src.Play();
         bandSourceIndex[band] = nextIdx;
         lastPlayTime[band] = Time.time;
@@ -413,6 +419,7 @@ public class CarEngineAudio : MonoBehaviour
             return;
         }
 
-        engineAudioSource.PlayOneShot(clip);
+        engineAudioSource.PlayOneShot(clip, masterGain);
+        Debug.LogFormat("[CarEngineAudio] PlayOneShot clip={0} masterGain={1} listenerVol={2}", clip.name, masterGain, AudioListener.volume);
     }
 }
