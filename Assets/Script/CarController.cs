@@ -54,6 +54,10 @@ public class CarController : MonoBehaviour
     // 각 기어별 최고 속도 (km/h)
     private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
 
+    // 최종 감속비 (디퍼렌셜 등): 문서 기본값은 3.5 권장
+    // 전체 전달비: overallRatio = gearRatio * finalDrive
+    public float finalDrive = 1.0f;
+
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
 
     // 게임 초기화를 위한 초기 위치/회전 저장
@@ -297,7 +301,9 @@ public class CarController : MonoBehaviour
             float currentSpeedKmh = GetCurrentSpeedKmh();
             float gearMaxSpeed = GetGearMaxSpeed();
             float speedRatio = Mathf.Clamp01(1f - (currentSpeedKmh / (gearMaxSpeed + 1f)));
-            float motor = maxTorque * throttleInput * GetCurrentGearRatio() * speedRatio;
+            // overallRatio = gearRatio * finalDrive
+            float overallRatio = GetCurrentGearRatio() * finalDrive;
+            float motor = maxTorque * throttleInput * overallRatio * speedRatio;
             frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
             backLeft.motorTorque = backRight.motorTorque = motor;
             frontLeft.brakeTorque = frontRight.brakeTorque = 0f;
