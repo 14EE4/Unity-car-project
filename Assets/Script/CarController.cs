@@ -56,7 +56,7 @@ public class CarController : MonoBehaviour
 
     // 최종 감속비 (디퍼렌셜 등): 문서 기본값은 3.5 권장
     // 전체 전달비: overallRatio = gearRatio * finalDrive
-    public float finalDrive = 1.0f;
+    public float finalDrive = 3.5f;
 
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
 

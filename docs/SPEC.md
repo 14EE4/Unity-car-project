@@ -7,7 +7,7 @@
 ## 엔진 / 토크
 - `maxTorque`: 500 (스크립트 기본값, `CarController.maxTorque`)
 - `engineBrakeTorque`: 10 (스크립트 기본값, `CarController.engineBrakeTorque`). 2026-05-15 조정: 60 → 10
- - `finalDrive`: 1.0 (스크립트 기본값, `CarController.finalDrive`). 문서 권장값: 3.5 — 적용 시 `gearMaxSpeeds` 및 튜닝 재검증 필요.
+- `finalDrive`: 3.5 (스크립트 기본값, `CarController.finalDrive`). 문서 권장값과 일치 — 적용 시 `gearMaxSpeeds` 및 튜닝 재검증 필요.
 
 ## 기어 비율 및 최고 속도
 - 기어비 (스크립트 기본값 `CarController.forwardGearRatios`):
