@@ -367,12 +367,12 @@ public class CarEngineAudio : MonoBehaviour
         if (src == null) return;
         src.clip = clip;
         src.pitch = engineAudioSource.pitch;
-        src.volume = Mathf.Clamp01(masterGain);
-        // diagnostic log
+        src.volume = 1f;
+        // diagnostic log (distance may affect perceived level)
         var listener = FindObjectOfType<AudioListener>();
         float dist = listener != null ? Vector3.Distance(listener.transform.position, src.transform.position) : -1f;
-        Debug.LogFormat("[CarEngineAudio] PlayBandClip band={0} clip={1} srcVol={2} masterGain={3} listenerVol={4} dist={5}", band, clip.name, src.volume, masterGain, AudioListener.volume, dist);
-        src.Play();
+        Debug.LogFormat("[CarEngineAudio] PlayBandClip band={0} clip={1} masterGain={2} listenerVol={3} dist={4}", band, clip.name, masterGain, AudioListener.volume, dist);
+        src.PlayOneShot(clip, masterGain);
         bandSourceIndex[band] = nextIdx;
         lastPlayTime[band] = Time.time;
     }

@@ -433,6 +433,8 @@ MonoBehaviour:
   gear4MaxSpeedKmh: 160
   gear5MaxSpeedKmh: 200
   reverseMaxSpeedKmh: 40
+  masterGain: 2
+  minRepeatInterval: 0.25
 --- !u!1 &4027797708340876540 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8605410210992407882, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
