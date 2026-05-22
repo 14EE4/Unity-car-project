@@ -6,6 +6,12 @@ public class CarEngineAudio : MonoBehaviour
     [Header("Clips")]
     public AudioClip startupClip;
     public AudioClip idleClip;
+    // Loop layers for smooth crossfades
+    public AudioClip idleLoopClip;
+    public AudioClip lowLoopClip;
+    public AudioClip medLoopClip;
+    public AudioClip highLoopClip;
+    public AudioClip maxLoopClip;
     public AudioClip lowOnClip;
     public AudioClip lowOffClip;
     public AudioClip medOnClip;
@@ -34,11 +40,8 @@ public class CarEngineAudio : MonoBehaviour
     public float gear4MaxSpeedKmh = 160f;
     public float gear5MaxSpeedKmh = 200f;
     public float reverseMaxSpeedKmh = 40f;
-    [Header("Playback")]
-    [Range(0.05f, 2f)] public float bandRepeatInterval = 0.35f;
-    [Range(0.05f, 2f)] public float idleRepeatInterval = 0.6f;
-
     private AudioSource engineAudioSource;
+    private AudioSource[] loopSources; // 0:idle,1:low,2:med,3:high,4:max
     private float currentSpeedKmh;
     private float currentThrottleInput;
     private bool currentHandbrakeActive;
@@ -50,7 +53,6 @@ public class CarEngineAudio : MonoBehaviour
     private float previousThrottleInput = 0f;
     private bool previousMaxRpmState = false;
     private bool warnedMasterVolumeZero;
-    private float bandRepeatTimer;
 
     private void Awake()
     {
@@ -62,6 +64,22 @@ public class CarEngineAudio : MonoBehaviour
         engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         engineAudioSource.minDistance = 2f;
         engineAudioSource.maxDistance = 100f;
+        // create separate loop audio sources for crossfading
+        loopSources = new AudioSource[5];
+        for (int i = 0; i < loopSources.Length; i++)
+        {
+            var go = new GameObject($"EngineLoopSource_{i}");
+            go.transform.SetParent(transform);
+            var src = go.AddComponent<AudioSource>();
+            src.playOnAwake = false;
+            src.loop = true;
+            src.spatialBlend = 1f;
+            src.dopplerLevel = 0f;
+            src.rolloffMode = AudioRolloffMode.Logarithmic;
+            src.minDistance = 2f;
+            src.maxDistance = 100f;
+            loopSources[i] = src;
+        }
     }
 
     private void Start()
@@ -71,6 +89,8 @@ public class CarEngineAudio : MonoBehaviour
         {
             PlayOneShotClip(idleClip);
         }
+        SetupLoopSources();
+        StartEngineLoop();
     }
 
     public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear)
@@ -125,28 +145,20 @@ public class CarEngineAudio : MonoBehaviour
         {
             PlayBandTransition(currentBand, nextBand);
             currentBand = nextBand;
-            bandRepeatTimer = 0f;
-        }
-        else
-        {
-            bandRepeatTimer += Time.deltaTime;
         }
 
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.pitch = pitch;
 
-        if (currentBand == 0)
+        // Apply crossfaded loop volumes and pitch
+        float[] weights = ComputeBandWeights(rpmNorm);
+        for (int i = 0; i < loopSources.Length; i++)
         {
-            if (bandRepeatTimer >= idleRepeatInterval)
-            {
-                bandRepeatTimer = 0f;
-                PlayOneShotClip(idleClip);
-            }
-        }
-        else if (bandRepeatTimer >= bandRepeatInterval)
-        {
-            bandRepeatTimer = 0f;
-            PlayCurrentBandClip(currentBand);
+            var src = loopSources[i];
+            if (src == null) continue;
+            float w = weights[i];
+            src.volume = w; // master volume handled by AudioListener
+            src.pitch = pitch;
         }
 
         if (!warnedMasterVolumeZero && AudioListener.volume <= 0.001f)
@@ -196,6 +208,86 @@ public class CarEngineAudio : MonoBehaviour
             case 5: return gear5MaxSpeedKmh;
             default: return 0f;
         }
+    }
+
+    // Returns weights for bands [idle, low, med, high, max] summing to <=1
+    private float[] ComputeBandWeights(float norm)
+    {
+        float[] w = new float[5];
+        float a = idleBand;
+        float b = lowBand;
+        float c = medBand;
+        float d = highBand;
+
+        if (norm <= a)
+        {
+            w[0] = 1f;
+            return w;
+        }
+
+        if (norm > a && norm <= b)
+        {
+            w[1] = Mathf.InverseLerp(a, b, norm);
+            w[0] = 1f - w[1];
+            return w;
+        }
+
+        if (norm > b && norm <= c)
+        {
+            w[2] = Mathf.InverseLerp(b, c, norm);
+            w[1] = 1f - w[2];
+            return w;
+        }
+
+        if (norm > c && norm <= d)
+        {
+            w[3] = Mathf.InverseLerp(c, d, norm);
+            w[2] = 1f - w[3];
+            return w;
+        }
+
+        if (norm > d)
+        {
+            w[4] = Mathf.InverseLerp(d, 1f, norm);
+            w[3] = 1f - w[4];
+            return w;
+        }
+
+        return w;
+    }
+
+    private void SetupLoopSources()
+    {
+        if (loopSources == null) return;
+
+        AssignLoopClip(0, idleLoopClip);
+        AssignLoopClip(1, lowLoopClip);
+        AssignLoopClip(2, medLoopClip);
+        AssignLoopClip(3, highLoopClip);
+        AssignLoopClip(4, maxLoopClip);
+
+        for (int i = 0; i < loopSources.Length; i++)
+        {
+            var s = loopSources[i];
+            if (s == null) continue;
+            if (s.clip != null && !s.isPlaying)
+            {
+                s.volume = 0f;
+                s.Play();
+            }
+        }
+    }
+
+    private void AssignLoopClip(int idx, AudioClip clip)
+    {
+        if (loopSources == null) return;
+        if (idx < 0 || idx >= loopSources.Length) return;
+        loopSources[idx].clip = clip;
+    }
+
+    private void StartEngineLoop()
+    {
+        // loopSources handle continuous layers; nothing needed here
     }
 
     private bool IsAtMaxRpm()
@@ -274,27 +366,7 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
-    private void PlayCurrentBandClip(int band)
-    {
-        switch (band)
-        {
-            case 0:
-                PlayOneShotClip(idleClip);
-                break;
-            case 1:
-                PlayOneShotClip(currentThrottleInput > 0f ? lowOnClip : lowOffClip);
-                break;
-            case 2:
-                PlayOneShotClip(currentThrottleInput > 0f ? medOnClip : medOffClip);
-                break;
-            case 3:
-                PlayOneShotClip(currentThrottleInput > 0f ? highOnClip : highOffClip);
-                break;
-            case 4:
-                PlayOneShotClip(maxRpmClip);
-                break;
-        }
-    }
+
 
     private void HandleHandbrakeTransition()
     {
