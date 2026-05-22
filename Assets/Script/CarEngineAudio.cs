@@ -25,11 +25,15 @@ public class CarEngineAudio : MonoBehaviour
     public float lowBand = 0.35f;
     public float medBand = 0.62f;
     public float highBand = 0.85f;
+    [Header("RPM Settings")]
+    public float rpmIdle = 800f;
+    public float rpmRedline = 7000f;
 
     private AudioSource engineAudioSource;
     private float currentSpeedKmh;
     private float currentThrottleInput;
     private bool currentHandbrakeActive;
+    private float currentEngineRpm;
     private int currentBand = 0;
     private bool previousHandbrakeActive;
 
@@ -51,11 +55,12 @@ public class CarEngineAudio : MonoBehaviour
         StartEngineLoop();
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive)
+    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, float engineRpm)
     {
         currentSpeedKmh = speedKmh;
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
+        currentEngineRpm = engineRpm;
         UpdateEngineAudio();
         HandleHandbrakeTransition();
     }
@@ -80,7 +85,10 @@ public class CarEngineAudio : MonoBehaviour
             currentBand = nextBand;
         }
 
-        engineAudioSource.pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, loadBlend);
+        // Simple RPM-based pitch mapping
+        float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
+        rpmNorm = Mathf.Clamp01(rpmNorm);
+        engineAudioSource.pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.volume = 1f;
     }
 

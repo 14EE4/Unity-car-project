@@ -13,6 +13,10 @@ public class CarController : MonoBehaviour
     public float maxSteerAngle = 45f; 
     public float steerSensitivity = 1f;
     public float steerInputMultiplier = 2f;
+    [Header("Engine RPM Estimation")]
+    public float finalDrive = 3.42f; // final drive ratio for rpm estimate
+    public float idleRpm = 800f;
+    public float redlineRpm = 7000f;
     public float brakeTorque = 3000f; 
     public float handbrakeTorque = 2000f;
     public float rollingResistanceBrake = 10f;
@@ -108,7 +112,7 @@ public class CarController : MonoBehaviour
 
             if (engineAudio != null)
             {
-                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
+                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, EstimateEngineRpm());
             }
 
             return;
@@ -148,7 +152,7 @@ public class CarController : MonoBehaviour
 
         if (engineAudio != null)
         {
-            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
+            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, EstimateEngineRpm());
         }
 
         debugLogTimer += Time.deltaTime;
@@ -341,6 +345,58 @@ public class CarController : MonoBehaviour
         }
 
         return carRigidbody.linearVelocity.magnitude * 3.6f;
+    }
+
+    private float EstimateEngineRpm()
+    {
+        // Neutral gear: approximate from idle + throttle
+        if (currentGear == 0)
+        {
+            return Mathf.Clamp(idleRpm + throttleInput * (redlineRpm - idleRpm) * 0.15f, idleRpm, redlineRpm);
+        }
+
+        // Prefer driven wheels rpm (back wheels assumed driven)
+        float wheelRpm = 0f;
+        int count = 0;
+        if (backLeft != null)
+        {
+            wheelRpm += Mathf.Abs(backLeft.rpm);
+            count++;
+        }
+
+        if (backRight != null)
+        {
+            wheelRpm += Mathf.Abs(backRight.rpm);
+            count++;
+        }
+
+        if (count == 0)
+        {
+            // fallback to front wheels
+            if (frontLeft != null)
+            {
+                wheelRpm += Mathf.Abs(frontLeft.rpm);
+                count++;
+            }
+
+            if (frontRight != null)
+            {
+                wheelRpm += Mathf.Abs(frontRight.rpm);
+                count++;
+            }
+        }
+
+        if (count == 0)
+        {
+            return idleRpm;
+        }
+
+        wheelRpm /= count; // average wheel rpm
+
+        float gearRatio = Mathf.Abs(GetCurrentGearRatio());
+        float engineRpm = wheelRpm * gearRatio * finalDrive;
+        engineRpm = Mathf.Clamp(engineRpm, idleRpm, redlineRpm);
+        return engineRpm;
     }
 
     private float GetForwardSpeedMps()
