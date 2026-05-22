@@ -127,6 +127,23 @@ public class CarEngineAudio : MonoBehaviour
             currentBand = nextBand;
         }
 
+        // While idle, repeat the idle one-shot with overlap to simulate continuous idle without loops
+        if (nextBand == 0)
+        {
+            AudioClip desiredIdle = idleClip;
+            if (desiredIdle != null)
+            {
+                float last = lastPlayTime[0];
+                float overlapFactor = 0.5f;
+                float interval = Mathf.Max(desiredIdle.length * overlapFactor, minRepeatInterval);
+                if (Time.time - last > interval)
+                {
+                    PlayOneShotClip(desiredIdle);
+                    lastPlayTime[0] = Time.time;
+                }
+            }
+        }
+
         // While in low/med/high bands, if throttle is held play the "On" clip repeatedly;
         // if throttle not held play the "Off" clip repeatedly. This simulates continuous
         // on/off behavior without layered loop sources.
@@ -167,9 +184,13 @@ public class CarEngineAudio : MonoBehaviour
 
     private float EstimateEngineRpm(float speedKmh, float throttleInput, int gear)
     {
+        // If in neutral or nearly stopped, let throttle raise RPM so sound changes when pressing accelerator
         if (gear == 0 || speedKmh < 1f)
         {
-            return 0f;
+            float t = Mathf.Clamp01(throttleInput);
+            // cap neutral revs to a conservative portion of redline to avoid instant full-redline
+            float neutralCap = Mathf.Lerp(rpmIdle, rpmRedline, 0.6f);
+            return Mathf.Lerp(rpmIdle, neutralCap, t);
         }
 
         float maxSpeedKmh = GetGearMaxSpeedKmh(gear);
@@ -259,6 +280,7 @@ public class CarEngineAudio : MonoBehaviour
         {
             case 0:
                 PlayOneShotClip(idleClip);
+                lastPlayTime[0] = Time.time;
                 if (previousBand == 1) PlayOneShotClip(lowOffClip);
                 else if (previousBand == 2) PlayOneShotClip(medOffClip);
                 else if (previousBand == 3) PlayOneShotClip(highOffClip);
