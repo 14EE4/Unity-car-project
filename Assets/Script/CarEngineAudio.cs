@@ -15,11 +15,6 @@ public class CarEngineAudio : MonoBehaviour
     public AudioClip maxRpmClip;
 
     [Header("2CV6 Accents")]
-    public AudioClip twoCV6EngineWarmingClip;
-    public AudioClip twoCV6EngineOffClip;
-    public AudioClip twoCV6FirstGearClip;
-    public AudioClip twoCV6SecondGearClip;
-    public AudioClip twoCV6ThirdGearClip;
     public AudioClip twoCV6HandbrakeOnClip;
     public AudioClip twoCV6HandbrakeOffClip;
 
@@ -135,7 +130,6 @@ public class CarEngineAudio : MonoBehaviour
     private void PlayStartupSound()
     {
         PlayOneShotClip(startupClip);
-        PlayOneShotClip(twoCV6EngineWarmingClip);
     }
 
     private void PlayBandTransition(int previousBand, int nextBand)
@@ -150,17 +144,14 @@ public class CarEngineAudio : MonoBehaviour
             if (nextBand == 1)
             {
                 PlayOneShotClip(lowOnClip);
-                PlayOneShotClip(twoCV6FirstGearClip);
             }
             else if (nextBand == 2)
             {
                 PlayOneShotClip(medOnClip);
-                PlayOneShotClip(twoCV6SecondGearClip);
             }
             else if (nextBand == 3)
             {
                 PlayOneShotClip(highOnClip);
-                PlayOneShotClip(twoCV6ThirdGearClip);
             }
             else
             {
@@ -173,7 +164,6 @@ public class CarEngineAudio : MonoBehaviour
         if (nextBand == 0)
         {
             PlayOneShotClip(lowOffClip);
-            PlayOneShotClip(twoCV6EngineOffClip);
         }
         else if (nextBand == 1)
         {
