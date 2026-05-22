@@ -15,6 +15,10 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 	- https://assetstore.unity.com/packages/3d/vehicles/sport-car-free-304754
 - RCC Design - Cartoon Race Track - Oval — 트랙 및 환경 에셋
 	- https://assetstore.unity.com/packages/3d/environments/roadways/cartoon-race-track-oval-175061
+- Skril Studio - i6 German - Free Engine Sound Pack
+	- https://assetstore.unity.com/packages/audio/sound-fx/transportation/i6-german-free-engine-sound-pack-106037
+- Juggernaut Realm - Car and transportation sounds collection
+	- https://assetstore.unity.com/packages/audio/sound-fx/car-and-transportation-sounds-collection-322871
 - TextMeshPro — HUD 및 UI 텍스트 렌더링 (Unity 패키지)
 
 라이선스: 상기 에셋은 Unity Asset Store의 표준 EULA에 따르며, 프로젝트 내 사용을 위해 확보된 에셋만 포함되어 있습니다.
@@ -47,7 +51,8 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 
 - 전체 진행률: **약 40%** (완료된 개발 항목 대비 전체 로드맵 항목 비율)
 - 완료된 주요 항목: 카메라 보정, 랩 타임 시스템, 체크포인트, HUD, 로딩/메뉴 흐름 등 (상세: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md))
-- 남은 주요 항목: 랩 타임 영속성 저장, 설정 창 상세 구현, 음향 적용, 다중 차량 선택, 레이스 플로우 고도화 등 (상세: [로드맵](docs/ROADMAP.md))
+ - 남은 주요 항목: 랩 타임 영속성 저장, 설정 창 상세 구현, 다중 차량 선택, 레이스 플로우 고도화 등 (상세: [로드맵](docs/ROADMAP.md))
+ - 음향 적용: Loopless on/off 엔진 사운드 구현 완료 — 자세한 변경과 테스트는 [개발 로그](docs/DEVELOPMENT_LOG.md) 참조
 
 ## 프로젝트 요약
 

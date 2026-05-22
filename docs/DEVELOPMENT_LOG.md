@@ -1,3 +1,31 @@
+# 2026-05-23 — Loopless on/off engine audio (implemented)
+
+- Files changed:
+	- Assets/Script/CarEngineAudio.cs — restored to previously working loopless implementation and tuned for fewer audible gaps.
+
+- What changed:
+	- Removed loop-layer playback and ensured `AudioSource.loop = false` so no loop clips are used.
+	- Implemented repeating one-shot playback per band to simulate continuous "On" while throttle held and "Off" when released.
+	- Added overlap-based repeat logic (`overlapFactor`) and shortened `minRepeatInterval` to reduce perceptual gaps between one-shots.
+	- Added `masterGain` to control played-back volume and `force2DForTesting` to disable distance attenuation during testing.
+	- Ensured `PlayOneShot` uses `masterGain` and idle state also repeats to avoid dead silence when stopped.
+
+- Tuning knobs (inspector):
+	- `overlapFactor` (default 0.6) — higher = more overlap, smoother but more dense re-triggers.
+	- `minRepeatInterval` (default 0.12s) — lower = more frequent replays.
+	- `masterGain` — multiply per-clip playback volume.
+	- `force2DForTesting` — set to true to avoid 3D attenuation while debugging audible continuity.
+
+- Quick test steps:
+	1. In Editor, set master volume (`AudioListener.volume`) to 1.0.
+	2. Confirm clips assigned on `Assets/Script/CarEngineAudio.cs` component.
+	3. Play: hold throttle — On clips should repeat continuously; release — Off clips repeat.
+	4. Toggle `force2DForTesting` to compare spatial attenuation.
+
+- Notes / Next steps:
+	- If gaps remain, increase `overlapFactor` (0.7–0.9) or decrease `minRepeatInterval` slightly.
+	- Avoid reintroducing loop files per user request; DSP scheduling can be explored later if needed.
+
 ---
 
 [Back to README](../README.md)
