@@ -34,6 +34,9 @@ public class CarEngineAudio : MonoBehaviour
     public float gear4MaxSpeedKmh = 160f;
     public float gear5MaxSpeedKmh = 200f;
     public float reverseMaxSpeedKmh = 40f;
+    [Header("Playback")]
+    [Range(0.05f, 2f)] public float bandRepeatInterval = 0.35f;
+    [Range(0.05f, 2f)] public float idleRepeatInterval = 0.6f;
 
     private AudioSource engineAudioSource;
     private float currentSpeedKmh;
@@ -47,6 +50,7 @@ public class CarEngineAudio : MonoBehaviour
     private float previousThrottleInput = 0f;
     private bool previousMaxRpmState = false;
     private bool warnedMasterVolumeZero;
+    private float bandRepeatTimer;
 
     private void Awake()
     {
@@ -121,10 +125,29 @@ public class CarEngineAudio : MonoBehaviour
         {
             PlayBandTransition(currentBand, nextBand);
             currentBand = nextBand;
+            bandRepeatTimer = 0f;
+        }
+        else
+        {
+            bandRepeatTimer += Time.deltaTime;
         }
 
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
         engineAudioSource.pitch = pitch;
+
+        if (currentBand == 0)
+        {
+            if (bandRepeatTimer >= idleRepeatInterval)
+            {
+                bandRepeatTimer = 0f;
+                PlayOneShotClip(idleClip);
+            }
+        }
+        else if (bandRepeatTimer >= bandRepeatInterval)
+        {
+            bandRepeatTimer = 0f;
+            PlayCurrentBandClip(currentBand);
+        }
 
         if (!warnedMasterVolumeZero && AudioListener.volume <= 0.001f)
         {
@@ -235,6 +258,28 @@ public class CarEngineAudio : MonoBehaviour
                 if (previousBand == 1) PlayOneShotClip(lowOffClip);
                 else if (previousBand == 2) PlayOneShotClip(medOffClip);
                 else if (previousBand == 3) PlayOneShotClip(highOffClip);
+                break;
+            case 1:
+                PlayOneShotClip(currentThrottleInput > 0f ? lowOnClip : lowOffClip);
+                break;
+            case 2:
+                PlayOneShotClip(currentThrottleInput > 0f ? medOnClip : medOffClip);
+                break;
+            case 3:
+                PlayOneShotClip(currentThrottleInput > 0f ? highOnClip : highOffClip);
+                break;
+            case 4:
+                PlayOneShotClip(maxRpmClip);
+                break;
+        }
+    }
+
+    private void PlayCurrentBandClip(int band)
+    {
+        switch (band)
+        {
+            case 0:
+                PlayOneShotClip(idleClip);
                 break;
             case 1:
                 PlayOneShotClip(currentThrottleInput > 0f ? lowOnClip : lowOffClip);
