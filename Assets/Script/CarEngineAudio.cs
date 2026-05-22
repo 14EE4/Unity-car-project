@@ -54,8 +54,12 @@ public class CarEngineAudio : MonoBehaviour
     private bool warnedMasterVolumeZero;
     // last play time per band to support repeating one-shots while throttle held
     private float[] lastPlayTime = new float[5];
+    // last scheduled dsp time per band for PlayScheduled
+    private double[] lastScheduledDsp = new double[5];
     // minimum repeat interval when holding throttle (seconds)
     public float minRepeatInterval = 0.25f;
+    // overlap factor when scheduling next clip (0-1): fraction of clip length to overlap
+    public float overlapFactor = 0.5f;
 
     private void Awake()
     {
@@ -152,19 +156,20 @@ public class CarEngineAudio : MonoBehaviour
             currentBand = nextBand;
         }
 
+        double nowDsp = AudioSettings.dspTime;
+
         // While idle, repeat the idle one-shot with overlap to simulate continuous idle without loops
         if (nextBand == 0)
         {
             AudioClip desiredIdle = idleClip;
             if (desiredIdle != null)
             {
-                float last = lastPlayTime[0];
-                float overlapFactor = 0.5f;
-                float interval = Mathf.Max(desiredIdle.length * overlapFactor, minRepeatInterval);
-                if (Time.time - last > interval)
+                double last = lastScheduledDsp[0];
+                double interval = Mathf.Max(desiredIdle.length * overlapFactor, minRepeatInterval);
+                if (nowDsp - last > interval)
                 {
-                    PlayOneShotClip(desiredIdle);
-                    lastPlayTime[0] = Time.time;
+                    PlayBandClip(0, desiredIdle);
+                    // lastScheduledDsp updated in PlayBandClip
                 }
             }
         }
@@ -177,14 +182,12 @@ public class CarEngineAudio : MonoBehaviour
             AudioClip desired = currentThrottleInput > 0f ? GetOnClipForBand(nextBand) : GetOffClipForBand(nextBand);
             if (desired != null)
             {
-                float last = lastPlayTime[nextBand];
-                // play the next one-shot before the previous finishes to create overlap
-                float overlapFactor = 0.5f; // play next at 50% of clip length
-                float interval = Mathf.Max(desired.length * overlapFactor, minRepeatInterval);
-                if (Time.time - last > interval)
+                double last = lastScheduledDsp[nextBand];
+                double interval = Mathf.Max(desired.length * overlapFactor, minRepeatInterval);
+                if (nowDsp - last > interval)
                 {
                     PlayBandClip(nextBand, desired);
-                    lastPlayTime[nextBand] = Time.time;
+                    // lastScheduledDsp updated in PlayBandClip
                 }
             }
         }
@@ -369,13 +372,18 @@ public class CarEngineAudio : MonoBehaviour
         src.clip = clip;
         src.pitch = engineAudioSource.pitch;
         src.volume = 1f;
+        // schedule precise playback using DSP time to avoid timing jitter
+        double now = AudioSettings.dspTime;
+        double suggestedNext = lastScheduledDsp[band] + clip.length * (1.0 - overlapFactor);
+        double start = System.Math.Max(suggestedNext, now + 0.02); // small safety offset
         // diagnostic log (distance may affect perceived level)
         var listener = FindObjectOfType<AudioListener>();
         float dist = listener != null ? Vector3.Distance(listener.transform.position, src.transform.position) : -1f;
-        Debug.LogFormat("[CarEngineAudio] PlayBandClip band={0} clip={1} masterGain={2} listenerVol={3} dist={4}", band, clip.name, masterGain, AudioListener.volume, dist);
-        src.PlayOneShot(clip, masterGain);
+        Debug.LogFormat("[CarEngineAudio] PlayBandClip band={0} clip={1} scheduled={2:F3} masterGain={3} listenerVol={4} dist={5}", band, clip.name, start, masterGain, AudioListener.volume, dist);
+        src.SetScheduledStartTime(start);
+        src.PlayScheduled(start);
         bandSourceIndex[band] = nextIdx;
-        lastPlayTime[band] = Time.time;
+        lastScheduledDsp[band] = start;
     }
 
     private AudioClip GetOnClipForBand(int band)
