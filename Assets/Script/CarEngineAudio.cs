@@ -52,6 +52,7 @@ public class CarEngineAudio : MonoBehaviour
     private void Start()
     {
         PlayStartupSound();
+        StartEngineLoop();
     }
 
     public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, float engineRpm)
@@ -71,19 +72,8 @@ public class CarEngineAudio : MonoBehaviour
             return;
         }
 
-        // Idle loop only when throttle is pressed (user requested)
-        if (currentThrottleInput > 0f)
-        {
-            StartEngineLoop();
-        }
-        else
-        {
-            // stop idle loop if not throttling
-            if (engineAudioSource.clip == idleLoopClip && engineAudioSource.isPlaying)
-            {
-                engineAudioSource.Stop();
-            }
-        }
+        // Ensure engine loop is playing so pitch changes and band transitions are audible
+        StartEngineLoop();
 
         // Use RPM to determine bands (low/med/high) and maxRPM only at peak
         float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
