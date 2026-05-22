@@ -108,7 +108,7 @@ public class CarController : MonoBehaviour
 
             if (engineAudio != null)
             {
-                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput);
+                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
             }
 
             return;
@@ -144,7 +144,7 @@ public class CarController : MonoBehaviour
 
         if (engineAudio != null)
         {
-            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput);
+            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive);
         }
 
         debugLogTimer += Time.deltaTime;

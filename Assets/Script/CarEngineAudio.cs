@@ -14,15 +14,17 @@ public class CarEngineAudio : MonoBehaviour
     public AudioClip highOffClip;
     public AudioClip maxRpmClip;
 
-    [Header("Transport Pack Accents")]
-    public AudioClip tramIdleLoopClip;
-    public AudioClip tramAcceleratingClip;
-    public AudioClip tramAcceleratingAndDeceleratingClip;
-    public AudioClip tramAcceleratingFasterClip;
-    public AudioClip tramAccelerating2Clip;
-    public AudioClip tramDeceleratingClip;
-    public AudioClip tramDecelerating2Clip;
-    public AudioClip tramTurningClip;
+    [Header("2CV6 Accents")]
+    public AudioClip twoCV6EngineWarmingClip;
+    public AudioClip twoCV6EngineOffClip;
+    public AudioClip twoCV6MotorNoStartClip;
+    public AudioClip twoCV6MotorNoStart2Clip;
+    public AudioClip twoCV6KeysOutClip;
+    public AudioClip twoCV6FirstGearClip;
+    public AudioClip twoCV6SecondGearClip;
+    public AudioClip twoCV6ThirdGearClip;
+    public AudioClip twoCV6HandbrakeOnClip;
+    public AudioClip twoCV6HandbrakeOffClip;
 
     [Header("Tuning")]
     public float engineMinPitch = 0.9f;
@@ -35,7 +37,9 @@ public class CarEngineAudio : MonoBehaviour
     private AudioSource engineAudioSource;
     private float currentSpeedKmh;
     private float currentThrottleInput;
+    private bool currentHandbrakeActive;
     private int currentBand = 0;
+    private bool previousHandbrakeActive;
 
     private void Awake()
     {
@@ -55,16 +59,18 @@ public class CarEngineAudio : MonoBehaviour
         StartEngineLoop();
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput)
+    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive)
     {
         currentSpeedKmh = speedKmh;
         currentThrottleInput = throttleInput;
+        currentHandbrakeActive = handbrakeActive;
         UpdateEngineAudio();
+        HandleHandbrakeTransition();
     }
 
     private void UpdateEngineAudio()
     {
-        if (idleLoopClip == null && tramIdleLoopClip == null)
+        if (idleLoopClip == null)
         {
             return;
         }
@@ -113,15 +119,14 @@ public class CarEngineAudio : MonoBehaviour
 
     private void StartEngineLoop()
     {
-        AudioClip loopClip = idleLoopClip != null ? idleLoopClip : tramIdleLoopClip;
-        if (loopClip == null)
+        if (idleLoopClip == null)
         {
             return;
         }
 
-        if (engineAudioSource.clip != loopClip)
+        if (engineAudioSource.clip != idleLoopClip)
         {
-            engineAudioSource.clip = loopClip;
+            engineAudioSource.clip = idleLoopClip;
         }
 
         if (!engineAudioSource.isPlaying)
@@ -133,6 +138,7 @@ public class CarEngineAudio : MonoBehaviour
     private void PlayStartupSound()
     {
         PlayOneShotClip(startupClip);
+        PlayOneShotClip(twoCV6EngineWarmingClip);
     }
 
     private void PlayBandTransition(int previousBand, int nextBand)
@@ -147,22 +153,22 @@ public class CarEngineAudio : MonoBehaviour
             if (nextBand == 1)
             {
                 PlayOneShotClip(lowOnClip);
-                PlayOneShotClip(tramAcceleratingClip);
+                PlayOneShotClip(twoCV6FirstGearClip);
             }
             else if (nextBand == 2)
             {
                 PlayOneShotClip(medOnClip);
-                PlayOneShotClip(tramAcceleratingAndDeceleratingClip);
+                PlayOneShotClip(twoCV6SecondGearClip);
             }
             else if (nextBand == 3)
             {
                 PlayOneShotClip(highOnClip);
-                PlayOneShotClip(tramAcceleratingFasterClip);
+                PlayOneShotClip(twoCV6ThirdGearClip);
             }
             else
             {
                 PlayOneShotClip(maxRpmClip);
-                PlayOneShotClip(tramAccelerating2Clip);
+                PlayOneShotClip(twoCV6MotorNoStartClip);
             }
 
             return;
@@ -171,18 +177,29 @@ public class CarEngineAudio : MonoBehaviour
         if (nextBand == 0)
         {
             PlayOneShotClip(lowOffClip);
-            PlayOneShotClip(tramDeceleratingClip);
+            PlayOneShotClip(twoCV6EngineOffClip);
         }
         else if (nextBand == 1)
         {
             PlayOneShotClip(medOffClip);
-            PlayOneShotClip(tramDecelerating2Clip);
+            PlayOneShotClip(twoCV6KeysOutClip);
         }
         else if (nextBand == 2)
         {
             PlayOneShotClip(highOffClip);
-            PlayOneShotClip(tramTurningClip);
+            PlayOneShotClip(twoCV6MotorNoStart2Clip);
         }
+    }
+
+    private void HandleHandbrakeTransition()
+    {
+        if (currentHandbrakeActive == previousHandbrakeActive)
+        {
+            return;
+        }
+
+        PlayOneShotClip(currentHandbrakeActive ? twoCV6HandbrakeOnClip : twoCV6HandbrakeOffClip);
+        previousHandbrakeActive = currentHandbrakeActive;
     }
 
     private void PlayOneShotClip(AudioClip clip)
