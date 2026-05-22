@@ -15,6 +15,7 @@ public class SettingsAudioPanel : MonoBehaviour
     {
         float savedVolume = PlayerPrefs.GetFloat(MasterVolumePrefKey, defaultMasterVolume);
         ApplyVolume(savedVolume, false);
+        Debug.Log($"[SettingsAudioPanel] Awake - applied saved master volume: {savedVolume}");
     }
 
     private void Start()
@@ -25,6 +26,10 @@ public class SettingsAudioPanel : MonoBehaviour
             masterVolumeSlider.maxValue = 1f;
             masterVolumeSlider.SetValueWithoutNotify(AudioListener.volume);
             masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+        }
+        else
+        {
+            Debug.LogWarning("[SettingsAudioPanel] Start - masterVolumeSlider is not assigned in Inspector.");
         }
     }
 
@@ -39,6 +44,7 @@ public class SettingsAudioPanel : MonoBehaviour
     public void OnMasterVolumeChanged(float value)
     {
         ApplyVolume(value, true);
+        Debug.Log($"[SettingsAudioPanel] Slider changed - new volume: {value}");
     }
 
     public void ResetToDefault()
