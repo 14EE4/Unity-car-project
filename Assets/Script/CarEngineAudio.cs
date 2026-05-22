@@ -12,8 +12,6 @@ public class CarEngineAudio : MonoBehaviour
     public AudioClip highOnClip;
     public AudioClip highOffClip;
     public AudioClip maxRpmClip;
-    public AudioClip gearShiftUpClip;
-    public AudioClip gearShiftDownClip;
 
     [Header("2CV6 Accents")]
     public AudioClip twoCV6HandbrakeOnClip;
@@ -45,7 +43,6 @@ public class CarEngineAudio : MonoBehaviour
     private int currentBand = 0;
     private bool previousHandbrakeActive;
     private int previousGear = 0;
-    private float previousEngineRpm = 0f;
     private float previousThrottleInput = 0f;
     private bool previousMaxRpmState = false;
     private bool warnedMasterVolumeZero;
@@ -71,7 +68,6 @@ public class CarEngineAudio : MonoBehaviour
     {
         // store previous values first
         previousThrottleInput = currentThrottleInput;
-        previousEngineRpm = currentEngineRpm;
         previousGear = currentGear;
 
         currentSpeedKmh = speedKmh;
@@ -81,7 +77,6 @@ public class CarEngineAudio : MonoBehaviour
         currentEngineRpm = EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
 
         UpdateEngineAudio();
-        HandleGearShiftTransition();
         HandleHandbrakeTransition();
     }
 
@@ -259,16 +254,6 @@ public class CarEngineAudio : MonoBehaviour
 
         PlayOneShotClip(currentHandbrakeActive ? twoCV6HandbrakeOnClip : twoCV6HandbrakeOffClip);
         previousHandbrakeActive = currentHandbrakeActive;
-    }
-
-    private void HandleGearShiftTransition()
-    {
-        if (currentGear == previousGear)
-        {
-            return;
-        }
-
-        PlayOneShotClip(currentGear > previousGear ? gearShiftUpClip : gearShiftDownClip);
     }
 
     private void PlayOneShotClip(AudioClip clip)
