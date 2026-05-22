@@ -17,9 +17,6 @@ public class CarEngineAudio : MonoBehaviour
     [Header("2CV6 Accents")]
     public AudioClip twoCV6EngineWarmingClip;
     public AudioClip twoCV6EngineOffClip;
-    public AudioClip twoCV6MotorNoStartClip;
-    public AudioClip twoCV6MotorNoStart2Clip;
-    public AudioClip twoCV6KeysOutClip;
     public AudioClip twoCV6FirstGearClip;
     public AudioClip twoCV6SecondGearClip;
     public AudioClip twoCV6ThirdGearClip;
@@ -168,7 +165,6 @@ public class CarEngineAudio : MonoBehaviour
             else
             {
                 PlayOneShotClip(maxRpmClip);
-                PlayOneShotClip(twoCV6MotorNoStartClip);
             }
 
             return;
@@ -182,12 +178,10 @@ public class CarEngineAudio : MonoBehaviour
         else if (nextBand == 1)
         {
             PlayOneShotClip(medOffClip);
-            PlayOneShotClip(twoCV6KeysOutClip);
         }
         else if (nextBand == 2)
         {
             PlayOneShotClip(highOffClip);
-            PlayOneShotClip(twoCV6MotorNoStart2Clip);
         }
     }
 

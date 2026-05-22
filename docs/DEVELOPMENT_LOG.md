@@ -13,10 +13,11 @@
 - `Car Engine Sound - i6 German Free`의 실제 파일명에 맞춰 `CarEngineAudio`를 RPM 구간형으로 재구성: `startup.wav`, `idle.wav`, `low_on.wav`, `low_off.wav`, `med_on.wav`, `med_off.wav`, `high_on.wav`, `high_off.wav`, `maxRPM.wav`
 - 내부 폴더의 `int_*.wav`는 이번 구현에서는 사용하지 않고, 바깥 폴더의 기본 파일만 사용하도록 정리
 - `CarController`는 주행 상태만 넘기고, `CarEngineAudio`가 속도/스로틀에 따라 루프 클립과 전환 효과를 고르는 방식으로 변경
-- `Car and transportation sounds collection` 대신 `2CV6` 계열로 보조음을 정리: `2CV6EngineWarming`, `2CV6EngineOff`, `2CV6MotorNoStart`, `2CV6MotorNoStart2`, `2CV6KeysOut`, `2CV6FirstGear`, `2CV6SecondGear`, `2CV6ThirdGear`, `2CV6HandbrakeOn`, `2CV6HandbrakeOff`
+- `Car and transportation sounds collection` 대신 `2CV6` 계열로 보조음을 정리: `2CV6EngineWarming`, `2CV6EngineOff`, `2CV6FirstGear`, `2CV6SecondGear`, `2CV6ThirdGear`, `2CV6HandbrakeOn`, `2CV6HandbrakeOff`
 - 기본 조향 한도(`maxSteerAngle`)를 `30` → `45`로 넓혀 더 크게 꺾이도록 조정
 - 수평 마우스 입력의 조향 반응을 높이기 위해 `steerInputMultiplier`를 추가하고 기본값을 `2`로 설정
 - `SteeringIndicatorUI`는 내부에 가상 조향각(좌우 1.5바퀴)을 유지하고, 화면 표시는 수평 이동만 하도록 정리
+- 설정 패널에 `SettingsAudioPanel` 추가: `AudioListener.volume`를 `PlayerPrefs`로 저장/복원하는 마스터 볼륨 슬라이더를 연결 가능하게 정리
 - 에디터 작업 메모: 차량 루트 오브젝트에 `CarController`와 `CarEngineAudio`를 추가한 뒤, 새 컴포넌트의 오디오 슬롯에 위 파일만 할당하고 씬에 `AudioListener`가 하나만 존재하는지 확인 필요
 
 ### 2026-05-21
