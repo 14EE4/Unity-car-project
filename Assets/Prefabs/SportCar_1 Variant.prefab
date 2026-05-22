@@ -413,14 +413,11 @@ MonoBehaviour:
   maxRpmClip: {fileID: 8300000, guid: 01c67f1834599824a880b36282466c10, type: 3}
   twoCV6EngineWarmingClip: {fileID: 8300000, guid: 9c77eae8a1e894eceb4ae708ed3d5bbe, type: 3}
   twoCV6EngineOffClip: {fileID: 8300000, guid: 1e2161a3e58cf47009e8df0896584ae3, type: 3}
-  twoCV6MotorNoStartClip: {fileID: 8300000, guid: 9abec19ce61764c779af95174eab2de7, type: 3}
-  twoCV6MotorNoStart2Clip: {fileID: 8300000, guid: cc969d409aa164341bf04064b3d2a5ed, type: 3}
-  twoCV6KeysOutClip: {fileID: 0}
-  twoCV6FirstGearClip: {fileID: 0}
-  twoCV6SecondGearClip: {fileID: 0}
-  twoCV6ThirdGearClip: {fileID: 0}
-  twoCV6HandbrakeOnClip: {fileID: 0}
-  twoCV6HandbrakeOffClip: {fileID: 0}
+  twoCV6FirstGearClip: {fileID: 8300000, guid: 4447d34f7cd444976a37d329b28edf90, type: 3}
+  twoCV6SecondGearClip: {fileID: 8300000, guid: 3b27ac7dd1f8b47058317b092531725d, type: 3}
+  twoCV6ThirdGearClip: {fileID: 8300000, guid: 0164bf449a0ad47b89d94c8b5f0c8f20, type: 3}
+  twoCV6HandbrakeOnClip: {fileID: 8300000, guid: 1ff21ee5cac90462aaa17a9ebb59ab4c, type: 3}
+  twoCV6HandbrakeOffClip: {fileID: 8300000, guid: da3bdf08833d2434db57dee1c0b12abd, type: 3}
   engineMinPitch: 0.85
   engineMaxPitch: 1.6
   idleBand: 0.12
