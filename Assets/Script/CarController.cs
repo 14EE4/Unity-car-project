@@ -17,6 +17,13 @@ public class CarController : MonoBehaviour
     public float finalDrive = 3.42f; // final drive ratio for rpm estimate
     public float idleRpm = 800f;
     public float redlineRpm = 7000f;
+    [Header("Grip / Downforce")]
+    public bool enableDownforce = true;
+    public float downforceCoeff = 0.5f; // multiplier for downforce (tune)
+    public float tireGripBase = 1.0f; // base multiplier for tire friction
+    public float tireGripMax = 1.4f; // max multiplier at high speed
+    public float speedGripStartKmh = 50f; // when grip boost begins
+    public float speedGripEndKmh = 200f; // when grip boost caps
     public float brakeTorque = 3000f; 
     public float handbrakeTorque = 2000f;
     public float rollingResistanceBrake = 10f;
@@ -40,6 +47,9 @@ public class CarController : MonoBehaviour
     private float longitudinalAcceleration = 0f;
     private bool suppressDriveInputUntilRelease = false;
     private CarEngineAudio engineAudio;
+    // stored baseline friction curves so we can apply multipliers without stacking
+    private WheelFrictionCurve flSideBase, frSideBase, blSideBase, brSideBase;
+    private WheelFrictionCurve flForwardBase, frForwardBase, blForwardBase, brForwardBase;
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 0;
@@ -84,6 +94,31 @@ public class CarController : MonoBehaviour
         if (engineAudio == null)
         {
             Debug.LogWarning("[CarController] CarEngineAudio component is missing. Add it to this car object to enable engine sounds.");
+        }
+
+        // capture base wheel friction curves to avoid multiplicative stacking
+        if (frontLeft != null)
+        {
+            flSideBase = frontLeft.sidewaysFriction;
+            flForwardBase = frontLeft.forwardFriction;
+        }
+
+        if (frontRight != null)
+        {
+            frSideBase = frontRight.sidewaysFriction;
+            frForwardBase = frontRight.forwardFriction;
+        }
+
+        if (backLeft != null)
+        {
+            blSideBase = backLeft.sidewaysFriction;
+            blForwardBase = backLeft.forwardFriction;
+        }
+
+        if (backRight != null)
+        {
+            brSideBase = backRight.sidewaysFriction;
+            brForwardBase = backRight.forwardFriction;
         }
     }
 
@@ -230,6 +265,11 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
+        // apply speed-dependent grip and downforce before physics forces
+        float speedKmh = GetCurrentSpeedKmh();
+        UpdateGripBySpeed(speedKmh);
+        ApplyDownforce();
+
         if (throttleInput > 0f)
         {
             carRigidbody.linearDamping = throttleDrag;
@@ -297,6 +337,64 @@ public class CarController : MonoBehaviour
             hud.SetSpeed(GetCurrentSpeedKmh());
             hud.SetGear(currentGear);
         }
+    }
+
+    private void ApplyDownforce()
+    {
+        if (!enableDownforce || carRigidbody == null)
+        {
+            return;
+        }
+
+        float speedMps = carRigidbody.velocity.magnitude;
+        float downforce = downforceCoeff * speedMps * speedMps;
+        carRigidbody.AddForce(-transform.up * downforce);
+    }
+
+    private void UpdateGripBySpeed(float speedKmh)
+    {
+        float t = Mathf.InverseLerp(speedGripStartKmh, speedGripEndKmh, speedKmh);
+        float gripMultiplier = Mathf.Lerp(1f, tireGripMax, t) * tireGripBase;
+        ApplyTireGripToAllWheels(gripMultiplier);
+    }
+
+    private void ApplyTireGripToAllWheels(float multiplier)
+    {
+        if (frontLeft != null)
+        {
+            frontLeft.sidewaysFriction = ScaleFrictionCurve(flSideBase, multiplier);
+            frontLeft.forwardFriction = ScaleFrictionCurve(flForwardBase, multiplier);
+        }
+
+        if (frontRight != null)
+        {
+            frontRight.sidewaysFriction = ScaleFrictionCurve(frSideBase, multiplier);
+            frontRight.forwardFriction = ScaleFrictionCurve(frForwardBase, multiplier);
+        }
+
+        if (backLeft != null)
+        {
+            backLeft.sidewaysFriction = ScaleFrictionCurve(blSideBase, multiplier);
+            backLeft.forwardFriction = ScaleFrictionCurve(blForwardBase, multiplier);
+        }
+
+        if (backRight != null)
+        {
+            backRight.sidewaysFriction = ScaleFrictionCurve(brSideBase, multiplier);
+            backRight.forwardFriction = ScaleFrictionCurve(brForwardBase, multiplier);
+        }
+    }
+
+    private WheelFrictionCurve ScaleFrictionCurve(WheelFrictionCurve baseCurve, float multiplier)
+    {
+        WheelFrictionCurve c = baseCurve;
+        c.extremumValue = baseCurve.extremumValue * multiplier;
+        c.asymptoteValue = baseCurve.asymptoteValue * multiplier;
+        c.stiffness = baseCurve.stiffness * multiplier;
+        // keep slip thresholds similar but slightly reduced to delay slip onset
+        c.extremumSlip = Mathf.Max(0.01f, baseCurve.extremumSlip * 0.9f);
+        c.asymptoteSlip = Mathf.Max(0.05f, baseCurve.asymptoteSlip * 0.95f);
+        return c;
     }
 
 
