@@ -35,6 +35,8 @@ public class CarEngineAudio : MonoBehaviour
     public float gear5MaxSpeedKmh = 200f;
     public float reverseMaxSpeedKmh = 40f;
     private AudioSource engineAudioSource;
+    private AudioSource[,] bandSources; // [band, 0..1] ping-pong sources
+    private int[] bandSourceIndex = new int[5];
     
     private float currentSpeedKmh;
     private float currentThrottleInput;
@@ -62,6 +64,26 @@ public class CarEngineAudio : MonoBehaviour
         engineAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         engineAudioSource.minDistance = 2f;
         engineAudioSource.maxDistance = 100f;
+        // create paired sources for bands (0..4) to allow ping-pong playback without loop files
+        bandSources = new AudioSource[5, 2];
+        for (int band = 0; band < 5; band++)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                var go = new GameObject($"EngineBand_{band}_Src_{i}");
+                go.transform.SetParent(transform);
+                var src = go.AddComponent<AudioSource>();
+                src.playOnAwake = false;
+                src.loop = false;
+                src.spatialBlend = 1f;
+                src.dopplerLevel = 0f;
+                src.rolloffMode = AudioRolloffMode.Logarithmic;
+                src.minDistance = 2f;
+                src.maxDistance = 100f;
+                bandSources[band, i] = src;
+            }
+            bandSourceIndex[band] = 0;
+        }
     }
 
     private void Start()
@@ -69,7 +91,7 @@ public class CarEngineAudio : MonoBehaviour
         PlayStartupSound();
         if (idleClip != null)
         {
-            PlayOneShotClip(idleClip);
+            PlayBandClip(0, idleClip);
         }
     }
 
@@ -158,7 +180,7 @@ public class CarEngineAudio : MonoBehaviour
                 float interval = Mathf.Max(desired.length * overlapFactor, minRepeatInterval);
                 if (Time.time - last > interval)
                 {
-                    PlayOneShotClip(desired);
+                    PlayBandClip(nextBand, desired);
                     lastPlayTime[nextBand] = Time.time;
                 }
             }
@@ -176,7 +198,7 @@ public class CarEngineAudio : MonoBehaviour
 
         if (atRedlineAndStalled && !previousMaxRpmState)
         {
-            PlayOneShotClip(maxRpmClip);
+            PlayBandClip(4, maxRpmClip);
         }
 
         previousMaxRpmState = atRedlineAndStalled;
@@ -283,58 +305,70 @@ public class CarEngineAudio : MonoBehaviour
                 // If throttle was just released (was on, now off), play the previous band's off clip.
                 if (previousThrottleInput > 0f && currentThrottleInput <= 0f)
                 {
-                    if (previousBand == 1) PlayOneShotClip(lowOffClip);
-                    else if (previousBand == 2) PlayOneShotClip(medOffClip);
-                    else if (previousBand == 3) PlayOneShotClip(highOffClip);
+                    if (previousBand == 1) PlayBandClip(1, lowOffClip);
+                    else if (previousBand == 2) PlayBandClip(2, medOffClip);
+                    else if (previousBand == 3) PlayBandClip(3, highOffClip);
                 }
                 // Play idle only when not throttling
                 if (currentThrottleInput <= 0f)
                 {
-                    PlayOneShotClip(idleClip);
+                    PlayBandClip(0, idleClip);
                     lastPlayTime[0] = Time.time;
                 }
                 break;
             case 1:
                 if (currentThrottleInput > 0f)
                 {
-                    PlayOneShotClip(lowOnClip);
-                    lastPlayTime[1] = Time.time;
+                    PlayBandClip(1, lowOnClip);
                 }
                 else
                 {
-                    PlayOneShotClip(lowOffClip);
-                    lastPlayTime[1] = Time.time;
+                    PlayBandClip(1, lowOffClip);
                 }
+                lastPlayTime[1] = Time.time;
                 break;
             case 2:
                 if (currentThrottleInput > 0f)
                 {
-                    PlayOneShotClip(medOnClip);
-                    lastPlayTime[2] = Time.time;
+                    PlayBandClip(2, medOnClip);
                 }
                 else
                 {
-                    PlayOneShotClip(medOffClip);
-                    lastPlayTime[2] = Time.time;
+                    PlayBandClip(2, medOffClip);
                 }
+                lastPlayTime[2] = Time.time;
                 break;
             case 3:
                 if (currentThrottleInput > 0f)
                 {
-                    PlayOneShotClip(highOnClip);
-                    lastPlayTime[3] = Time.time;
+                    PlayBandClip(3, highOnClip);
                 }
                 else
                 {
-                    PlayOneShotClip(highOffClip);
-                    lastPlayTime[3] = Time.time;
+                    PlayBandClip(3, highOffClip);
                 }
+                lastPlayTime[3] = Time.time;
                 break;
             case 4:
-                PlayOneShotClip(maxRpmClip);
+                PlayBandClip(4, maxRpmClip);
                 lastPlayTime[4] = Time.time;
                 break;
         }
+    }
+
+    private void PlayBandClip(int band, AudioClip clip)
+    {
+        if (clip == null) return;
+        if (band < 0 || band > 4) return;
+        int nextIdx = 1 - bandSourceIndex[band];
+        var src = bandSources[band, nextIdx];
+        if (src == null) return;
+        src.clip = clip;
+        src.pitch = engineAudioSource.pitch;
+        src.volume = 1f;
+        src.Play();
+        bandSourceIndex[band] = nextIdx;
+        lastPlayTime[band] = Time.time;
     }
 
     private AudioClip GetOnClipForBand(int band)
