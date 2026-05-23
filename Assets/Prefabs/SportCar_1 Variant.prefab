@@ -477,12 +477,14 @@ MonoBehaviour:
   - 1.9
   - 1.4
   - 1
+  - 0.85
   gearMaxSpeeds:
   - 50
   - 85
   - 130
   - 160
   - 200
+  - 230
   defaultDrivenWheelRadius: 0.35
   engineAudio: {fileID: 0}
   rpmDisplay: {fileID: 0}

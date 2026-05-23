@@ -216,7 +216,7 @@ public class CarEngineSystem : MonoBehaviour
         return Mathf.Lerp(idleRPM, maxRPM, speedRatio);
     }
 
-    private float GetGearMaxSpeed(int gear)
+    public float GetGearMaxSpeed(int gear)
     {
         if (gear < 0)
         {

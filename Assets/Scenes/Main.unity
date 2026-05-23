@@ -2480,13 +2480,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9f97a8df2290da46a2225ea4dc2b55c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  engineAudio: {fileID: 6862501324769161063}
-  rpmText: {fileID: 1094183311}
+  engineAudio: {fileID: 0}
+  engineSystem: {fileID: 0}
+  rpmText: {fileID: 0}
   rpmTextLegacy: {fileID: 0}
+  rpmGaugeImage: {fileID: 0}
   format: '{0:F0} RPM'
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
-  warningColor: {r: 1, g: 0.35, b: 0.2, a: 1}
-  warningThreshold: 7000
+  maxRPM: 8000
+  normalColor: {r: 0, g: 1, b: 0, a: 1}
+  warningColor: {r: 1, g: 1, b: 0, a: 1}
+  redlineColor: {r: 1, g: 0, b: 0, a: 1}
+  warningThreshold: 5500
+  redlineThreshold: 7000
+  blinkSpeed: 5
 --- !u!4 &1113036417 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8736022052560050535, guid: 2b742cea3010f98448c0976eb0724a22, type: 3}
