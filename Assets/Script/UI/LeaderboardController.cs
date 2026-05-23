@@ -19,6 +19,11 @@ public class LeaderboardController : MonoBehaviour
 
     void Start()
     {
+        // Ensure registration UI panel shows when entering leaderboard scene (if needed)
+        var reg = Object.FindObjectOfType<UserRegistrationUI>();
+        if (reg != null)
+            reg.ShowIfNoUserName();
+
         if (refreshInterval > 0f)
             InvokeRepeating(nameof(LoadLeaderboard), 0f, refreshInterval);
     }

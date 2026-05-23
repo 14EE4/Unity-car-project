@@ -30,6 +30,21 @@ public class UserRegistrationUI : MonoBehaviour
         }
     }
 
+    // Public helper: show the name input panel unconditionally
+    public void ShowPanel()
+    {
+        if (nameInputPanel == null) return;
+        nameInputPanel.SetActive(true);
+    }
+
+    // Public helper: show the panel only if no UserName saved
+    public void ShowIfNoUserName()
+    {
+        if (nameInputPanel == null) return;
+        var stored = PlayerPrefs.GetString("UserName", string.Empty);
+        nameInputPanel.SetActive(string.IsNullOrWhiteSpace(stored));
+    }
+
     void HandleSubmit()
     {
         if (nameInputField == null)
