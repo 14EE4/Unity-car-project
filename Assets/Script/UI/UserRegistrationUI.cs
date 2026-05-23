@@ -148,14 +148,26 @@ public class UserRegistrationUI : MonoBehaviour
         }
         else
         {
-            var lb = Object.FindObjectOfType<LeaderboardController>();
-            if (lb != null)
+            var submitter = Object.FindObjectOfType<ScoreSubmitter>();
+            if (submitter != null && submitter.HoldBestLapFromTimer())
             {
-                lb.LoadLeaderboard();
+                Debug.Log("[UserRegistrationUI] No pending score. Submitting best lap stored in app data.");
+                if (!submitter.TrySubmitPendingScore())
+                {
+                    Debug.LogWarning("[UserRegistrationUI] Best lap was found but could not be submitted.");
+                }
             }
             else
             {
-                Debug.LogWarning("[UserRegistrationUI] LeaderboardController not found to refresh leaderboard.");
+                var lb = Object.FindObjectOfType<LeaderboardController>();
+                if (lb != null)
+                {
+                    lb.LoadLeaderboard();
+                }
+                else
+                {
+                    Debug.LogWarning("[UserRegistrationUI] LeaderboardController not found to refresh leaderboard.");
+                }
             }
         }
     }

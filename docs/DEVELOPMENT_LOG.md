@@ -4,6 +4,27 @@
 
 # Development Log
 
+### 2026-05-23 — 리더보드 서버 연동 상태 정리 및 앱데이터 최고기록 전송 흐름 반영
+
+- 변경 파일:
+	- `Assets/Script/UI/LeaderboardController.cs` — 서버 응답 raw JSON과 파싱 실패 로그를 추가해 비어 있는 리더보드 원인을 구분할 수 있도록 정리했습니다.
+	- `Assets/Script/UI/UserRegistrationUI.cs` — 이름 등록 후 보류된 기록 또는 앱데이터의 최고기록을 자동 제출하는 흐름으로 정리했습니다.
+	- `Assets/Script/UI/ScoreSubmitter.cs` — 랩타임과 `lap_time_text`를 함께 서버로 보내고, 이름이 없을 때는 점수를 보류할 수 있도록 확장했습니다.
+	- `Assets/Script/LapTimer.cs` — 앱데이터에 저장된 개인 최고기록을 다시 읽어 제출할 수 있는 헬퍼를 추가했습니다.
+
+- 현재 동작 요약:
+	- 이름이 없으면 이름 입력 패널을 띄우고, 이름 등록 후 보류된 랩 기록 또는 저장된 최고기록을 서버에 전송합니다.
+	- 이름이 있으면 결승선 통과 시 바로 `POST /score`를 수행합니다.
+	- 리더보드는 서버의 `/leaderboard` 응답을 그대로 렌더링하므로, 서버가 개인 최고기록 1개만 반환해야 합니다.
+
+- 확인 포인트:
+	1. 리더보드 씬 진입 시 `UserRegistrationUI.ShowIfNoUserName()`가 호출되는지 확인합니다.
+	2. 랩 완주 후 `ScoreSubmitter` 로그가 찍히는지 확인합니다.
+	3. 이름 등록 후 `/register` 다음에 `/score`가 자동으로 호출되는지 확인합니다.
+	4. `LeaderboardController`의 raw response가 빈 배열인지, 실제 기록인지 로그로 구분합니다.
+
+---
+
 ### 2026-05-23 — 온라인 리더보드: 이름 입력, 등록, 랭킹 조회, 기록 전송 기능 추가
 
 - 변경 파일:

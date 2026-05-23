@@ -2,6 +2,12 @@
 
 최근 작업으로 유저 이름 입력과 서버 연동 리더보드 기능을 추가했습니다. 아래는 구현된 기능, 에디터/런타임 설정, 사용법 및 테스트 팁입니다.
 
+## 서버 연동 개요
+- Base URL: `https://api.pyeong.p-e.kr/api`
+- 인증/식별: `SystemInfo.deviceUniqueIdentifier`를 `device_id`로 사용합니다.
+- 통신 방식: UnityWebRequest + JSON 직렬화(`JsonUtility`)
+- HTTPS: Nginx Proxy Manager가 외부 HTTPS를 내부 서버 포트로 프록시하므로, Unity 쪽에서 별도 비보안 설정은 필요하지 않습니다.
+
 ## 주요 추가/수정 파일
 - `Assets/Script/UI/LeaderboardManager.cs` : API 기본 URL(`baseUrl`)과 `DeviceId`를 제공하는 싱글턴 매니저입니다.
 - `Assets/Script/UI/LeaderboardController.cs` : 서버에서 랭킹을 가져와 `Item_LeaderboardEntry` 프리팹으로 `Scroll_RankList/Content`를 채우는 컨트롤러입니다.
@@ -26,17 +32,25 @@
 
 4. `ScoreSubmitter` 연결 (옵션)
    - `ScoreSubmitter` 컴포넌트를 적당한 GameObject에 추가합니다.
-   - 랩/경기 종료 콜백에서 `SubmitScoreRequest(lapSeconds, trackId)`를 호출하도록 연결하면 자동 제출됩니다.
+  - 랩/경기 종료 콜백에서 `SubmitScoreOrAskName(lapSeconds, lapTimeText, trackId)`를 호출하도록 연결하면 자동 제출됩니다.
+  - 이름이 없는 경우에는 이름 입력 패널을 띄우고, 이름이 있으면 즉시 전송합니다.
 
 ## 런타임 흐름
 - 리더보드 씬 입장 → `LeaderboardController`가 `UserRegistrationUI.ShowIfNoUserName()` 호출 → 이름 없으면 입력 패널 표시
 - 이름 제출 → `UserRegistrationUI`가 `POST /register` 호출 → 성공 시 `LeaderboardController.LoadLeaderboard()`로 목록 갱신
 - 랩 제출 → `ScoreSubmitter`가 `POST /score` 호출 → 성공 시 리더보드 갱신
+- 이름이 없는 상태에서 랩을 완료한 경우 → 앱데이터(`lap_times.json`)에 저장된 개인 최고기록 1개를 보류 → 이름 등록 후 자동 전송
 
 ## 리더보드 표시 규칙
 - 리더보드에는 사용자별 개인 최고기록(Personal Best) 1개만 표시합니다.
 - 서버의 `/leaderboard` 응답은 사용자별 최단 `lap_seconds`를 기준으로 정렬된 항목이어야 합니다.
 - Unity의 `LeaderboardController`는 서버가 반환한 결과를 그대로 렌더링하므로, 서버 응답이 곧 화면 표시 규칙이 됩니다.
+
+## 현재 Unity 클라이언트 동작
+- 리더보드 씬 진입 시 `LeaderboardController`가 `UserRegistrationUI.ShowIfNoUserName()`를 호출해 이름 입력 패널 표시 여부를 결정합니다.
+- 이름이 없을 때 랩 기록이 발생하면, `ScoreSubmitter`가 앱데이터에 저장된 최고기록을 우선 읽어서 보류합니다.
+- 이름 등록이 완료되면 보류된 최고기록을 `POST /score`로 전송합니다.
+- `LeaderboardController`는 씬 진입 시와 성공적인 제출 후 리더보드를 다시 가져옵니다.
 
 ## 테스트 팁
 - 에디터에서 저장된 이름을 지우려면 상단 메뉴 `Dev → Clear UserName Pref` 클릭
@@ -60,8 +74,13 @@
 
 - POST `/api/score`
   ```json
-  { "device_id":"<device_id>", "lap_seconds":80.12, "track_id":"track01" }
+  { "device_id":"<device_id>", "lap_seconds":80.12, "lap_time_text":"01:20:120", "track_id":"track01" }
   ```
+
+## 서버 응답 기대값
+- `POST /register` 성공 시: 등록된 `device_id`와 `user_name`을 포함한 JSON 응답
+- `POST /score` 성공 시: 저장 성공 여부와 식별자/메시지를 포함한 JSON 응답
+- `GET /leaderboard?limit=10` 성공 시: `[{ rank, player_name, lap_seconds, lap_time_text }]` 배열
 
 ## 추가 지원
 원하시면 다음을 도와드릴 수 있습니다:
