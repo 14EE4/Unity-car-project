@@ -21,8 +21,23 @@ public class LeaderboardController : MonoBehaviour
     {
         // Ensure registration UI panel shows when entering leaderboard scene (if needed)
         var reg = Object.FindObjectOfType<UserRegistrationUI>();
+        if (reg == null)
+        {
+            // Try to find inactive instances as well (e.g., component attached to inactive GameObject)
+            var all = Resources.FindObjectsOfTypeAll<UserRegistrationUI>();
+            if (all != null && all.Length > 0)
+                reg = all[0];
+        }
+
         if (reg != null)
+        {
+            Debug.Log("[LeaderboardController] Found UserRegistrationUI -> ShowIfNoUserName()");
             reg.ShowIfNoUserName();
+        }
+        else
+        {
+            Debug.LogWarning("[LeaderboardController] UserRegistrationUI not found in scene (active or inactive). Ensure a GameObject with UserRegistrationUI exists and is assigned in the scene.");
+        }
 
         if (refreshInterval > 0f)
             InvokeRepeating(nameof(LoadLeaderboard), 0f, refreshInterval);

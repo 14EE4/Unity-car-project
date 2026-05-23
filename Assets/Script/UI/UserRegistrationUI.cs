@@ -40,9 +40,16 @@ public class UserRegistrationUI : MonoBehaviour
     // Public helper: show the panel only if no UserName saved
     public void ShowIfNoUserName()
     {
-        if (nameInputPanel == null) return;
+        if (nameInputPanel == null)
+        {
+            Debug.LogWarning("[UserRegistrationUI] nameInputPanel is not assigned in inspector.");
+            return;
+        }
+
         var stored = PlayerPrefs.GetString("UserName", string.Empty);
-        nameInputPanel.SetActive(string.IsNullOrWhiteSpace(stored));
+        var shouldShow = string.IsNullOrWhiteSpace(stored);
+        Debug.Log($"[UserRegistrationUI] ShowIfNoUserName called. storedUserName='{stored}', willShow={shouldShow}");
+        nameInputPanel.SetActive(shouldShow);
     }
 
     void HandleSubmit()
