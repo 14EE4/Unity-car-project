@@ -4,16 +4,26 @@ public class Checkpoint : MonoBehaviour
 {
     public bool IsVisited { get; private set; } = false;
 
-    private Renderer checkpointRenderer;
-    private Color originalColor;
+    private Renderer[] checkpointRenderers;
+    private Collider[] checkpointColliders;
+    private Color[][] originalColors;
     private CheckpointManager checkpointManager;
 
     private void Awake()
     {
-        checkpointRenderer = GetComponent<Renderer>();
-        if (checkpointRenderer != null)
+        checkpointRenderers = GetComponentsInChildren<Renderer>(true);
+        checkpointColliders = GetComponentsInChildren<Collider>(true);
+        originalColors = new Color[checkpointRenderers.Length][];
+
+        for (int i = 0; i < checkpointRenderers.Length; i++)
         {
-            originalColor = checkpointRenderer.material.color;
+            Material[] materials = checkpointRenderers[i].materials;
+            originalColors[i] = new Color[materials.Length];
+
+            for (int j = 0; j < materials.Length; j++)
+            {
+                originalColors[i][j] = materials[j].color;
+            }
         }
 
         checkpointManager = FindObjectOfType<CheckpointManager>();
@@ -32,10 +42,7 @@ public class Checkpoint : MonoBehaviour
                 IsVisited = true;
                 Debug.Log($"Checkpoint {gameObject.name} validated and visited.");
 
-                if (checkpointRenderer != null)
-                {
-                    checkpointRenderer.material.color = Color.green;
-                }
+                SetCheckpointTransparency(0.15f);
             }
             else
             {
@@ -47,9 +54,34 @@ public class Checkpoint : MonoBehaviour
     public void ResetCheckpoint()
     {
         IsVisited = false;
-        if (checkpointRenderer != null)
+        SetCheckpointTransparency(1f);
+    }
+
+    private void SetCheckpointTransparency(float alpha)
+    {
+        for (int i = 0; i < checkpointRenderers.Length; i++)
         {
-            checkpointRenderer.material.color = originalColor;
+            Renderer checkpointRenderer = checkpointRenderers[i];
+            if (checkpointRenderer != null)
+            {
+                checkpointRenderer.enabled = true;
+
+                Material[] materials = checkpointRenderer.materials;
+                for (int j = 0; j < materials.Length; j++)
+                {
+                    Color color = originalColors[i][j];
+                    color.a = alpha;
+                    materials[j].color = color;
+                }
+            }
+        }
+
+        foreach (var checkpointCollider in checkpointColliders)
+        {
+            if (checkpointCollider != null)
+            {
+                checkpointCollider.enabled = alpha >= 1f;
+            }
         }
     }
 }
