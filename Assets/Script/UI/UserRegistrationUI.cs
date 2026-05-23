@@ -7,8 +7,9 @@ using UnityEngine.UI;
 
 public class UserRegistrationUI : MonoBehaviour
 {
+    const string baseUrl = "https://api.pyeong.p-e.kr/api";
     [Tooltip("POST URL to register user on server")]
-    public string registerApiUrl = "http://내_서버_IP/api/register";
+    public string registerApiUrl = baseUrl + "/register";
 
     public GameObject nameInputPanel;
     public TMP_InputField nameInputField;

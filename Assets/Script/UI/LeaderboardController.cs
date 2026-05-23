@@ -5,8 +5,9 @@ using TMPro;
 
 public class LeaderboardController : MonoBehaviour
 {
+    const string baseUrl = "https://api.pyeong.p-e.kr/api";
     [Tooltip("GET URL that returns a JSON array of leaderboard entries")]
-    public string leaderboardApiUrl = "http://내_서버_IP/api/leaderboard";
+    public string leaderboardApiUrl = baseUrl + "/leaderboard";
 
     [Tooltip("Prefab: Project/Item_LeaderboardEntry (contains Text_Rank, Text_PlayerName, Text_LapTime)")]
     public GameObject entryPrefab;
