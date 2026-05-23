@@ -79,7 +79,7 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear, float engineRpm = -1f)
+    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear, float engineRpm)
     {
         // store previous values first
         previousThrottleInput = currentThrottleInput;
@@ -89,7 +89,7 @@ public class CarEngineAudio : MonoBehaviour
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
         currentGear = gear;
-        currentEngineRpm = engineRpm > 0f ? engineRpm : EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
+        currentEngineRpm = engineRpm;
 
         UpdateEngineAudio();
         HandleHandbrakeTransition();
@@ -185,23 +185,6 @@ public class CarEngineAudio : MonoBehaviour
         }
 
         previousMaxRpmState = atRedlineAndStalled;
-    }
-
-    private float EstimateEngineRpm(float speedKmh, float throttleInput, int gear)
-    {
-        if (gear == 0 || speedKmh < 1f)
-        {
-            return 0f;
-        }
-
-        float maxSpeedKmh = GetGearMaxSpeedKmh(gear);
-        if (maxSpeedKmh <= 0f)
-        {
-            return 0f;
-        }
-
-        float speedRatio = Mathf.Clamp01(speedKmh / maxSpeedKmh);
-        return Mathf.Lerp(rpmIdle, rpmRedline, speedRatio);
     }
 
     private float GetGearMaxSpeedKmh(int gear)

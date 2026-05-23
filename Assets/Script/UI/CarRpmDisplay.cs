@@ -81,11 +81,6 @@ public class CarRpmDisplay : MonoBehaviour
             return engineSystem.CurrentRPM;
         }
 
-        if (engineAudio != null)
-        {
-            return engineAudio.CurrentEngineRpm;
-        }
-
         return -1f;
     }
 
