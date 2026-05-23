@@ -57,6 +57,8 @@ public class CarEngineAudio : MonoBehaviour
     public float overlapFactor = 0.6f; // fraction of clip length to overlap when repeating
     public float masterGain = 1f;
     public bool force2DForTesting = true;
+    // track last play time per clip to avoid accidental duplicates
+    private System.Collections.Generic.Dictionary<AudioClip, float> lastClipPlayTime = new System.Collections.Generic.Dictionary<AudioClip, float>();
 
     private void Awake()
     {
@@ -377,6 +379,17 @@ public class CarEngineAudio : MonoBehaviour
             volumeScale *= 0.85f;
         }
 
+        // prevent playing the same clip again too soon
+        float interval = Mathf.Max(clip.length * (1f - overlapFactor), minRepeatInterval);
+        if (lastClipPlayTime.TryGetValue(clip, out float last))
+        {
+            if (Time.time - last < interval)
+            {
+                return;
+            }
+        }
+
         engineAudioSource.PlayOneShot(clip, volumeScale);
+        lastClipPlayTime[clip] = Time.time;
     }
 }
