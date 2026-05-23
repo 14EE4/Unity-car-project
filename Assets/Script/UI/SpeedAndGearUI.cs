@@ -8,29 +8,20 @@ public class SpeedAndGearUI : MonoBehaviour
     [Header("UI Elements")]
     public TextMeshProUGUI speedText;
     public TextMeshProUGUI gearText;
-    public TextMeshProUGUI rpmText;
 
     [Header("Vehicle Source (optional)")]
     public Rigidbody targetRigidbody;
     public MonoBehaviour vehicleScript; // assign your car controller if available
     public string speedFieldName = "CurrentSpeed";
     public string gearFieldName = "CurrentGear";
-    public string rpmFieldName = "CurrentRPM";
-    public string rpmWarningFieldName = "IsRpmWarning";
 
     [Header("Formatting")]
     public float speedMultiplier = 3.6f; // m/s -> km/h
     public string speedFormat = "0"; // string format for speed
     public string gearFormat = "G{0}"; // e.g. G1, G2
-    public string rpmFormat = "0";
     public string speedPrefix = "Speed: ";
     public string speedSuffix = " km/h";
     public string gearPrefix = "Gear: ";
-    public string rpmPrefix = "RPM: ";
-
-    [Header("RPM Warning")]
-    public Color rpmNormalColor = Color.white;
-    public Color rpmWarningColor = new Color(1f, 0.35f, 0.2f);
 
     void Update()
     {
@@ -40,8 +31,6 @@ public class SpeedAndGearUI : MonoBehaviour
 
         float speed = 0f;
         int gear = 0;
-        float rpm = 0f;
-        bool rpmWarning = false;
 
         if (targetRigidbody != null)
         {
@@ -76,37 +65,10 @@ public class SpeedAndGearUI : MonoBehaviour
                 var gp = type.GetProperty(gearFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 if (gp != null) gear = ToInt(gp.GetValue(vehicleScript));
             }
-
-            var rf = type.GetField(rpmFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (rf != null)
-            {
-                rpm = ToFloat(rf.GetValue(vehicleScript));
-            }
-            else
-            {
-                var rp = type.GetProperty(rpmFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                if (rp != null) rpm = ToFloat(rp.GetValue(vehicleScript));
-            }
-
-            var warnField = type.GetField(rpmWarningFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (warnField != null)
-            {
-                rpmWarning = ToBool(warnField.GetValue(vehicleScript));
-            }
-            else
-            {
-                var warnProp = type.GetProperty(rpmWarningFieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                if (warnProp != null) rpmWarning = ToBool(warnProp.GetValue(vehicleScript));
-            }
         }
 
         if (speedText != null) speedText.text = string.Format("{0}{1}{2}", speedPrefix, Mathf.RoundToInt(speed).ToString(speedFormat), speedSuffix);
         if (gearText != null) gearText.text = string.Format("{0}{1}", gearPrefix, FormatGear(gear));
-        if (rpmText != null)
-        {
-            rpmText.text = string.Format("{0}{1}", rpmPrefix, Mathf.RoundToInt(rpm).ToString(rpmFormat));
-            rpmText.color = rpmWarning ? rpmWarningColor : rpmNormalColor;
-        }
     }
 
     float ToFloat(object o)
@@ -132,15 +94,6 @@ public class SpeedAndGearUI : MonoBehaviour
         return 0;
     }
 
-    bool ToBool(object o)
-    {
-        if (o == null) return false;
-        if (o is bool) return (bool)o;
-        bool res;
-        if (bool.TryParse(o.ToString(), out res)) return res;
-        return false;
-    }
-
     // Optional: allow other scripts to push values directly
     public void SetSpeed(float s)
     {
@@ -150,15 +103,6 @@ public class SpeedAndGearUI : MonoBehaviour
     public void SetGear(int g)
     {
         if (gearText != null) gearText.text = string.Format("{0}{1}", gearPrefix, FormatGear(g));
-    }
-
-    public void SetRPM(float rpm, bool warning)
-    {
-        if (rpmText != null)
-        {
-            rpmText.text = string.Format("{0}{1}", rpmPrefix, Mathf.RoundToInt(rpm).ToString(rpmFormat));
-            rpmText.color = warning ? rpmWarningColor : rpmNormalColor;
-        }
     }
 
     string FormatGear(int g)

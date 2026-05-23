@@ -7,6 +7,7 @@ public class CarController : MonoBehaviour
     
     [Header("HUD")]
     public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
+    public CarRpmDisplay rpmDisplay; // assign the existing RPM display UI
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
@@ -243,9 +244,9 @@ public class CarController : MonoBehaviour
         rpmWarningActive = currentRPM >= rpmWarningThreshold;
         isFuelCutActive = currentRPM >= fuelCutRPM;
 
-        if (hud != null)
+        if (rpmDisplay != null)
         {
-            hud.SetRPM(currentRPM, rpmWarningActive);
+            rpmDisplay.SetRPM(currentRPM, rpmWarningActive);
         }
     }
 
@@ -390,7 +391,6 @@ public class CarController : MonoBehaviour
         {
             hud.SetSpeed(GetCurrentSpeedKmh());
             hud.SetGear(currentGear);
-            hud.SetRPM(currentRPM, rpmWarningActive);
         }
     }
 
