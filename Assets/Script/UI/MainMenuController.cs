@@ -11,6 +11,10 @@ public class MainMenuController : MonoBehaviour
 {
     [Tooltip("Scene name to load when Play is pressed")]
     public string mainSceneName = "Main";
+
+    [Header("Leaderboard")]
+    public string leaderboardSceneName = "Leaderboard";
+
     public CanvasGroup settingsPanel;
     public CanvasGroup keyGuidePanel;
 
@@ -22,6 +26,7 @@ public class MainMenuController : MonoBehaviour
     void OnValidate()
     {
         if (Application.isPlaying) return;
+
 
         if (settingsPanel != null)
         {
@@ -45,6 +50,8 @@ public class MainMenuController : MonoBehaviour
         // 메인 메뉴 진입 시 커서를 해제하고 표시합니다.
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        // Removed legacy name-input wiring
 
         // 설정 패널이 에디터에서 연결되어 있으면 초기 상태로 숨깁니다.
         if (settingsPanel != null)
@@ -85,13 +92,25 @@ public class MainMenuController : MonoBehaviour
         // NOTE: Automatic runtime binding of UI buttons has been removed to encourage
         // editor-time wiring. Use the inspector to assign button onClick handlers
         // to call `ShowKeyGuide()` and `ShowSettings()` for clearer ownership.
+
+        // legacy name input panel removed from main menu
     }
+
+    
 
     // Play 버튼 동작: 메인 게임 씬을 로드합니다.
     public void PlayGame()
     {
         LoadingScreenManager.LoadScene(mainSceneName);
     }
+
+    // 리더보드 버튼 동작: 리더보드 씬으로 이동합니다.
+    public void LeaderboardButtonClicked()
+    {
+        LoadingScreenManager.LoadScene(leaderboardSceneName);
+    }
+
+    
 
     // 설정창 열기: 인스펙터에서 할당된 settingsPanel의 CanvasGroup을 사용해 표시합니다.
     public void ShowSettings()
@@ -208,6 +227,7 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+
     // 지정한 Transform부터 상위 계층을 로그로 출력합니다. 디버그 용도입니다.
     void LogHierarchy(Transform start)
     {
@@ -243,12 +263,16 @@ public class MainMenuController : MonoBehaviour
         Debug.Log("[MainMenuController] Closed KeyGuidePanel");
     }
 
+#if UNITY_EDITOR
     public void QuitGame()
     {
-#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
     }
+#else
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+#endif
+    
 }

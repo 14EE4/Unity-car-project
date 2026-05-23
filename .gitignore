@@ -109,6 +109,8 @@ InitTestScene*.unity*
 Assets/CartoonTracksPack1/
 Assets/SportCar/
 Assets/TutorialInfo/
+Assets/Car and transportation sounds collection/
+Assets/Car Engine Sound - i6 German Free/
 
 # 기타 대용량 바이너리 파일 제외
 *.psd

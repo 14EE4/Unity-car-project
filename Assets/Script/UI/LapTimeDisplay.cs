@@ -14,6 +14,7 @@ public class LapTimeDisplay : MonoBehaviour
     public string bestLabel = "Best 3";
     public string emptyLapText = "--:--:---";
     public Color notificationColor = new Color(1f, 0.87f, 0.45f, 1f);
+    public Color lockedStateColor = new Color(1f, 0.35f, 0.35f, 1f);
 
     private void Awake()
     {
@@ -66,6 +67,12 @@ public class LapTimeDisplay : MonoBehaviour
         {
             builder.AppendLine();
             builder.AppendLine(string.Format("<color=#{0}>{1}</color>", ColorUtility.ToHtmlStringRGB(notificationColor), lapTimer.notificationMessage));
+        }
+
+        if (lapTimer.isRunLocked)
+        {
+            builder.AppendLine();
+            builder.AppendLine(string.Format("<color=#{0}>Lap complete. Press R to reset, or restart / return to menu to begin a new run.</color>", ColorUtility.ToHtmlStringRGB(lockedStateColor)));
         }
 
         return builder.ToString();

@@ -18,7 +18,7 @@ public static class KeyGuideFactory
         else
         {
             var activeScene = SceneManager.GetActiveScene();
-            var canvases = Object.FindObjectsOfType<Canvas>();
+            var canvases = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None);
             foreach (var c in canvases)
             {
                 if (c.gameObject.scene == activeScene)

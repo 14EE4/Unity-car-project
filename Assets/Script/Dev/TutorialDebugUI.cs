@@ -38,7 +38,7 @@ public class TutorialDebugUI : MonoBehaviour
 
         if (GUILayout.Button("Log TutorialUI status"))
         {
-            var tut = FindObjectOfType<TutorialUI>();
+            var tut = Object.FindFirstObjectByType<TutorialUI>();
             if (tut == null)
             {
                 Debug.Log("TutorialDebugUI: No TutorialUI instance found in scene.");

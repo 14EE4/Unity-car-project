@@ -61,9 +61,32 @@ public class FinishLine : MonoBehaviour
             return;
         }
 
+        var checkpointManager = Object.FindFirstObjectByType<CheckpointManager>();
+        if (checkpointManager != null && checkpointManager.AreCheckpointsLocked())
+        {
+            Debug.Log("[FinishLine] Checkpoints are locked. Ignoring finish trigger until the run is reset.");
+            return;
+        }
+
         Debug.Log($"[FinishLine] Player reached finish line. TimerRunning={lapTimer.isTimerRunning}, RunFinished={lapTimer.isRunFinished}");
         bool completed = lapTimer.TryCompleteLap();
         Debug.Log($"[FinishLine] TryCompleteLap result={completed}");
+
+        if (completed)
+        {
+            var submitter = Object.FindFirstObjectByType<ScoreSubmitter>();
+            if (submitter != null)
+            {
+                var lapSeconds = lapTimer.recentLapTime;
+                var lapTimeText = lapTimer.FormatLapTime(lapSeconds);
+                Debug.Log($"[FinishLine] Forwarding lap to ScoreSubmitter | lapSeconds={lapSeconds:F3} | lapTimeText={lapTimeText}");
+                submitter.SubmitScoreOrAskName(lapSeconds, lapTimeText, null);
+            }
+            else
+            {
+                Debug.LogWarning("[FinishLine] ScoreSubmitter not found. Lap was recorded locally but not sent to server.");
+            }
+        }
     }
 
     /// <summary>

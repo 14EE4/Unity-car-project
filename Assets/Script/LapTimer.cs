@@ -24,6 +24,7 @@ public class LapTimer : MonoBehaviour
     public string notificationMessage { get; private set; }
     public bool hasNotification => Time.time < notificationEndTime && !string.IsNullOrEmpty(notificationMessage);
     public bool isRunFinished { get; private set; }
+    public bool isRunLocked => isRunFinished || (checkpointManager != null && checkpointManager.AreCheckpointsLocked());
 
     private float lapStartTime;
     private float notificationEndTime;
@@ -112,12 +113,15 @@ public class LapTimer : MonoBehaviour
             {
                 string bestTimesText = string.Join(", ", bestLapTimes.ConvertAll(FormatLapTime));
                 Debug.Log($"[LapTimer] Lap accepted. Recent={FormatLapTime(recentLapTime)} | BestTimes=[{bestTimesText}]");
-                Debug.Log("[LapTimer] Completing run: ResetTimerState -> isRunFinished=true -> checkpoint reset.");
+                Debug.Log("[LapTimer] Completing run: ResetTimerState -> isRunFinished=true -> checkpoints locked until reset.");
             }
 
             ResetTimerState();
             isRunFinished = true;
-            checkpointManager.ResetCheckpoints();
+            if (checkpointManager != null)
+            {
+                checkpointManager.LockCheckpoints();
+            }
             SetNotification($"Lap recorded: {FormatLapTime(recentLapTime)}");
             return true;
         }
@@ -150,6 +154,30 @@ public class LapTimer : MonoBehaviour
         int milliseconds = totalMilliseconds % 1000;
 
         return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+    }
+
+    public bool TryGetBestLapTime(out float bestLapTime)
+    {
+        if (bestLapTimes != null && bestLapTimes.Count > 0)
+        {
+            bestLapTime = bestLapTimes[0];
+            return true;
+        }
+
+        bestLapTime = 0f;
+        return false;
+    }
+
+    public bool TryGetBestLapTimeDisplay(out float bestLapTime, out string bestLapTimeText)
+    {
+        if (TryGetBestLapTime(out bestLapTime))
+        {
+            bestLapTimeText = FormatLapTime(bestLapTime);
+            return true;
+        }
+
+        bestLapTimeText = null;
+        return false;
     }
 
     private void StartTimer()
