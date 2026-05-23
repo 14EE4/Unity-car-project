@@ -34,6 +34,23 @@
 
 이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
 
+### 2026-05-23 — RPM 단일 출처 정리 및 오디오 fallback 제거
+
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — RPM 추정 fallback을 제거하고, 엔진 시스템에서 전달받은 RPM만 사용하도록 정리했습니다.
+	- `Assets/Script/UI/CarRpmDisplay.cs` — RPM 표시는 엔진 시스템만 읽도록 정리해 오디오 경로 의존을 제거했습니다.
+	- `README.md` — 최근 엔진/RPM 작업 상태를 요약 항목으로 추가했습니다.
+
+- 변경 사항:
+	- 엔진 RPM의 단일 출처를 `CarEngineSystem.CurrentRPM`으로 고정했습니다.
+	- 오디오는 더 이상 RPM을 추정하거나 계산하지 않고, 전달받은 RPM을 이용해 사운드 연출만 담당합니다.
+	- RPM UI도 엔진 시스템만 읽도록 정리해, 오디오와 RPM 표시의 책임 분리를 명확히 했습니다.
+
+- 확인 포인트:
+	1. `CarEngineAudio`에 RPM fallback 경로가 남아 있지 않은지 확인합니다.
+	2. `CarRpmDisplay`가 `CarEngineSystem`을 우선 읽는지 확인합니다.
+	3. 씬에서 `CarEngineSystem`이 차량 오브젝트에 1개만 붙어 있는지 확인합니다.
+
 ### 2026-05-23 — 6단 변속 RPM 유지 및 RPM 게이지 색상 업데이트
 
 - 변경 파일:
