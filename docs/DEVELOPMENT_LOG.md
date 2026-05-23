@@ -1,4 +1,11 @@
-# 2026-05-23 — 루프 없는 On/Off 엔진 사운드 (구현 완료)
+
+[Back to README](../README.md)
+
+# Development Log
+
+이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
+
+### 2026-05-23 — 루프 없는 On/Off 엔진 사운드 (구현 완료)
 
 - 변경 파일:
 	- `Assets/Script/CarEngineAudio.cs` — 이전에 잘 동작하던 루프리스 구현으로 복원하고, 들리는 끊김을 줄이도록 튜닝했습니다.
@@ -26,13 +33,45 @@
 	- 여전히 끊김이 느껴지면 `overlapFactor`를 0.7~0.9로 올리거나 `minRepeatInterval`을 조금 더 줄여보세요.
 	- 사용자 요청에 따라 루프 파일은 재도입하지 않습니다. 필요 시 DSP 예약(PlayScheduled) 방식으로 보완하는 방안을 검토할 수 있습니다.
 
+### 2026-05-23 — 엔진 사운드 중첩 방지 (핫픽스)
+
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — 동일 오디오 클립이 짧은 시간 내 중복 재생되는 문제를 방지하도록 수정했습니다.
+
+- 변경 사항:
+	- 클립별 마지막 재생 시각을 기록하는 `Dictionary<AudioClip, float> lastClipPlayTime`를 추가했습니다.
+	- `PlayOneShotClip()`에서 동일 클립이 재생 간격보다 빠르게 재생 요청되면 무시하도록 하여 중첩을 방지합니다.
+	- 재생 간격은 `Mathf.Max(clip.length * (1f - overlapFactor), minRepeatInterval)`로 계산하며, 인스펙터의 `overlapFactor`/`minRepeatInterval`로 튜닝 가능합니다.
+
+- 테스트 방법:
+	1. 에디터에서 씬을 재생합니다.
+	2. 차량에 탑승 후 스로틀을 반복 입력하여 이전에 발생하던 오디오 중첩 상황을 재현합니다.
+	3. 동일 클립이 바로 중복 재생되지 않는지 확인합니다.
+	4. 문제가 지속되면 씬에 중복 `AudioSource`나 복제된 차량 오브젝트가 없는지, `AudioListener`가 여러 개 존재하지 않는지 확인하세요.
+
+- 권장 후속:
+	- 자연스러운 연속음을 위해 `overlapFactor`를 0.4~0.7 범위로 조정해 보세요.
+	- 더 정밀한 처리가 필요하면 루프형 `AudioSource` 2개를 이용한 크로스페이드 방식 전환을 고려하세요.
+
 ---
 
-[Back to README](../README.md)
 
-# Development Log
+### 2026-05-23 — RPM 단일 출처 정리 및 오디오 fallback 제거
 
-이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — RPM 추정 fallback을 제거하고, 엔진 시스템에서 전달받은 RPM만 사용하도록 정리했습니다.
+	- `Assets/Script/UI/CarRpmDisplay.cs` — RPM 표시는 엔진 시스템만 읽도록 정리해 오디오 경로 의존을 제거했습니다.
+	- `README.md` — 최근 엔진/RPM 작업 상태를 요약 항목으로 추가했습니다.
+
+- 변경 사항:
+	- 엔진 RPM의 단일 출처를 `CarEngineSystem.CurrentRPM`으로 고정했습니다.
+	- 오디오는 더 이상 RPM을 추정하거나 계산하지 않고, 전달받은 RPM을 이용해 사운드 연출만 담당합니다.
+	- RPM UI도 엔진 시스템만 읽도록 정리해, 오디오와 RPM 표시의 책임 분리를 명확히 했습니다.
+
+- 확인 포인트:
+	1. `CarEngineAudio`에 RPM fallback 경로가 남아 있지 않은지 확인합니다.
+	2. `CarRpmDisplay`가 `CarEngineSystem`을 우선 읽는지 확인합니다.
+	3. 씬에서 `CarEngineSystem`이 차량 오브젝트에 1개만 붙어 있는지 확인합니다.
 
 ### 2026-05-23 — RPM 단일 출처 정리 및 오디오 fallback 제거
 
@@ -256,6 +295,16 @@
 - [x] 주행 안내 화살표(주황: 금지 / 초록: 주행 방향) 적용
 - 체크포인트 프리펩 녹색 v자 모델로 보이게 만듦
 - 바퀴 모델과 콜라이더가 안맞던 문제 수정
+
+### 최근 추가된 완료 항목 (로드맵 반영)
+
+- [x] 엔진 오디오: 중첩 재생 방지 핫픽스 및 루프리스 원샷 재생 방식 적용 (`Assets/Script/CarEngineAudio.cs`)
+- [x] 엔진 RPM 단일 출처 통일: `CarEngineSystem.CurrentRPM`을 오디오·UI의 단일 출처로 고정 (`Assets/Script/CarEngineSystem.cs`, `Assets/Script/UI/CarRpmDisplay.cs`)
+- [x] 컨트롤러·엔진 중복 필드 정리 및 기어 설정 통합 (`Assets/Script/CarController.cs`, `Assets/Script/CarEngineSystem.cs`)
+- [x] 6단 변속 확장 및 프리팹 직렬화 복구 (`Assets/Prefabs/SportCar_1 Variant.prefab`)
+- [x] 변속 시 RPM 유지 개선 및 RPM 게이지 색상/레드존 블링크 추가 (`Assets/Script/CarEngineSystem.cs`, `Assets/Script/UI/CarRpmDisplay.cs`)
+- [x] 랩 타임 영속성 저장 및 복원 (세션 Recent/Best 유지) (`Assets/Script/LapTimer.cs`)
+- [x] 체크포인트 통과 시 오브젝트 비활성화 처리 및 리셋 동작 정리 (`Assets/Script/Checkpoint.cs`, `Assets/Script/CheckpointManager.cs`)
 
 ---
 
