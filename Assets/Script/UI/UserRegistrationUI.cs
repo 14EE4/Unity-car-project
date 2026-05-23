@@ -134,7 +134,10 @@ public class UserRegistrationUI : MonoBehaviour
             if (submitter != null)
             {
                 Debug.Log("[UserRegistrationUI] Auto-submitting held score after registration.");
-                submitter.SubmitScoreRequest(pendingLapSeconds, pendingLapTimeText, pendingTrackId);
+                if (!submitter.TrySubmitPendingScore())
+                {
+                    submitter.SubmitScoreRequest(pendingLapSeconds, pendingLapTimeText, pendingTrackId);
+                }
             }
             else
             {

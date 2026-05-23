@@ -156,6 +156,30 @@ public class LapTimer : MonoBehaviour
         return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
     }
 
+    public bool TryGetBestLapTime(out float bestLapTime)
+    {
+        if (bestLapTimes != null && bestLapTimes.Count > 0)
+        {
+            bestLapTime = bestLapTimes[0];
+            return true;
+        }
+
+        bestLapTime = 0f;
+        return false;
+    }
+
+    public bool TryGetBestLapTimeDisplay(out float bestLapTime, out string bestLapTimeText)
+    {
+        if (TryGetBestLapTime(out bestLapTime))
+        {
+            bestLapTimeText = FormatLapTime(bestLapTime);
+            return true;
+        }
+
+        bestLapTimeText = null;
+        return false;
+    }
+
     private void StartTimer()
     {
         isTimerRunning = true;

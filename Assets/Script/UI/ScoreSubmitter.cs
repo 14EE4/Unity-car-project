@@ -8,6 +8,11 @@ public class ScoreSubmitter : MonoBehaviour
     [Tooltip("Optional: if empty, will use LeaderboardManager.Instance.SubmitScoreUrl at runtime")]
     public string submitUrl = string.Empty;
 
+    float pendingLapSeconds = -1f;
+    string pendingLapTimeText;
+    string pendingTrackId;
+    bool hasPendingScore;
+
     // If name is missing, hand off to the registration UI and keep the score pending there.
     public void SubmitScoreOrAskName(float lapSeconds, string lapTimeText, string trackId = null)
     {
@@ -27,6 +32,42 @@ public class ScoreSubmitter : MonoBehaviour
 
         Debug.Log("[ScoreSubmitter] UserName missing. Prompting registration UI and holding score.");
         reg.PromptForNameAndHoldScore(lapSeconds, lapTimeText, trackId);
+    }
+
+    public bool HoldBestLapFromTimer()
+    {
+        var lapTimer = Object.FindObjectOfType<LapTimer>();
+        if (lapTimer == null)
+        {
+            Debug.LogWarning("[ScoreSubmitter] LapTimer not found; cannot hold best lap.");
+            return false;
+        }
+
+        if (!lapTimer.TryGetBestLapTimeDisplay(out var bestLapSeconds, out var bestLapText))
+        {
+            Debug.LogWarning("[ScoreSubmitter] No best lap exists yet in persistent data.");
+            return false;
+        }
+
+        pendingLapSeconds = bestLapSeconds;
+        pendingLapTimeText = bestLapText;
+        pendingTrackId = null;
+        hasPendingScore = true;
+
+        Debug.Log($"[ScoreSubmitter] Holding best lap from persistent data: {bestLapText} ({bestLapSeconds:F3}s)");
+        return true;
+    }
+
+    public bool TrySubmitPendingScore()
+    {
+        if (!hasPendingScore)
+        {
+            return false;
+        }
+
+        SubmitScoreRequest(pendingLapSeconds, pendingLapTimeText, pendingTrackId);
+        ClearPendingScore();
+        return true;
     }
 
     // Public entry: call StartCoroutine(SubmitScore(lapSeconds, lapTimeText, trackId)) or use SubmitScoreRequest
@@ -82,6 +123,14 @@ public class ScoreSubmitter : MonoBehaviour
     public void SubmitScoreRequest(float lapSeconds, string lapTimeText, string trackId = null)
     {
         StartCoroutine(SubmitScore(lapSeconds, lapTimeText, trackId));
+    }
+
+    void ClearPendingScore()
+    {
+        hasPendingScore = false;
+        pendingLapSeconds = -1f;
+        pendingLapTimeText = null;
+        pendingTrackId = null;
     }
 
     [System.Serializable]
