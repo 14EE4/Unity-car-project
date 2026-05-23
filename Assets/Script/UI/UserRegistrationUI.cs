@@ -7,10 +7,8 @@ using UnityEngine.UI;
 
 public class UserRegistrationUI : MonoBehaviour
 {
-    const string baseUrl = "https://api.pyeong.p-e.kr/api";
-    [Tooltip("POST URL to register user on server")]
-    public string registerApiUrl = baseUrl + "/register";
-
+    [Tooltip("If empty, will use LeaderboardManager.Instance.RegisterUrl at runtime")]
+    public string registerApiUrl = string.Empty;
     public GameObject nameInputPanel;
     public TMP_InputField nameInputField;
     public Button submitButton;
@@ -60,11 +58,18 @@ public class UserRegistrationUI : MonoBehaviour
 
     IEnumerator RegisterUserAndRefresh(string userName)
     {
-        var deviceId = GetOrCreateDeviceId();
+        var deviceId = LeaderboardManager.Instance != null ? LeaderboardManager.Instance.DeviceId : SystemInfo.deviceUniqueIdentifier;
         var payload = new RegisterRequest { device_id = deviceId, user_name = userName };
         var json = JsonUtility.ToJson(payload);
 
-        using (var req = new UnityWebRequest(registerApiUrl, "POST"))
+        var url = !string.IsNullOrEmpty(registerApiUrl) ? registerApiUrl : (LeaderboardManager.Instance != null ? LeaderboardManager.Instance.RegisterUrl : string.Empty);
+        if (string.IsNullOrEmpty(url))
+        {
+            Debug.LogWarning("[UserRegistrationUI] register URL is not set and LeaderboardManager is not present.");
+            yield break;
+        }
+
+        using (var req = new UnityWebRequest(url, "POST"))
         {
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
             req.downloadHandler = new DownloadHandlerBuffer();

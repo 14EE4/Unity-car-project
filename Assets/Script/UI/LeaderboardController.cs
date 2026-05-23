@@ -5,9 +5,8 @@ using TMPro;
 
 public class LeaderboardController : MonoBehaviour
 {
-    const string baseUrl = "https://api.pyeong.p-e.kr/api";
-    [Tooltip("GET URL that returns a JSON array of leaderboard entries")]
-    public string leaderboardApiUrl = baseUrl + "/leaderboard";
+    [Tooltip("If empty, will use LeaderboardManager.Instance.LeaderboardUrl at runtime")]
+    public string leaderboardApiUrl = string.Empty;
 
     [Tooltip("Prefab: Project/Item_LeaderboardEntry (contains Text_Rank, Text_PlayerName, Text_LapTime)")]
     public GameObject entryPrefab;
@@ -31,13 +30,14 @@ public class LeaderboardController : MonoBehaviour
 
     IEnumerator FetchLeaderboard()
     {
-        if (string.IsNullOrEmpty(leaderboardApiUrl))
+        var url = !string.IsNullOrEmpty(leaderboardApiUrl) ? leaderboardApiUrl : (LeaderboardManager.Instance != null ? LeaderboardManager.Instance.LeaderboardUrl : string.Empty);
+        if (string.IsNullOrEmpty(url))
         {
-            Debug.LogWarning("[LeaderboardController] leaderboardApiUrl is empty.");
+            Debug.LogWarning("[LeaderboardController] leaderboard URL is not set and LeaderboardManager is not present.");
             yield break;
         }
 
-        using (var req = UnityWebRequest.Get(leaderboardApiUrl))
+        using (var req = UnityWebRequest.Get(url))
         {
             yield return req.SendWebRequest();
 
