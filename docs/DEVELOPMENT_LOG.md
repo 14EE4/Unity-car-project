@@ -51,6 +51,23 @@
 	2. `CarRpmDisplay`가 `CarEngineSystem`을 우선 읽는지 확인합니다.
 	3. 씬에서 `CarEngineSystem`이 차량 오브젝트에 1개만 붙어 있는지 확인합니다.
 
+### 2026-05-23 — 컨트롤러 중복 정리 및 6단 프리팹 직렬화 복구
+
+- 변경 파일:
+	- `Assets/Script/CarController.cs` — 엔진 RPM/기어 튜닝 중복 필드를 정리하고, 기어비/최고속 조회를 `CarEngineSystem` 기준으로 통합했습니다.
+	- `Assets/Script/CarEngineSystem.cs` — `GetGearMaxSpeed()`를 공개해 컨트롤러가 엔진 시스템의 6단 설정을 직접 참조하도록 조정했습니다.
+	- `Assets/Prefabs/SportCar_1 Variant.prefab` — 6단 기어비와 최고속 직렬화 값이 빠져 있던 부분을 복구했습니다.
+
+- 변경 사항:
+	- 컨트롤러에 남아 있던 엔진 관련 튜닝 필드를 제거해, 기어/속도 설정의 기준점을 엔진 시스템 하나로 맞췄습니다.
+	- 프리팹에 저장된 배열 값이 5개로 남아 있던 문제를 고쳐, 실제 씬에서도 6단 설정이 적용되도록 했습니다.
+	- 코드 기본값과 프리팹 직렬화 값이 어긋날 때 생기던 혼선을 줄였습니다.
+
+- 확인 포인트:
+	1. `SportCar_1 Variant.prefab`의 `forwardGearRatios`와 `gearMaxSpeeds`가 각각 6개 값인지 확인합니다.
+	2. `CarController`에 엔진 튜닝 배열이 더 남아 있지 않은지 확인합니다.
+	3. 플레이 모드에서 6단 진입 후 RPM이 프리팹 기준으로 정상 동작하는지 확인합니다.
+
 ### 2026-05-23 — 6단 변속 RPM 유지 및 RPM 게이지 색상 업데이트
 
 - 변경 파일:
