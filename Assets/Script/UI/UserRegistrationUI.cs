@@ -107,16 +107,16 @@ public class UserRegistrationUI : MonoBehaviour
 
     IEnumerator RegisterUserAndRefresh(string userName)
     {
-        var deviceId = LeaderboardManager.Instance != null ? LeaderboardManager.Instance.DeviceId : SystemInfo.deviceUniqueIdentifier;
+        var deviceId = GetDeviceId();
         var payload = new RegisterRequest { device_id = deviceId, user_name = userName };
         var json = JsonUtility.ToJson(payload);
 
-        Debug.Log($"[UserRegistrationUI] RegisterUserAndRefresh | deviceId={deviceId} | urlCandidate={(LeaderboardManager.Instance != null ? LeaderboardManager.Instance.RegisterUrl : registerApiUrl)} | payload={json}");
+        Debug.Log($"[UserRegistrationUI] RegisterUserAndRefresh | deviceId={deviceId} | urlCandidate={GetRegisterUrl()} | payload={json}");
 
-        var url = !string.IsNullOrEmpty(registerApiUrl) ? registerApiUrl : (LeaderboardManager.Instance != null ? LeaderboardManager.Instance.RegisterUrl : string.Empty);
+        var url = GetRegisterUrl();
         if (string.IsNullOrEmpty(url))
         {
-            Debug.LogWarning("[UserRegistrationUI] register URL is not set and LeaderboardManager is not present.");
+            Debug.LogWarning("[UserRegistrationUI] register URL is not set and default API is unavailable.");
             yield break;
         }
 
@@ -243,12 +243,6 @@ public class UserRegistrationUI : MonoBehaviour
 
     IEnumerator SubmitScoreDirectly(float lapSeconds, string lapTimeText, string trackId)
     {
-        if (LeaderboardManager.Instance == null)
-        {
-            Debug.LogWarning("[UserRegistrationUI] LeaderboardManager missing; abort direct score submit.");
-            yield break;
-        }
-
         if (lapSeconds <= 0f)
         {
             Debug.LogWarning($"[UserRegistrationUI] Invalid lapSeconds for direct submit: {lapSeconds}");
@@ -257,14 +251,20 @@ public class UserRegistrationUI : MonoBehaviour
 
         var payload = new ScoreRequest
         {
-            device_id = LeaderboardManager.Instance.DeviceId,
+            device_id = GetDeviceId(),
             lap_seconds = lapSeconds,
             lap_time_text = lapTimeText,
             track_id = trackId
         };
 
         var json = JsonUtility.ToJson(payload);
-        var url = LeaderboardManager.Instance.SubmitScoreUrl;
+        var url = GetSubmitScoreUrl();
+
+        if (string.IsNullOrEmpty(url))
+        {
+            Debug.LogWarning("[UserRegistrationUI] submit URL is not set and default API is unavailable.");
+            yield break;
+        }
 
         Debug.Log($"[UserRegistrationUI] Direct submit payload | url={url} | deviceId={payload.device_id} | lapSeconds={payload.lap_seconds:F3} | lapTimeText={payload.lap_time_text} | trackId={payload.track_id}");
 
@@ -300,6 +300,41 @@ public class UserRegistrationUI : MonoBehaviour
         int milliseconds = totalMilliseconds % 1000;
 
         return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+    }
+
+    string GetDeviceId()
+    {
+        if (LeaderboardManager.Instance != null)
+        {
+            return LeaderboardManager.Instance.DeviceId;
+        }
+
+        return SystemInfo.deviceUniqueIdentifier;
+    }
+
+    string GetRegisterUrl()
+    {
+        if (!string.IsNullOrEmpty(registerApiUrl))
+        {
+            return registerApiUrl;
+        }
+
+        if (LeaderboardManager.Instance != null)
+        {
+            return LeaderboardManager.Instance.RegisterUrl;
+        }
+
+        return $"{LeaderboardManager.DefaultBaseUrl}/register";
+    }
+
+    string GetSubmitScoreUrl()
+    {
+        if (LeaderboardManager.Instance != null)
+        {
+            return LeaderboardManager.Instance.SubmitScoreUrl;
+        }
+
+        return $"{LeaderboardManager.DefaultBaseUrl}/score";
     }
 
     [System.Serializable]
