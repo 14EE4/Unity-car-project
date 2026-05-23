@@ -36,6 +36,11 @@ public class CarEngineSystem : MonoBehaviour
     public float CurrentWheelRPM { get; private set; }
     public float CurrentSpeedKmh { get; private set; }
 
+    private int lastGear = 0;
+    private float shiftRpmCarry = -1f;
+    private float shiftRpmCarryTimer = 0f;
+    public float shiftRpmCarryDuration = 0.35f;
+
     private void Awake()
     {
         if (engineAudio == null)
@@ -54,6 +59,30 @@ public class CarEngineSystem : MonoBehaviour
         CurrentSpeedKmh = speedKmh;
         CurrentGearRatio = GetGearRatio(gear);
         CurrentWheelRPM = GetDrivenWheelRPM(speedKmh, driveLeft, driveRight);
+
+        if (gear != lastGear)
+        {
+            float previousRatio = Mathf.Abs(GetGearRatio(lastGear));
+            float currentRatio = Mathf.Abs(GetGearRatio(gear));
+
+            if (previousRatio > 0.01f && currentRatio > 0.01f)
+            {
+                shiftRpmCarry = Mathf.Clamp(CurrentRPM * (currentRatio / previousRatio), idleRPM, maxRPM);
+                shiftRpmCarryTimer = shiftRpmCarryDuration;
+            }
+            else if (gear == 0)
+            {
+                shiftRpmCarry = Mathf.Clamp(CurrentRPM, idleRPM, maxRPM);
+                shiftRpmCarryTimer = 0.15f;
+            }
+            else
+            {
+                shiftRpmCarry = -1f;
+                shiftRpmCarryTimer = 0f;
+            }
+
+            lastGear = gear;
+        }
 
         CurrentRPM = UpdateEngineRPM(speedKmh, throttleInput, gear, CurrentWheelRPM, driveLeft, driveRight, deltaTime);
         IsRpmWarning = CurrentRPM >= rpmWarningThreshold;
@@ -111,6 +140,12 @@ public class CarEngineSystem : MonoBehaviour
             // In gear, RPM should primarily follow vehicle speed.
             // Throttle only adds a small low-speed assist instead of free-revving to redline.
             desiredRPM = Mathf.Max(idleRPM, speedBasedRPM + throttleAssist);
+
+            if (shiftRpmCarryTimer > 0f && shiftRpmCarry > 0f)
+            {
+                desiredRPM = Mathf.Max(desiredRPM, shiftRpmCarry);
+                shiftRpmCarryTimer = Mathf.Max(0f, shiftRpmCarryTimer - deltaTime);
+            }
         }
 
         desiredRPM = Mathf.Clamp(desiredRPM, idleRPM, maxRPM);
