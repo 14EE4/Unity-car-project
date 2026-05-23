@@ -1,4 +1,5 @@
 using System.Collections;
+using System.IO;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -152,7 +153,8 @@ public class UserRegistrationUI : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("[UserRegistrationUI] ScoreSubmitter not found; held score could not be submitted.");
+                Debug.LogWarning("[UserRegistrationUI] ScoreSubmitter not found; submitting held score directly from registration UI.");
+                StartCoroutine(SubmitScoreDirectly(pendingLapSeconds, pendingLapTimeText, pendingTrackId));
             }
 
             ClearPendingScore();
@@ -167,6 +169,11 @@ public class UserRegistrationUI : MonoBehaviour
                 {
                     Debug.LogWarning("[UserRegistrationUI] Best lap was found but could not be submitted.");
                 }
+            }
+            else if (TryLoadBestLapFromPersistentData(out var bestLapSeconds, out var bestLapText))
+            {
+                Debug.Log($"[UserRegistrationUI] No ScoreSubmitter or no LapTimer. Submitting persistent best lap directly: {bestLapText} ({bestLapSeconds:F3}s)");
+                StartCoroutine(SubmitScoreDirectly(bestLapSeconds, bestLapText, null));
             }
             else
             {
@@ -193,10 +200,129 @@ public class UserRegistrationUI : MonoBehaviour
         pendingTrackId = null;
     }
 
+    bool TryLoadBestLapFromPersistentData(out float bestLapSeconds, out string bestLapText)
+    {
+        var saveFilePath = Path.Combine(Application.persistentDataPath, "lap_times.json");
+        Debug.Log($"[UserRegistrationUI] TryLoadBestLapFromPersistentData | saveFilePath={saveFilePath}");
+
+        if (!File.Exists(saveFilePath))
+        {
+            Debug.LogWarning("[UserRegistrationUI] Persistent lap data file does not exist.");
+            bestLapSeconds = 0f;
+            bestLapText = null;
+            return false;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(saveFilePath);
+            Debug.Log($"[UserRegistrationUI] Persistent lap JSON: {json}");
+
+            var saveData = JsonUtility.FromJson<LapTimerSaveData>(json);
+            if (saveData == null || saveData.bestLapTimes == null || saveData.bestLapTimes.Count == 0)
+            {
+                Debug.LogWarning("[UserRegistrationUI] Persistent lap data has no best lap entries.");
+                bestLapSeconds = 0f;
+                bestLapText = null;
+                return false;
+            }
+
+            saveData.bestLapTimes.Sort();
+            bestLapSeconds = saveData.bestLapTimes[0];
+            bestLapText = FormatLapTime(bestLapSeconds);
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"[UserRegistrationUI] Failed to load persistent lap data: {exception.Message}");
+            bestLapSeconds = 0f;
+            bestLapText = null;
+            return false;
+        }
+    }
+
+    IEnumerator SubmitScoreDirectly(float lapSeconds, string lapTimeText, string trackId)
+    {
+        if (LeaderboardManager.Instance == null)
+        {
+            Debug.LogWarning("[UserRegistrationUI] LeaderboardManager missing; abort direct score submit.");
+            yield break;
+        }
+
+        if (lapSeconds <= 0f)
+        {
+            Debug.LogWarning($"[UserRegistrationUI] Invalid lapSeconds for direct submit: {lapSeconds}");
+            yield break;
+        }
+
+        var payload = new ScoreRequest
+        {
+            device_id = LeaderboardManager.Instance.DeviceId,
+            lap_seconds = lapSeconds,
+            lap_time_text = lapTimeText,
+            track_id = trackId
+        };
+
+        var json = JsonUtility.ToJson(payload);
+        var url = LeaderboardManager.Instance.SubmitScoreUrl;
+
+        Debug.Log($"[UserRegistrationUI] Direct submit payload | url={url} | deviceId={payload.device_id} | lapSeconds={payload.lap_seconds:F3} | lapTimeText={payload.lap_time_text} | trackId={payload.track_id}");
+
+        using (var req = new UnityWebRequest(url, "POST"))
+        {
+            req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+
+            Debug.Log($"[UserRegistrationUI] Direct POST {url} -> {json}");
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"[UserRegistrationUI] Direct score submit failed: {req.error} | {req.downloadHandler.text}");
+                yield break;
+            }
+
+            Debug.Log($"[UserRegistrationUI] Direct score submit success: {req.downloadHandler.text}");
+            var lb = Object.FindObjectOfType<LeaderboardController>();
+            if (lb != null)
+            {
+                lb.LoadLeaderboard();
+            }
+        }
+    }
+
+    static string FormatLapTime(float lapTime)
+    {
+        int totalMilliseconds = Mathf.Max(0, Mathf.FloorToInt(lapTime * 1000f));
+        int minutes = totalMilliseconds / 60000;
+        int seconds = (totalMilliseconds / 1000) % 60;
+        int milliseconds = totalMilliseconds % 1000;
+
+        return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+    }
+
     [System.Serializable]
     class RegisterRequest
     {
         public string device_id;
         public string user_name;
+    }
+
+    [System.Serializable]
+    class ScoreRequest
+    {
+        public string device_id;
+        public float lap_seconds;
+        public string lap_time_text;
+        public string track_id;
+    }
+
+    [System.Serializable]
+    class LapTimerSaveData
+    {
+        public bool hasRecentLapTime;
+        public float recentLapTime;
+        public System.Collections.Generic.List<float> bestLapTimes = new System.Collections.Generic.List<float>();
     }
 }
