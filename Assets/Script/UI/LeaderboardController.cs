@@ -69,14 +69,23 @@ public class LeaderboardController : MonoBehaviour
             if (req.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"[LeaderboardController] Failed to fetch leaderboard: {req.error}");
+                Debug.LogError($"[LeaderboardController] Response body: {req.downloadHandler.text}");
                 yield break;
             }
 
             var json = req.downloadHandler.text;
+            Debug.Log($"[LeaderboardController] Raw leaderboard response: {json}");
 
             // JsonUtility cannot parse a raw top-level array, so wrap it.
             var wrapped = "{\"items\":" + json + "}";
             var wrapper = JsonUtility.FromJson<LeaderboardWrapper>(wrapped);
+
+            if (wrapper == null)
+            {
+                Debug.LogError($"[LeaderboardController] Failed to parse leaderboard response. Wrapped JSON: {wrapped}");
+                yield break;
+            }
+
             Populate(wrapper != null ? wrapper.items : null);
         }
     }
