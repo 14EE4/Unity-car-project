@@ -13,7 +13,7 @@ public class CarEngineSystem : MonoBehaviour
     public float rpmFallRate = 7000f;
     public float freeRevResponse = 1.4f;
     public float lowSpeedThrottleBlendKmh = 18f;
-    public float lowSpeedThrottleAssistRPM = 900f;
+    public float lowSpeedThrottleAssistRPM = 450f;
 
     [Header("Gearing")]
     public float finalDrive = 3.5f;
@@ -104,19 +104,13 @@ public class CarEngineSystem : MonoBehaviour
         }
         else
         {
-            float wheelDrivenRPM = wheelRPM;
-            if (wheelDrivenRPM <= 0f)
-            {
-                wheelDrivenRPM = GetWheelRPMFromSpeed(speedKmh, driveLeft, driveRight);
-            }
-
-            float coupledRPM = Mathf.Abs(wheelDrivenRPM) * Mathf.Abs(GetGearRatio(gear)) * finalDrive;
+            float speedBasedRPM = GetSpeedBasedEngineRPM(speedKmh, gear);
             float lowSpeedBlend = Mathf.Clamp01(1f - (speedKmh / Mathf.Max(0.01f, lowSpeedThrottleBlendKmh)));
             float throttleAssist = lowSpeedThrottleAssistRPM * Mathf.Clamp01(throttleInput) * lowSpeedBlend;
 
-            // In gear, RPM should primarily follow wheel speed.
+            // In gear, RPM should primarily follow vehicle speed.
             // Throttle only adds a small low-speed assist instead of free-revving to redline.
-            desiredRPM = Mathf.Max(idleRPM, coupledRPM + throttleAssist);
+            desiredRPM = Mathf.Max(idleRPM, speedBasedRPM + throttleAssist);
         }
 
         desiredRPM = Mathf.Clamp(desiredRPM, idleRPM, maxRPM);
@@ -148,6 +142,18 @@ public class CarEngineSystem : MonoBehaviour
         }
 
         return maxTorque * throttleInput * gearRatio * finalDrive * speedRatio * lowRpmFactor;
+    }
+
+    private float GetSpeedBasedEngineRPM(float speedKmh, int gear)
+    {
+        float gearMaxSpeed = GetGearMaxSpeed(gear);
+        if (gearMaxSpeed <= 0f)
+        {
+            return idleRPM;
+        }
+
+        float speedRatio = Mathf.Clamp01(speedKmh / gearMaxSpeed);
+        return Mathf.Lerp(idleRPM, maxRPM, speedRatio);
     }
 
     private float GetGearMaxSpeed(int gear)
