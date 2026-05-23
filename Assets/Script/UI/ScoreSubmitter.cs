@@ -8,8 +8,29 @@ public class ScoreSubmitter : MonoBehaviour
     [Tooltip("Optional: if empty, will use LeaderboardManager.Instance.SubmitScoreUrl at runtime")]
     public string submitUrl = string.Empty;
 
-    // Public entry: call StartCoroutine(SubmitScore(lapSeconds, trackId)) or use SubmitScoreRequest
-    public IEnumerator SubmitScore(float lapSeconds, string trackId = null)
+    // If name is missing, hand off to the registration UI and keep the score pending there.
+    public void SubmitScoreOrAskName(float lapSeconds, string lapTimeText, string trackId = null)
+    {
+        var storedUserName = PlayerPrefs.GetString("UserName", string.Empty);
+        if (!string.IsNullOrWhiteSpace(storedUserName))
+        {
+            SubmitScoreRequest(lapSeconds, lapTimeText, trackId);
+            return;
+        }
+
+        var reg = Object.FindObjectOfType<UserRegistrationUI>();
+        if (reg == null)
+        {
+            Debug.LogWarning("[ScoreSubmitter] UserRegistrationUI not found; cannot prompt for name.");
+            return;
+        }
+
+        Debug.Log("[ScoreSubmitter] UserName missing. Prompting registration UI and holding score.");
+        reg.PromptForNameAndHoldScore(lapSeconds, lapTimeText, trackId);
+    }
+
+    // Public entry: call StartCoroutine(SubmitScore(lapSeconds, lapTimeText, trackId)) or use SubmitScoreRequest
+    public IEnumerator SubmitScore(float lapSeconds, string lapTimeText, string trackId = null)
     {
         if (LeaderboardManager.Instance == null)
         {
@@ -27,6 +48,7 @@ public class ScoreSubmitter : MonoBehaviour
         {
             device_id = LeaderboardManager.Instance.DeviceId,
             lap_seconds = lapSeconds,
+            lap_time_text = lapTimeText,
             track_id = trackId
         };
 
@@ -57,9 +79,9 @@ public class ScoreSubmitter : MonoBehaviour
     }
 
     // Convenience helper to call from other scripts
-    public void SubmitScoreRequest(float lapSeconds, string trackId = null)
+    public void SubmitScoreRequest(float lapSeconds, string lapTimeText, string trackId = null)
     {
-        StartCoroutine(SubmitScore(lapSeconds, trackId));
+        StartCoroutine(SubmitScore(lapSeconds, lapTimeText, trackId));
     }
 
     [System.Serializable]
@@ -67,6 +89,7 @@ public class ScoreSubmitter : MonoBehaviour
     {
         public string device_id;
         public float lap_seconds;
+        public string lap_time_text;
         public string track_id;
     }
 }

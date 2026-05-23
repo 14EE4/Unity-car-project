@@ -71,6 +71,21 @@ public class FinishLine : MonoBehaviour
         Debug.Log($"[FinishLine] Player reached finish line. TimerRunning={lapTimer.isTimerRunning}, RunFinished={lapTimer.isRunFinished}");
         bool completed = lapTimer.TryCompleteLap();
         Debug.Log($"[FinishLine] TryCompleteLap result={completed}");
+
+        if (completed)
+        {
+            var submitter = Object.FindFirstObjectByType<ScoreSubmitter>();
+            if (submitter != null)
+            {
+                var lapSeconds = lapTimer.recentLapTime;
+                var lapTimeText = lapTimer.FormatLapTime(lapSeconds);
+                submitter.SubmitScoreOrAskName(lapSeconds, lapTimeText, null);
+            }
+            else
+            {
+                Debug.LogWarning("[FinishLine] ScoreSubmitter not found. Lap was recorded locally but not sent to server.");
+            }
+        }
     }
 
     /// <summary>

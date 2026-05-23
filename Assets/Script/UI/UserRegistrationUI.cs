@@ -14,6 +14,11 @@ public class UserRegistrationUI : MonoBehaviour
     public Button submitButton;
     [Min(1)] public int minimumNameLength = 2;
 
+    float pendingLapSeconds = -1f;
+    string pendingLapTimeText;
+    string pendingTrackId;
+    bool hasPendingScore;
+
     void Start()
     {
         if (submitButton != null)
@@ -22,7 +27,6 @@ public class UserRegistrationUI : MonoBehaviour
             submitButton.onClick.AddListener(HandleSubmit);
         }
 
-        // Show panel when no saved name exists
         if (nameInputPanel != null)
         {
             var stored = PlayerPrefs.GetString("UserName", string.Empty);
@@ -30,14 +34,19 @@ public class UserRegistrationUI : MonoBehaviour
         }
     }
 
-    // Public helper: show the name input panel unconditionally
     public void ShowPanel()
     {
         if (nameInputPanel == null) return;
         nameInputPanel.SetActive(true);
+
+        if (nameInputField != null)
+        {
+            nameInputField.text = string.Empty;
+            nameInputField.ActivateInputField();
+            nameInputField.Select();
+        }
     }
 
-    // Public helper: show the panel only if no UserName saved
     public void ShowIfNoUserName()
     {
         if (nameInputPanel == null)
@@ -50,6 +59,17 @@ public class UserRegistrationUI : MonoBehaviour
         var shouldShow = string.IsNullOrWhiteSpace(stored);
         Debug.Log($"[UserRegistrationUI] ShowIfNoUserName called. storedUserName='{stored}', willShow={shouldShow}");
         nameInputPanel.SetActive(shouldShow);
+    }
+
+    public void PromptForNameAndHoldScore(float lapSeconds, string lapTimeText, string trackId = null)
+    {
+        pendingLapSeconds = lapSeconds;
+        pendingLapTimeText = lapTimeText;
+        pendingTrackId = trackId;
+        hasPendingScore = true;
+
+        Debug.Log($"[UserRegistrationUI] Holding score until name is registered. lapSeconds={lapSeconds}, lapTimeText={lapTimeText}, trackId={trackId}");
+        ShowPanel();
     }
 
     void HandleSubmit()
@@ -102,38 +122,53 @@ public class UserRegistrationUI : MonoBehaviour
             if (req.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"[UserRegistrationUI] Registration failed: {req.error}\n{req.downloadHandler.text}");
+                yield break;
+            }
+
+            Debug.Log($"[UserRegistrationUI] Registered user: {userName} (device={deviceId})");
+        }
+
+        if (hasPendingScore)
+        {
+            var submitter = Object.FindObjectOfType<ScoreSubmitter>();
+            if (submitter != null)
+            {
+                Debug.Log("[UserRegistrationUI] Auto-submitting held score after registration.");
+                submitter.SubmitScoreRequest(pendingLapSeconds, pendingLapTimeText, pendingTrackId);
             }
             else
             {
-                Debug.Log($"[UserRegistrationUI] Registered user: {userName} (device={deviceId})");
+                Debug.LogWarning("[UserRegistrationUI] ScoreSubmitter not found; held score could not be submitted.");
             }
-        }
 
-        // Refresh leaderboard if controller available
-        var lb = Object.FindObjectOfType<LeaderboardController>();
-        if (lb != null)
-        {
-            lb.LoadLeaderboard();
+            ClearPendingScore();
         }
         else
         {
-            Debug.LogWarning("[UserRegistrationUI] LeaderboardController not found to refresh leaderboard.");
+            var lb = Object.FindObjectOfType<LeaderboardController>();
+            if (lb != null)
+            {
+                lb.LoadLeaderboard();
+            }
+            else
+            {
+                Debug.LogWarning("[UserRegistrationUI] LeaderboardController not found to refresh leaderboard.");
+            }
         }
     }
 
-    string GetOrCreateDeviceId()
+    void ClearPendingScore()
     {
-        const string key = "DeviceId";
-        var stored = PlayerPrefs.GetString(key, string.Empty);
-        if (!string.IsNullOrWhiteSpace(stored)) return stored;
-
-        var sys = SystemInfo.deviceUniqueIdentifier;
-        var id = string.IsNullOrWhiteSpace(sys) ? System.Guid.NewGuid().ToString("N") : sys.Trim();
-        PlayerPrefs.SetString(key, id);
-        PlayerPrefs.Save();
-        return id;
+        hasPendingScore = false;
+        pendingLapSeconds = -1f;
+        pendingLapTimeText = null;
+        pendingTrackId = null;
     }
 
     [System.Serializable]
-    class RegisterRequest { public string device_id; public string user_name; }
+    class RegisterRequest
+    {
+        public string device_id;
+        public string user_name;
+    }
 }
