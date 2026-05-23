@@ -8,6 +8,7 @@ public class CarController : MonoBehaviour
     [Header("HUD")]
     public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
     public CarRpmDisplay rpmDisplay; // assign the existing RPM display UI
+    public CarEngineSystem engineSystem; // new engine simulation component
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
@@ -71,9 +72,9 @@ public class CarController : MonoBehaviour
 
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
 
-    public float CurrentRPM => currentRPM;
-    public bool IsFuelCutActive => isFuelCutActive;
-    public bool IsRpmWarning => rpmWarningActive;
+    public float CurrentRPM => engineSystem != null ? engineSystem.CurrentRPM : currentRPM;
+    public bool IsFuelCutActive => engineSystem != null ? engineSystem.IsFuelCutActive : isFuelCutActive;
+    public bool IsRpmWarning => engineSystem != null ? engineSystem.IsRpmWarning : rpmWarningActive;
 
     // 게임 초기화를 위한 초기 위치/회전 저장
     private Vector3 initialPosition;
@@ -105,10 +106,10 @@ public class CarController : MonoBehaviour
         initialPosition = carRigidbody.position;
         initialRotation = carRigidbody.rotation;
 
-        engineAudio = GetComponent<CarEngineAudio>();
-        if (engineAudio == null)
+        engineSystem = GetComponent<CarEngineSystem>();
+        if (engineSystem == null)
         {
-            Debug.LogWarning("[CarController] CarEngineAudio component is missing. Add it to this car object to enable engine sounds.");
+            Debug.LogWarning("[CarController] CarEngineSystem component is missing. Add it to this car object to enable engine simulation.");
         }
 
         // capture base wheel friction curves to avoid multiplicative stacking
@@ -139,8 +140,6 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
-        CalculateRPM();
-
         if (suppressDriveInputUntilRelease)
         {
             throttleInput = 0f;
@@ -160,11 +159,6 @@ public class CarController : MonoBehaviour
             {
                 suppressDriveInputUntilRelease = false;
                 Debug.Log("[CarController] Drive input lock released after reset.");
-            }
-
-            if (engineAudio != null)
-            {
-                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear, currentRPM);
             }
 
             return;
@@ -200,53 +194,6 @@ public class CarController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             ShiftDown();
-        }
-
-        if (engineAudio != null)
-        {
-            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear, currentRPM);
-        }
-
-        debugLogTimer += Time.deltaTime;
-        if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
-        {
-            debugLogTimer = 0f;
-            string hb = handbrakeActive ? " | Handbrake: ON" : "";
-            Debug.Log(string.Format("Speed: {0:F1} km/h | RPM: {1:F0} | Accel: {2:F2} m/s^2 | Throttle: {3} | Brake: {4} | Gear: {5} | Motor: {6:F1} | BrakeTorque: {7:F1} | FuelCut: {8} | Slope: {9:F1} deg{10}", GetCurrentSpeedKmh(), currentRPM, longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, isFuelCutActive ? "ON" : "OFF", GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
-        }
-    }
-
-    private void CalculateRPM()
-    {
-        float targetRPM = idleRPM;
-
-        if (currentGear != 0)
-        {
-            float gearRatio = Mathf.Abs(GetCurrentGearRatio());
-            float wheelRPMFromSpeed = GetDrivenWheelRPMFromSpeed(GetCurrentSpeedKmh());
-            float wheelRPMFromCollider = GetDrivenWheelAverageRPM();
-            float blendedWheelRPM = wheelRPMFromSpeed;
-
-            if (wheelRPMFromCollider > 0f)
-            {
-                blendedWheelRPM = Mathf.Lerp(wheelRPMFromSpeed, wheelRPMFromCollider, 0.7f);
-            }
-
-            float motionRPM = blendedWheelRPM * gearRatio * finalDrive;
-            float throttleRPMBoost = throttleInput > 0f
-                ? throttleInput * Mathf.Lerp(0f, 2500f, Mathf.Clamp01(1f - (GetCurrentSpeedKmh() / 30f)))
-                : 0f;
-
-            targetRPM = Mathf.Max(motionRPM, idleRPM + throttleRPMBoost);
-        }
-
-        currentRPM = Mathf.Clamp(targetRPM, idleRPM, maxRPM);
-        rpmWarningActive = currentRPM >= rpmWarningThreshold;
-        isFuelCutActive = currentRPM >= fuelCutRPM;
-
-        if (rpmDisplay != null)
-        {
-            rpmDisplay.SetRPM(currentRPM, rpmWarningActive);
         }
     }
 
@@ -316,10 +263,14 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
-        CalculateRPM();
+        float speedKmh = GetCurrentSpeedKmh();
+
+        if (engineSystem != null)
+        {
+            engineSystem.Step(speedKmh, throttleInput, handbrakeActive, currentGear, maxTorque, backLeft, backRight);
+        }
 
         // apply speed-dependent grip and downforce before physics forces
-        float speedKmh = GetCurrentSpeedKmh();
         UpdateGripBySpeed(speedKmh);
         ApplyDownforce();
 
@@ -350,15 +301,9 @@ public class CarController : MonoBehaviour
         }
         else if (throttleInput > 0f)
         {
-            // 기어별 최고 속도 제한 적용: 속도 도달 시 토크 감소
-            float currentSpeedKmh = GetCurrentSpeedKmh();
-            float gearMaxSpeed = GetGearMaxSpeed();
-            float speedRatio = Mathf.Clamp01(1f - (currentSpeedKmh / (gearMaxSpeed + 1f)));
-            // overallRatio = gearRatio * finalDrive
-            float overallRatio = GetCurrentGearRatio() * finalDrive;
-            float rpmTorqueMultiplier = Mathf.InverseLerp(idleRPM, lowRpmTorqueEndRPM, currentRPM);
-            rpmTorqueMultiplier = Mathf.Lerp(lowRpmTorqueMultiplier, 1f, rpmTorqueMultiplier);
-            float motor = isFuelCutActive ? 0f : maxTorque * throttleInput * overallRatio * speedRatio * rpmTorqueMultiplier;
+            float motor = engineSystem != null
+                ? engineSystem.CurrentMotorTorque
+                : ComputeLegacyMotorTorque(speedKmh);
             frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
             backLeft.motorTorque = backRight.motorTorque = motor;
             frontLeft.brakeTorque = frontRight.brakeTorque = 0f;
@@ -388,12 +333,33 @@ public class CarController : MonoBehaviour
         }
         longitudinalAcceleration = (GetForwardSpeedMps() - previousForwardSpeed) / Time.fixedDeltaTime;
         previousForwardSpeed = GetForwardSpeedMps();
+        currentRPM = engineSystem != null ? engineSystem.CurrentRPM : currentRPM;
+        isFuelCutActive = engineSystem != null ? engineSystem.IsFuelCutActive : isFuelCutActive;
+        rpmWarningActive = engineSystem != null ? engineSystem.IsRpmWarning : rpmWarningActive;
         // Push speed and gear values to HUD if assigned (push method recommended for accuracy)
         if (hud != null)
         {
             hud.SetSpeed(GetCurrentSpeedKmh());
             hud.SetGear(currentGear);
         }
+
+        debugLogTimer += Time.deltaTime;
+        if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
+        {
+            debugLogTimer = 0f;
+            string hb = handbrakeActive ? " | Handbrake: ON" : "";
+            Debug.Log(string.Format("Speed: {0:F1} km/h | RPM: {1:F0} | Accel: {2:F2} m/s^2 | Throttle: {3} | Brake: {4} | Gear: {5} | Motor: {6:F1} | BrakeTorque: {7:F1} | FuelCut: {8} | Slope: {9:F1} deg{10}", GetCurrentSpeedKmh(), CurrentRPM, longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, IsFuelCutActive ? "ON" : "OFF", GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
+        }
+    }
+
+    private float ComputeLegacyMotorTorque(float speedKmh)
+    {
+        float gearMaxSpeed = GetGearMaxSpeed();
+        float speedRatio = Mathf.Clamp01(1f - (speedKmh / (gearMaxSpeed + 1f)));
+        float overallRatio = GetCurrentGearRatio() * finalDrive;
+        float rpmTorqueMultiplier = Mathf.InverseLerp(idleRPM, lowRpmTorqueEndRPM, currentRPM);
+        rpmTorqueMultiplier = Mathf.Lerp(lowRpmTorqueMultiplier, 1f, rpmTorqueMultiplier);
+        return maxTorque * throttleInput * overallRatio * speedRatio * rpmTorqueMultiplier;
     }
 
     
