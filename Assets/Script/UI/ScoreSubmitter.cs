@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -42,8 +44,8 @@ public class ScoreSubmitter : MonoBehaviour
         var lapTimer = Object.FindObjectOfType<LapTimer>();
         if (lapTimer == null)
         {
-            Debug.LogWarning("[ScoreSubmitter] LapTimer not found; cannot hold best lap.");
-            return false;
+            Debug.LogWarning("[ScoreSubmitter] LapTimer not found; falling back to persistent lap data file.");
+            return TryHoldBestLapFromPersistentData();
         }
 
         Debug.Log($"[ScoreSubmitter] HoldBestLapFromTimer | loaded best count={(lapTimer.bestLapTimes != null ? lapTimer.bestLapTimes.Count : 0)} | recentLapTime={lapTimer.recentLapTime:F3} | hasRecentLapTime={lapTimer.hasRecentLapTime}");
@@ -61,6 +63,45 @@ public class ScoreSubmitter : MonoBehaviour
 
         Debug.Log($"[ScoreSubmitter] Holding best lap from persistent data: {bestLapText} ({bestLapSeconds:F3}s)");
         return true;
+    }
+
+    bool TryHoldBestLapFromPersistentData()
+    {
+        var saveFilePath = Path.Combine(Application.persistentDataPath, "lap_times.json");
+        Debug.Log($"[ScoreSubmitter] TryHoldBestLapFromPersistentData | saveFilePath={saveFilePath}");
+
+        if (!File.Exists(saveFilePath))
+        {
+            Debug.LogWarning("[ScoreSubmitter] Persistent lap data file does not exist.");
+            return false;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(saveFilePath);
+            Debug.Log($"[ScoreSubmitter] Persistent lap JSON: {json}");
+
+            var saveData = JsonUtility.FromJson<LapTimerSaveData>(json);
+            if (saveData == null || saveData.bestLapTimes == null || saveData.bestLapTimes.Count == 0)
+            {
+                Debug.LogWarning("[ScoreSubmitter] Persistent lap data has no best lap entries.");
+                return false;
+            }
+
+            saveData.bestLapTimes.Sort();
+            pendingLapSeconds = saveData.bestLapTimes[0];
+            pendingLapTimeText = FormatLapTime(pendingLapSeconds);
+            pendingTrackId = null;
+            hasPendingScore = true;
+
+            Debug.Log($"[ScoreSubmitter] Holding best lap from persistent file: {pendingLapTimeText} ({pendingLapSeconds:F3}s)");
+            return true;
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"[ScoreSubmitter] Failed to load persistent lap data: {exception.Message}");
+            return false;
+        }
     }
 
     public bool TrySubmitPendingScore()
@@ -150,5 +191,23 @@ public class ScoreSubmitter : MonoBehaviour
         public float lap_seconds;
         public string lap_time_text;
         public string track_id;
+    }
+
+    [System.Serializable]
+    class LapTimerSaveData
+    {
+        public bool hasRecentLapTime;
+        public float recentLapTime;
+        public List<float> bestLapTimes = new List<float>();
+    }
+
+    static string FormatLapTime(float lapTime)
+    {
+        int totalMilliseconds = Mathf.Max(0, Mathf.FloorToInt(lapTime * 1000f));
+        int minutes = totalMilliseconds / 60000;
+        int seconds = (totalMilliseconds / 1000) % 60;
+        int milliseconds = totalMilliseconds % 1000;
+
+        return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
     }
 }
