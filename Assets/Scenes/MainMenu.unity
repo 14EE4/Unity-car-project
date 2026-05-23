@@ -280,7 +280,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 64708977}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 342009861}
+        m_TargetAssemblyTypeName: MainMenuController, Assembly-CSharp
+        m_MethodName: LeaderboardButtonClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &64708977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -883,7 +895,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainSceneName: Main
   leaderboardSceneName: Leaderboard
-  registerApiUrl: "http://\uB0B4_\uC11C\uBC84_IP/api/register"
+  registerApiUrl: http://pyeong.p-e.kr/api/register
   nameInputPanel: {fileID: 0}
   nameInputField: {fileID: 0}
   submitButton: {fileID: 0}
