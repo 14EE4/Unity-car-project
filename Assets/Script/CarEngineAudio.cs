@@ -33,6 +33,7 @@ public class CarEngineAudio : MonoBehaviour
     public float gear3MaxSpeedKmh = 130f;
     public float gear4MaxSpeedKmh = 160f;
     public float gear5MaxSpeedKmh = 200f;
+    public float gear6MaxSpeedKmh = 230f;
     public float reverseMaxSpeedKmh = 40f;
     [Header("Sound Response")]
     public float highRpmVolumeBoost = 0.9f;
@@ -222,6 +223,7 @@ public class CarEngineAudio : MonoBehaviour
             case 3: return gear3MaxSpeedKmh;
             case 4: return gear4MaxSpeedKmh;
             case 5: return gear5MaxSpeedKmh;
+            case 6: return gear6MaxSpeedKmh;
             default: return 0f;
         }
     }

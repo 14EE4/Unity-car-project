@@ -61,9 +61,9 @@ public class CarController : MonoBehaviour
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 0;
     private readonly float reverseGearRatio = 2.8f;
-    private readonly float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f };
+    private readonly float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f, 0.85f };
     // 각 기어별 최고 속도 (km/h)
-    private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
+    private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f, 230f };
 
     // 최종 감속비 (디퍼렌셜 등): 문서 기본값은 3.5 권장
     // 전체 전달비: overallRatio = gearRatio * finalDrive

@@ -18,8 +18,8 @@ public class CarEngineSystem : MonoBehaviour
     [Header("Gearing")]
     public float finalDrive = 3.5f;
     public float reverseGearRatio = 2.8f;
-    public float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f };
-    public float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
+    public float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f, 0.85f };
+    public float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f, 230f };
     public float defaultDrivenWheelRadius = 0.35f;
 
     [Header("Outputs")]
