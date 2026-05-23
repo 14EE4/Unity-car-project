@@ -33,6 +33,11 @@
 - 이름 제출 → `UserRegistrationUI`가 `POST /register` 호출 → 성공 시 `LeaderboardController.LoadLeaderboard()`로 목록 갱신
 - 랩 제출 → `ScoreSubmitter`가 `POST /score` 호출 → 성공 시 리더보드 갱신
 
+## 리더보드 표시 규칙
+- 리더보드에는 사용자별 개인 최고기록(Personal Best) 1개만 표시합니다.
+- 서버의 `/leaderboard` 응답은 사용자별 최단 `lap_seconds`를 기준으로 정렬된 항목이어야 합니다.
+- Unity의 `LeaderboardController`는 서버가 반환한 결과를 그대로 렌더링하므로, 서버 응답이 곧 화면 표시 규칙이 됩니다.
+
 ## 테스트 팁
 - 에디터에서 저장된 이름을 지우려면 상단 메뉴 `Dev → Clear UserName Pref` 클릭
 - 로컬 테스트: `LeaderboardManager.baseUrl`를 `http://localhost:<port>/api`로 변경하고 로컬 API 실행

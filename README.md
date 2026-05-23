@@ -66,6 +66,10 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 
 이 프로젝트는 GitHub Copilot과 Gemini의 도움을 받아 개발되었습니다.
 
+## Leaderboard Rule
+
+리더보드는 사용자별 개인 최고기록(Personal Best) 1개만 표시합니다. 서버의 `/leaderboard` 응답은 이 규칙에 맞게 정렬되어야 하며, Unity 클라이언트는 서버 결과를 그대로 렌더링합니다.
+
 ## Online Leaderboard
 
 간단한 설명과 설정/사용법은 [docs/LEADERBOARD.md](docs/LEADERBOARD.md)에서 확인하세요.
