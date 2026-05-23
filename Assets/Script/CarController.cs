@@ -445,17 +445,29 @@ public class CarController : MonoBehaviour
 
     private void ShiftUp()
     {
+        int previousGear = currentGear;
         if (currentGear < forwardGearRatios.Length)
         {
             currentGear++;
+        }
+
+        if (engineSystem != null && currentGear != previousGear)
+        {
+            engineSystem.NotifyGearChanged(previousGear, currentGear);
         }
     }
 
     private void ShiftDown()
     {
+        int previousGear = currentGear;
         if (currentGear > -1)
         {
             currentGear--;
+        }
+
+        if (engineSystem != null && currentGear != previousGear)
+        {
+            engineSystem.NotifyGearChanged(previousGear, currentGear);
         }
     }
 

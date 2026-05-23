@@ -101,6 +101,31 @@ public class CarEngineSystem : MonoBehaviour
         }
     }
 
+    public void NotifyGearChanged(int previousGear, int nextGear)
+    {
+        float previousRatio = Mathf.Abs(GetGearRatio(previousGear));
+        float nextRatio = Mathf.Abs(GetGearRatio(nextGear));
+
+        if (previousRatio > 0.01f && nextRatio > 0.01f)
+        {
+            shiftRpmCarry = Mathf.Clamp(CurrentRPM * (nextRatio / previousRatio), idleRPM, maxRPM);
+            shiftRpmCarryTimer = shiftRpmCarryDuration;
+            CurrentRPM = Mathf.Max(CurrentRPM, shiftRpmCarry);
+        }
+        else if (nextGear == 0)
+        {
+            shiftRpmCarry = Mathf.Clamp(CurrentRPM, idleRPM, maxRPM);
+            shiftRpmCarryTimer = 0.15f;
+        }
+        else
+        {
+            shiftRpmCarry = -1f;
+            shiftRpmCarryTimer = 0f;
+        }
+
+        lastGear = nextGear;
+    }
+
     public float GetGearRatio(int gear)
     {
         if (gear < 0)
