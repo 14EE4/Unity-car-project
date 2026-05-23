@@ -39,6 +39,9 @@ public class LeaderboardController : MonoBehaviour
             Debug.LogWarning("[LeaderboardController] UserRegistrationUI not found in scene (active or inactive). Ensure a GameObject with UserRegistrationUI exists and is assigned in the scene.");
         }
 
+        // Always load leaderboard once when entering the scene.
+        LoadLeaderboard();
+
         if (refreshInterval > 0f)
             InvokeRepeating(nameof(LoadLeaderboard), 0f, refreshInterval);
     }
@@ -50,7 +53,9 @@ public class LeaderboardController : MonoBehaviour
 
     IEnumerator FetchLeaderboard()
     {
-        var url = !string.IsNullOrEmpty(leaderboardApiUrl) ? leaderboardApiUrl : (LeaderboardManager.Instance != null ? LeaderboardManager.Instance.LeaderboardUrl : string.Empty);
+        var url = !string.IsNullOrEmpty(leaderboardApiUrl)
+            ? leaderboardApiUrl
+            : (LeaderboardManager.Instance != null ? LeaderboardManager.Instance.LeaderboardUrl : $"{LeaderboardManager.DefaultBaseUrl}/leaderboard?limit=10");
         if (string.IsNullOrEmpty(url))
         {
             Debug.LogWarning("[LeaderboardController] leaderboard URL is not set and LeaderboardManager is not present.");
@@ -100,7 +105,7 @@ public class LeaderboardController : MonoBehaviour
             if (playerText != null)
                 playerText.text = item.player_name;
             if (lapText != null)
-                lapText.text = item.lap_time;
+                lapText.text = item.lap_time_text;
         }
     }
 
@@ -135,7 +140,8 @@ public class LeaderboardController : MonoBehaviour
     {
         public int rank;
         public string player_name;
-        public string lap_time;
+        public float lap_seconds;
+        public string lap_time_text;
     }
 
     [System.Serializable]
