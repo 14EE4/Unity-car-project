@@ -9,6 +9,10 @@ public class CarEngineSystem : MonoBehaviour
     public float rpmWarningThreshold = 7000f;
     public float lowRpmTorqueEndRPM = 2000f;
     [Range(0.1f, 1f)] public float lowRpmTorqueMultiplier = 0.45f;
+    public float rpmRiseRate = 5000f;
+    public float rpmFallRate = 7000f;
+    public float freeRevResponse = 1.4f;
+    public float lowSpeedThrottleBlendKmh = 18f;
 
     [Header("Gearing")]
     public float finalDrive = 3.5f;
@@ -44,14 +48,13 @@ public class CarEngineSystem : MonoBehaviour
         }
     }
 
-    public void Step(float speedKmh, float throttleInput, bool handbrakeActive, int gear, float maxTorque, WheelCollider driveLeft, WheelCollider driveRight)
+    public void Step(float speedKmh, float throttleInput, bool handbrakeActive, int gear, float maxTorque, WheelCollider driveLeft, WheelCollider driveRight, float deltaTime)
     {
         CurrentSpeedKmh = speedKmh;
         CurrentGearRatio = GetGearRatio(gear);
         CurrentWheelRPM = GetDrivenWheelRPM(speedKmh, driveLeft, driveRight);
 
-        CurrentRPM = CalculateEngineRPM(speedKmh, throttleInput, gear, CurrentWheelRPM, driveLeft, driveRight);
-        CurrentRPM = Mathf.Clamp(CurrentRPM, idleRPM, maxRPM);
+        CurrentRPM = UpdateEngineRPM(speedKmh, throttleInput, gear, CurrentWheelRPM, driveLeft, driveRight, deltaTime);
         IsRpmWarning = CurrentRPM >= rpmWarningThreshold;
         IsFuelCutActive = throttleInput > 0f && CurrentRPM >= fuelCutRPM;
 
@@ -89,26 +92,40 @@ public class CarEngineSystem : MonoBehaviour
         return forwardGearRatios[index];
     }
 
-    private float CalculateEngineRPM(float speedKmh, float throttleInput, int gear, float wheelRPM, WheelCollider driveLeft, WheelCollider driveRight)
+    private float UpdateEngineRPM(float speedKmh, float throttleInput, int gear, float wheelRPM, WheelCollider driveLeft, WheelCollider driveRight, float deltaTime)
     {
+        float desiredRPM;
+
         if (gear == 0)
         {
             float neutralThrottle = Mathf.Clamp01(throttleInput);
-            return Mathf.Lerp(idleRPM, maxRPM, neutralThrottle * 0.6f);
+            desiredRPM = Mathf.Lerp(idleRPM, maxRPM, Mathf.Pow(neutralThrottle, freeRevResponse));
         }
-
-        float wheelDrivenRPM = wheelRPM;
-        if (wheelDrivenRPM <= 0f)
+        else
         {
-            wheelDrivenRPM = GetWheelRPMFromSpeed(speedKmh, driveLeft, driveRight);
+            float wheelDrivenRPM = wheelRPM;
+            if (wheelDrivenRPM <= 0f)
+            {
+                wheelDrivenRPM = GetWheelRPMFromSpeed(speedKmh, driveLeft, driveRight);
+            }
+
+            float coupledRPM = Mathf.Abs(wheelDrivenRPM) * Mathf.Abs(GetGearRatio(gear)) * finalDrive;
+            float throttleFreeRevRPM = Mathf.Lerp(idleRPM, maxRPM, Mathf.Pow(Mathf.Clamp01(throttleInput), freeRevResponse));
+            float lowSpeedBlend = Mathf.Clamp01(1f - (speedKmh / Mathf.Max(0.01f, lowSpeedThrottleBlendKmh)));
+
+            // At low speed, let throttle pull the RPM toward a free-rev target.
+            // At higher speed, stay closer to wheel-coupled RPM.
+            desiredRPM = Mathf.Lerp(coupledRPM, Mathf.Max(coupledRPM, throttleFreeRevRPM), lowSpeedBlend * Mathf.Clamp01(throttleInput));
+            desiredRPM = Mathf.Max(idleRPM, desiredRPM);
         }
 
-        float motionRPM = Mathf.Abs(wheelDrivenRPM) * Mathf.Abs(GetGearRatio(gear)) * finalDrive;
-        float throttleLift = throttleInput > 0f
-            ? Mathf.Lerp(0f, 1200f, Mathf.Clamp01(throttleInput))
-            : 0f;
+        desiredRPM = Mathf.Clamp(desiredRPM, idleRPM, maxRPM);
 
-        return Mathf.Max(idleRPM, motionRPM + throttleLift * 0.15f);
+        float rise = rpmRiseRate * Mathf.Max(0.02f, deltaTime);
+        float fall = rpmFallRate * Mathf.Max(0.02f, deltaTime);
+        float rate = desiredRPM >= CurrentRPM ? rise : fall;
+
+        return Mathf.MoveTowards(CurrentRPM, desiredRPM, rate);
     }
 
     private float CalculateMotorTorque(float speedKmh, float throttleInput, int gear, float maxTorque)

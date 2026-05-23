@@ -266,7 +266,7 @@ public class CarController : MonoBehaviour
 
         if (engineSystem != null)
         {
-            engineSystem.Step(speedKmh, throttleInput, handbrakeActive, currentGear, maxTorque, backLeft, backRight);
+            engineSystem.Step(speedKmh, throttleInput, handbrakeActive, currentGear, maxTorque, backLeft, backRight, Time.fixedDeltaTime);
         }
 
         // apply speed-dependent grip and downforce before physics forces
