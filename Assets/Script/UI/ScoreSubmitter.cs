@@ -121,12 +121,6 @@ public class ScoreSubmitter : MonoBehaviour
     // Public entry: call StartCoroutine(SubmitScore(lapSeconds, lapTimeText, trackId)) or use SubmitScoreRequest
     public IEnumerator SubmitScore(float lapSeconds, string lapTimeText, string trackId = null)
     {
-        if (LeaderboardManager.Instance == null)
-        {
-            Debug.LogWarning("[ScoreSubmitter] LeaderboardManager missing; abort submit.");
-            yield break;
-        }
-
         if (lapSeconds <= 0f)
         {
             Debug.LogWarning($"[ScoreSubmitter] Invalid lapSeconds: {lapSeconds}");
@@ -135,14 +129,20 @@ public class ScoreSubmitter : MonoBehaviour
 
         var payload = new ScoreRequest
         {
-            device_id = LeaderboardManager.Instance.DeviceId,
+            device_id = GetDeviceId(),
             lap_seconds = lapSeconds,
             lap_time_text = lapTimeText,
             track_id = trackId
         };
 
         string json = JsonUtility.ToJson(payload);
-        string url = !string.IsNullOrEmpty(submitUrl) ? submitUrl : LeaderboardManager.Instance.SubmitScoreUrl;
+        string url = GetSubmitUrl();
+
+        if (string.IsNullOrEmpty(url))
+        {
+            Debug.LogWarning("[ScoreSubmitter] submit URL is not set and default API is unavailable.");
+            yield break;
+        }
 
         Debug.Log($"[ScoreSubmitter] Prepared payload | url={url} | deviceId={payload.device_id} | lapSeconds={payload.lap_seconds:F3} | lapTimeText={payload.lap_time_text} | trackId={payload.track_id}");
 
@@ -209,5 +209,30 @@ public class ScoreSubmitter : MonoBehaviour
         int milliseconds = totalMilliseconds % 1000;
 
         return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+    }
+
+    string GetDeviceId()
+    {
+        if (LeaderboardManager.Instance != null)
+        {
+            return LeaderboardManager.Instance.DeviceId;
+        }
+
+        return SystemInfo.deviceUniqueIdentifier;
+    }
+
+    string GetSubmitUrl()
+    {
+        if (!string.IsNullOrEmpty(submitUrl))
+        {
+            return submitUrl;
+        }
+
+        if (LeaderboardManager.Instance != null)
+        {
+            return LeaderboardManager.Instance.SubmitScoreUrl;
+        }
+
+        return $"{LeaderboardManager.DefaultBaseUrl}/score";
     }
 }
