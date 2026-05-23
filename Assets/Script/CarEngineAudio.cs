@@ -142,7 +142,7 @@ public class CarEngineAudio : MonoBehaviour
         // on/off behavior without layered loop sources.
         if (nextBand >= 1 && nextBand <= 3)
         {
-            AudioClip desired = currentThrottleInput > 0f ? GetOnClipForBand(nextBand) : GetOffClipForBand(nextBand);
+            AudioClip desired = GetBandClipWithFallback(nextBand, currentThrottleInput > 0f);
             if (desired != null)
             {
                 float last = lastPlayTime[nextBand];
@@ -307,6 +307,50 @@ public class CarEngineAudio : MonoBehaviour
             case 3: return highOnClip;
             default: return null;
         }
+    }
+
+    private AudioClip GetBandClipWithFallback(int band, bool throttleOn)
+    {
+        AudioClip clip = throttleOn ? GetOnClipForBand(band) : GetOffClipForBand(band);
+        if (clip != null)
+        {
+            return clip;
+        }
+
+        if (band == 3)
+        {
+            clip = throttleOn ? maxRpmClip : maxRpmClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+
+            clip = throttleOn ? medOnClip : medOffClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+        }
+
+        if (band == 2)
+        {
+            clip = throttleOn ? highOnClip : highOffClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+        }
+
+        if (band == 1)
+        {
+            clip = throttleOn ? medOnClip : medOffClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+        }
+
+        return throttleOn ? idleClip : idleClip;
     }
 
     private AudioClip GetOffClipForBand(int band)

@@ -34,6 +34,23 @@
 
 이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
 
+### 2026-05-23 — RPM 계산 안정화 및 고RPM 오디오 fallback 추가
+
+- 변경 파일:
+	- `Assets/Script/CarEngineSystem.cs` — 기어 주행 시 RPM이 차량 속도 기반으로 따라가도록 유지하고, 저속 보정만 제한적으로 적용하도록 조정했습니다.
+	- `Assets/Script/CarEngineAudio.cs` — 6300RPM 이상 구간에서 high band 클립이 비어 있어도 소리가 끊기지 않도록 band fallback을 추가했습니다.
+
+- 변경 사항:
+	- 기어가 들어간 상태에서는 바퀴 슬립에 의해 RPM이 급격히 치솟지 않도록 속도 기반 RPM을 우선 사용합니다.
+	- 고RPM에서 `highOnClip` 또는 `maxRpmClip`이 할당되지 않아도 `medOnClip` / `medOffClip` / `idleClip` 순으로 대체 재생되도록 수정했습니다.
+	- 결과적으로 6300RPM 이상에서 엔진음이 갑자기 사라지는 현상을 줄였습니다.
+
+- 확인 포인트:
+	1. 1단 주행 중 14km/h 부근에서 RPM이 비정상적으로 빨리 8000에 붙지 않는지 확인합니다.
+	2. 6300RPM 이상에서 high band 클립이 비어 있어도 무음 구간이 생기지 않는지 확인합니다.
+	3. 인스펙터에서 `highOnClip`, `highOffClip`, `maxRpmClip` 할당 여부를 점검합니다.
+
+
 ## Revision History (latest first)
 
 ### 2026-05-23 — 랩 완료 후 잠금 문구 및 재시작 규칙 정리
