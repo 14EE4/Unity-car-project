@@ -13,6 +13,7 @@ public class CarEngineSystem : MonoBehaviour
     public float rpmFallRate = 7000f;
     public float freeRevResponse = 1.4f;
     public float lowSpeedThrottleBlendKmh = 18f;
+    public float lowSpeedThrottleAssistRPM = 900f;
 
     [Header("Gearing")]
     public float finalDrive = 3.5f;
@@ -110,13 +111,12 @@ public class CarEngineSystem : MonoBehaviour
             }
 
             float coupledRPM = Mathf.Abs(wheelDrivenRPM) * Mathf.Abs(GetGearRatio(gear)) * finalDrive;
-            float throttleFreeRevRPM = Mathf.Lerp(idleRPM, maxRPM, Mathf.Pow(Mathf.Clamp01(throttleInput), freeRevResponse));
             float lowSpeedBlend = Mathf.Clamp01(1f - (speedKmh / Mathf.Max(0.01f, lowSpeedThrottleBlendKmh)));
+            float throttleAssist = lowSpeedThrottleAssistRPM * Mathf.Clamp01(throttleInput) * lowSpeedBlend;
 
-            // At low speed, let throttle pull the RPM toward a free-rev target.
-            // At higher speed, stay closer to wheel-coupled RPM.
-            desiredRPM = Mathf.Lerp(coupledRPM, Mathf.Max(coupledRPM, throttleFreeRevRPM), lowSpeedBlend * Mathf.Clamp01(throttleInput));
-            desiredRPM = Mathf.Max(idleRPM, desiredRPM);
+            // In gear, RPM should primarily follow wheel speed.
+            // Throttle only adds a small low-speed assist instead of free-revving to redline.
+            desiredRPM = Mathf.Max(idleRPM, coupledRPM + throttleAssist);
         }
 
         desiredRPM = Mathf.Clamp(desiredRPM, idleRPM, maxRPM);
