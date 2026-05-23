@@ -21,15 +21,19 @@ public class UserRegistrationUI : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[UserRegistrationUI] Start | panelAssigned={nameInputPanel != null} | fieldAssigned={nameInputField != null} | submitButtonAssigned={submitButton != null}");
+
         if (submitButton != null)
         {
             submitButton.onClick.RemoveListener(HandleSubmit);
             submitButton.onClick.AddListener(HandleSubmit);
+            Debug.Log("[UserRegistrationUI] Submit button listener wired.");
         }
 
         if (nameInputPanel != null)
         {
             var stored = PlayerPrefs.GetString("UserName", string.Empty);
+            Debug.Log($"[UserRegistrationUI] Start storedUserName='{stored}'");
             nameInputPanel.SetActive(string.IsNullOrWhiteSpace(stored));
         }
     }
@@ -37,6 +41,7 @@ public class UserRegistrationUI : MonoBehaviour
     public void ShowPanel()
     {
         if (nameInputPanel == null) return;
+        Debug.Log($"[UserRegistrationUI] ShowPanel called | pendingScore={hasPendingScore} | pendingLapSeconds={pendingLapSeconds:F3} | pendingLapTimeText={pendingLapTimeText} | pendingTrackId={pendingTrackId}");
         nameInputPanel.SetActive(true);
 
         if (nameInputField != null)
@@ -81,6 +86,7 @@ public class UserRegistrationUI : MonoBehaviour
         }
 
         var userName = nameInputField.text != null ? nameInputField.text.Trim() : string.Empty;
+        Debug.Log($"[UserRegistrationUI] HandleSubmit called | enteredUserName='{userName}' | pendingScore={hasPendingScore} | pendingLapSeconds={pendingLapSeconds:F3} | pendingLapTimeText={pendingLapTimeText}");
         if (string.IsNullOrWhiteSpace(userName) || userName.Length < minimumNameLength)
         {
             Debug.LogWarning($"[UserRegistrationUI] Invalid user name: '{userName}'");
@@ -103,6 +109,8 @@ public class UserRegistrationUI : MonoBehaviour
         var deviceId = LeaderboardManager.Instance != null ? LeaderboardManager.Instance.DeviceId : SystemInfo.deviceUniqueIdentifier;
         var payload = new RegisterRequest { device_id = deviceId, user_name = userName };
         var json = JsonUtility.ToJson(payload);
+
+        Debug.Log($"[UserRegistrationUI] RegisterUserAndRefresh | deviceId={deviceId} | urlCandidate={(LeaderboardManager.Instance != null ? LeaderboardManager.Instance.RegisterUrl : registerApiUrl)} | payload={json}");
 
         var url = !string.IsNullOrEmpty(registerApiUrl) ? registerApiUrl : (LeaderboardManager.Instance != null ? LeaderboardManager.Instance.RegisterUrl : string.Empty);
         if (string.IsNullOrEmpty(url))
@@ -128,6 +136,8 @@ public class UserRegistrationUI : MonoBehaviour
             Debug.Log($"[UserRegistrationUI] Registered user: {userName} (device={deviceId})");
         }
 
+        Debug.Log($"[UserRegistrationUI] Registration completed | hasPendingScore={hasPendingScore}");
+
         if (hasPendingScore)
         {
             var submitter = Object.FindObjectOfType<ScoreSubmitter>();
@@ -136,6 +146,7 @@ public class UserRegistrationUI : MonoBehaviour
                 Debug.Log("[UserRegistrationUI] Auto-submitting held score after registration.");
                 if (!submitter.TrySubmitPendingScore())
                 {
+                    Debug.LogWarning("[UserRegistrationUI] Pending score submit failed; falling back to direct submit request.");
                     submitter.SubmitScoreRequest(pendingLapSeconds, pendingLapTimeText, pendingTrackId);
                 }
             }
@@ -159,6 +170,7 @@ public class UserRegistrationUI : MonoBehaviour
             }
             else
             {
+                Debug.Log("[UserRegistrationUI] No pending score and no best lap to submit. Refreshing leaderboard only.");
                 var lb = Object.FindObjectOfType<LeaderboardController>();
                 if (lb != null)
                 {
@@ -174,6 +186,7 @@ public class UserRegistrationUI : MonoBehaviour
 
     void ClearPendingScore()
     {
+        Debug.Log("[UserRegistrationUI] Clearing pending score state.");
         hasPendingScore = false;
         pendingLapSeconds = -1f;
         pendingLapTimeText = null;

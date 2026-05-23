@@ -79,6 +79,7 @@ public class FinishLine : MonoBehaviour
             {
                 var lapSeconds = lapTimer.recentLapTime;
                 var lapTimeText = lapTimer.FormatLapTime(lapSeconds);
+                Debug.Log($"[FinishLine] Forwarding lap to ScoreSubmitter | lapSeconds={lapSeconds:F3} | lapTimeText={lapTimeText}");
                 submitter.SubmitScoreOrAskName(lapSeconds, lapTimeText, null);
             }
             else

@@ -16,7 +16,10 @@ public class ScoreSubmitter : MonoBehaviour
     // If name is missing, hand off to the registration UI and keep the score pending there.
     public void SubmitScoreOrAskName(float lapSeconds, string lapTimeText, string trackId = null)
     {
+        Debug.Log($"[ScoreSubmitter] SubmitScoreOrAskName | lapSeconds={lapSeconds:F3} | lapTimeText={lapTimeText} | trackId={trackId}");
+
         var storedUserName = PlayerPrefs.GetString("UserName", string.Empty);
+        Debug.Log($"[ScoreSubmitter] Current stored user name='{storedUserName}'");
         if (!string.IsNullOrWhiteSpace(storedUserName))
         {
             SubmitScoreRequest(lapSeconds, lapTimeText, trackId);
@@ -43,6 +46,8 @@ public class ScoreSubmitter : MonoBehaviour
             return false;
         }
 
+        Debug.Log($"[ScoreSubmitter] HoldBestLapFromTimer | loaded best count={(lapTimer.bestLapTimes != null ? lapTimer.bestLapTimes.Count : 0)} | recentLapTime={lapTimer.recentLapTime:F3} | hasRecentLapTime={lapTimer.hasRecentLapTime}");
+
         if (!lapTimer.TryGetBestLapTimeDisplay(out var bestLapSeconds, out var bestLapText))
         {
             Debug.LogWarning("[ScoreSubmitter] No best lap exists yet in persistent data.");
@@ -62,9 +67,11 @@ public class ScoreSubmitter : MonoBehaviour
     {
         if (!hasPendingScore)
         {
+            Debug.LogWarning("[ScoreSubmitter] TrySubmitPendingScore called but no pending score exists.");
             return false;
         }
 
+        Debug.Log($"[ScoreSubmitter] Submitting pending score | lapSeconds={pendingLapSeconds:F3} | lapTimeText={pendingLapTimeText} | trackId={pendingTrackId}");
         SubmitScoreRequest(pendingLapSeconds, pendingLapTimeText, pendingTrackId);
         ClearPendingScore();
         return true;
@@ -95,6 +102,8 @@ public class ScoreSubmitter : MonoBehaviour
 
         string json = JsonUtility.ToJson(payload);
         string url = !string.IsNullOrEmpty(submitUrl) ? submitUrl : LeaderboardManager.Instance.SubmitScoreUrl;
+
+        Debug.Log($"[ScoreSubmitter] Prepared payload | url={url} | deviceId={payload.device_id} | lapSeconds={payload.lap_seconds:F3} | lapTimeText={payload.lap_time_text} | trackId={payload.track_id}");
 
         using (var req = new UnityWebRequest(url, "POST"))
         {
@@ -127,6 +136,7 @@ public class ScoreSubmitter : MonoBehaviour
 
     void ClearPendingScore()
     {
+        Debug.Log("[ScoreSubmitter] Clearing pending score state.");
         hasPendingScore = false;
         pendingLapSeconds = -1f;
         pendingLapTimeText = null;
