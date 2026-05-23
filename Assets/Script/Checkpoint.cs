@@ -7,7 +7,7 @@ public class Checkpoint : MonoBehaviour
 
     private void Awake()
     {
-        checkpointManager = FindObjectOfType<CheckpointManager>();
+        checkpointManager = Object.FindFirstObjectByType<CheckpointManager>();
         if (checkpointManager == null)
         {
             Debug.LogError("CheckpointManager not found in the scene.");

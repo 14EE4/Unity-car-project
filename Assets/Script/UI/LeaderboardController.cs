@@ -19,14 +19,14 @@ public class LeaderboardController : MonoBehaviour
 
     void Start()
     {
+        ConfigureCursorForLeaderboard();
+
         // Ensure registration UI panel shows when entering leaderboard scene (if needed)
-        var reg = Object.FindObjectOfType<UserRegistrationUI>();
+        var reg = Object.FindFirstObjectByType<UserRegistrationUI>();
         if (reg == null)
         {
             // Try to find inactive instances as well (e.g., component attached to inactive GameObject)
-            var all = Resources.FindObjectsOfTypeAll<UserRegistrationUI>();
-            if (all != null && all.Length > 0)
-                reg = all[0];
+            reg = Object.FindFirstObjectByType<UserRegistrationUI>(FindObjectsInactive.Include);
         }
 
         if (reg != null)
@@ -44,6 +44,20 @@ public class LeaderboardController : MonoBehaviour
 
         if (refreshInterval > 0f)
             InvokeRepeating(nameof(LoadLeaderboard), 0f, refreshInterval);
+    }
+
+    void ConfigureCursorForLeaderboard()
+    {
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        var cursorLockManager = Object.FindFirstObjectByType<CursorLockManager>();
+        if (cursorLockManager != null && cursorLockManager.enabled)
+        {
+            cursorLockManager.enabled = false;
+            Debug.Log("[LeaderboardController] Disabled CursorLockManager for leaderboard UI.");
+        }
     }
 
     public void LoadLeaderboard()
