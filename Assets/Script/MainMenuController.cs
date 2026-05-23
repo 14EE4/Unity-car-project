@@ -1,6 +1,10 @@
+using System.Collections;
+using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
 // 메인 메뉴 UI 제어기
 // - 씬 전환(Play 버튼)
@@ -11,6 +15,15 @@ public class MainMenuController : MonoBehaviour
 {
     [Tooltip("Scene name to load when Play is pressed")]
     public string mainSceneName = "Main";
+
+    [Header("Leaderboard / User Registration")]
+    public string leaderboardSceneName = "Leaderboard";
+    public string registerApiUrl = "http://내_서버_IP/api/register";
+    public GameObject nameInputPanel;
+    public TMP_InputField nameInputField;
+    public Button submitButton;
+    [Min(1)] public int minimumNameLength = 2;
+
     public CanvasGroup settingsPanel;
     public CanvasGroup keyGuidePanel;
 
@@ -22,6 +35,9 @@ public class MainMenuController : MonoBehaviour
     void OnValidate()
     {
         if (Application.isPlaying) return;
+
+        if (nameInputPanel != null)
+            nameInputPanel.SetActive(false);
 
         if (settingsPanel != null)
         {
@@ -45,6 +61,8 @@ public class MainMenuController : MonoBehaviour
         // 메인 메뉴 진입 시 커서를 해제하고 표시합니다.
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        WireSubmitButton();
 
         // 설정 패널이 에디터에서 연결되어 있으면 초기 상태로 숨깁니다.
         if (settingsPanel != null)
@@ -85,12 +103,47 @@ public class MainMenuController : MonoBehaviour
         // NOTE: Automatic runtime binding of UI buttons has been removed to encourage
         // editor-time wiring. Use the inspector to assign button onClick handlers
         // to call `ShowKeyGuide()` and `ShowSettings()` for clearer ownership.
+
+        if (nameInputPanel != null)
+            nameInputPanel.SetActive(false);
+    }
+
+    void OnEnable()
+    {
+        WireSubmitButton();
+    }
+
+    void OnDisable()
+    {
+        if (submitButton != null)
+            submitButton.onClick.RemoveListener(HandleSubmitButtonClicked);
     }
 
     // Play 버튼 동작: 메인 게임 씬을 로드합니다.
     public void PlayGame()
     {
         LoadingScreenManager.LoadScene(mainSceneName);
+    }
+
+    // 리더보드 버튼 동작: 저장된 이름이 있으면 바로 이동하고, 없으면 이름 입력 패널을 띄웁니다.
+    public void LeaderboardButtonClicked()
+    {
+        var storedName = PlayerPrefs.GetString("UserName", string.Empty);
+        if (string.IsNullOrWhiteSpace(storedName))
+        {
+            ShowNameInputPanel();
+            return;
+        }
+
+        PlayerPrefs.SetString("UserName", storedName.Trim());
+        PlayerPrefs.Save();
+        GoToLeaderboard();
+    }
+
+    // 이름 확인 버튼에 연결할 수 있는 공개 함수입니다.
+    public void SubmitUserName()
+    {
+        HandleSubmitButtonClicked();
     }
 
     // 설정창 열기: 인스펙터에서 할당된 settingsPanel의 CanvasGroup을 사용해 표시합니다.
@@ -208,6 +261,119 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
+    void ShowNameInputPanel()
+    {
+        if (nameInputPanel == null)
+        {
+            Debug.LogWarning("[MainMenuController] LeaderboardButtonClicked called but nameInputPanel is null.");
+            return;
+        }
+
+        nameInputPanel.SetActive(true);
+
+        if (nameInputField != null)
+        {
+            nameInputField.text = string.Empty;
+            nameInputField.ActivateInputField();
+            nameInputField.Select();
+        }
+    }
+
+    void HandleSubmitButtonClicked()
+    {
+        if (nameInputField == null)
+        {
+            Debug.LogWarning("[MainMenuController] Submit pressed but nameInputField is null.");
+            return;
+        }
+
+        var userName = nameInputField.text != null ? nameInputField.text.Trim() : string.Empty;
+        if (!IsValidUserName(userName))
+        {
+            Debug.LogWarning($"[MainMenuController] Invalid user name: '{userName}'");
+            nameInputField.ActivateInputField();
+            nameInputField.Select();
+            return;
+        }
+
+        PlayerPrefs.SetString("UserName", userName);
+        PlayerPrefs.Save();
+
+        if (nameInputPanel != null)
+            nameInputPanel.SetActive(false);
+
+        StartCoroutine(RegisterUserAndOpenLeaderboard(userName));
+    }
+
+    bool IsValidUserName(string userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+            return false;
+
+        return userName.Trim().Length >= minimumNameLength;
+    }
+
+    IEnumerator RegisterUserAndOpenLeaderboard(string userName)
+    {
+        var deviceId = GetOrCreateDeviceId();
+        var payload = new RegisterRequest
+        {
+            device_id = deviceId,
+            user_name = userName
+        };
+
+        var json = JsonUtility.ToJson(payload);
+        using (var request = new UnityWebRequest(registerApiUrl, "POST"))
+        {
+            request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"[MainMenuController] User registration failed: {request.error}\n{request.downloadHandler.text}");
+            }
+            else
+            {
+                Debug.Log($"[MainMenuController] User registered successfully. device_id={deviceId}, user_name={userName}");
+            }
+        }
+
+        GoToLeaderboard();
+    }
+
+    void GoToLeaderboard()
+    {
+        LoadingScreenManager.LoadScene(leaderboardSceneName);
+    }
+
+    string GetOrCreateDeviceId()
+    {
+        const string deviceIdPrefKey = "DeviceId";
+
+        var storedDeviceId = PlayerPrefs.GetString(deviceIdPrefKey, string.Empty);
+        if (!string.IsNullOrWhiteSpace(storedDeviceId))
+            return storedDeviceId;
+
+        var systemDeviceId = SystemInfo.deviceUniqueIdentifier;
+        var deviceId = string.IsNullOrWhiteSpace(systemDeviceId) ? System.Guid.NewGuid().ToString("N") : systemDeviceId.Trim();
+
+        PlayerPrefs.SetString(deviceIdPrefKey, deviceId);
+        PlayerPrefs.Save();
+        return deviceId;
+    }
+
+    void WireSubmitButton()
+    {
+        if (submitButton == null)
+            return;
+
+        submitButton.onClick.RemoveListener(HandleSubmitButtonClicked);
+        submitButton.onClick.AddListener(HandleSubmitButtonClicked);
+    }
+
     // 지정한 Transform부터 상위 계층을 로그로 출력합니다. 디버그 용도입니다.
     void LogHierarchy(Transform start)
     {
@@ -250,5 +416,12 @@ public class MainMenuController : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    [System.Serializable]
+    class RegisterRequest
+    {
+        public string device_id;
+        public string user_name;
     }
 }
