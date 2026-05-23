@@ -162,7 +162,7 @@ public class CarController : MonoBehaviour
 
             if (engineAudio != null)
             {
-                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear);
+                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear, currentRPM);
             }
 
             return;
@@ -202,7 +202,7 @@ public class CarController : MonoBehaviour
 
         if (engineAudio != null)
         {
-            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear);
+            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear, currentRPM);
         }
 
         CalculateRPM();

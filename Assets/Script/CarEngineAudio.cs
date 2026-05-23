@@ -34,6 +34,9 @@ public class CarEngineAudio : MonoBehaviour
     public float gear4MaxSpeedKmh = 160f;
     public float gear5MaxSpeedKmh = 200f;
     public float reverseMaxSpeedKmh = 40f;
+    [Header("Sound Response")]
+    public float highRpmVolumeBoost = 0.9f;
+    public float highRpmPitchBoost = 0.35f;
     private AudioSource engineAudioSource;
     
     private float currentSpeedKmh;
@@ -80,7 +83,7 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear)
+    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear, float engineRpm = -1f)
     {
         // store previous values first
         previousThrottleInput = currentThrottleInput;
@@ -90,7 +93,7 @@ public class CarEngineAudio : MonoBehaviour
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
         currentGear = gear;
-        currentEngineRpm = EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
+        currentEngineRpm = engineRpm > 0f ? engineRpm : EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
 
         UpdateEngineAudio();
         HandleHandbrakeTransition();
@@ -166,6 +169,7 @@ public class CarEngineAudio : MonoBehaviour
             }
         }
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
+        pitch += rpmNorm * highRpmPitchBoost;
         engineAudioSource.pitch = pitch;
 
 
@@ -342,6 +346,13 @@ public class CarEngineAudio : MonoBehaviour
             return;
         }
 
-        engineAudioSource.PlayOneShot(clip, masterGain);
+        float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
+        float volumeScale = masterGain * Mathf.Lerp(0.7f, 1f + highRpmVolumeBoost, rpmNorm);
+        if (currentThrottleInput <= 0f)
+        {
+            volumeScale *= 0.85f;
+        }
+
+        engineAudioSource.PlayOneShot(clip, volumeScale);
     }
 }
