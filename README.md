@@ -61,3 +61,7 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 
 - 완료된 작업 및 남은 과제: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md)
 - 전송/백업 및 빠른 시작 가이드: [전송 및 셋업 가이드](docs/GUIDE.md)
+
+## Online Leaderboard
+
+간단한 설명과 설정/사용법은 [docs/LEADERBOARD.md](docs/LEADERBOARD.md)에서 확인하세요.

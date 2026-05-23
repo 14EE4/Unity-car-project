@@ -1,7 +1,32 @@
 
+
 [Back to README](../README.md)
 
 # Development Log
+
+### 2026-05-23 — 온라인 리더보드: 이름 입력, 등록, 랭킹 조회, 기록 전송 기능 추가
+
+- 변경 파일:
+	- `Assets/Script/UI/LeaderboardManager.cs` (새파일) — API 기본 URL과 `DeviceId` 제공 싱글턴
+	- `Assets/Script/UI/LeaderboardController.cs` (새파일) — 랭킹 조회 및 UI 생성 로직
+	- `Assets/Script/UI/UserRegistrationUI.cs` (새파일) — 이름 입력, PlayerPrefs 저장, `/register` POST
+	- `Assets/Script/UI/ScoreSubmitter.cs` (새파일) — `/score` POST 전송 유틸
+	- `Assets/Editor/ClearUserNamePref.cs` (새파일) — 에디터에서 `UserName` 초기화 도구
+	- `docs/LEADERBOARD.md` (새파일) — 리더보드 설정 및 사용법 문서
+
+- 변경 요약:
+	- 리더보드 씬에서 `UserRegistrationUI`를 통해 사용자 이름을 입력/저장하고 서버에 등록할 수 있게 구현했습니다.
+	- `LeaderboardController`는 서버의 `/leaderboard` 엔드포인트에서 목록을 받아 `Item_LeaderboardEntry` 프리팹으로 `Scroll_RankList/Content`를 채웁니다.
+	- 랩 완료 시 `ScoreSubmitter`를 통해 `POST /score`를 전송하면 서버 저장 후 리더보드를 갱신합니다.
+	- 에디터 메뉴에 `Dev -> Clear UserName Pref`를 추가해 테스트용으로 저장된 이름을 지울 수 있습니다.
+
+- 빠른 테스트:
+	1. `LeaderboardManager` GameObject를 리더보드 씬에 추가하고 `baseUrl` 확인(기본: `https://api.pyeong.p-e.kr/api`).
+	2. `UserRegistrationUI` 및 `LeaderboardController`의 인스펙터 필드를 할당.
+	3. 플레이 모드에서 리더보드 씬 진입 시 PlayerPrefs에 `UserName`이 없으면 입력 패널이 표시됩니다.
+	4. 이름 제출 후 콘솔 로그를 확인해 `/register` 요청/응답을 검증하고, `LoadLeaderboard()`로 목록이 갱신되는지 확인합니다.
+
+---
 
 이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
 
