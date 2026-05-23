@@ -105,6 +105,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5621057211259534690, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1425733920270317767}
+    - targetCorrespondingSourceObject: {fileID: 5621057211259534690, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 867645365631951836}
     - targetCorrespondingSourceObject: {fileID: 5356491896567995282, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5162221393377771133}
@@ -255,8 +258,16 @@ MonoBehaviour:
   backLeft: {fileID: 1347462698821581191}
   backRight: {fileID: 52504637802212703}
   hud: {fileID: 0}
+  rpmDisplay: {fileID: 0}
+  engineSystem: {fileID: 0}
   steeringUi: {fileID: 0}
   maxTorque: 1500
+  idleRPM: 1000
+  maxRPM: 8000
+  fuelCutRPM: 7500
+  rpmWarningThreshold: 7000
+  lowRpmTorqueEndRPM: 2000
+  lowRpmTorqueMultiplier: 0.45
   maxSteerAngle: 35
   steerSensitivity: 1
   steerInputMultiplier: 2
@@ -277,6 +288,7 @@ MonoBehaviour:
   debugLogInterval: 0.25
   detailedWheelDebug: 1
   currentGear: 0
+  finalDrive: 3.5
   EnableSpeedLogs: 0
 --- !u!65 &5425068724996265905
 BoxCollider:
@@ -433,9 +445,49 @@ MonoBehaviour:
   gear4MaxSpeedKmh: 160
   gear5MaxSpeedKmh: 200
   reverseMaxSpeedKmh: 40
+  highRpmVolumeBoost: 0.9
+  highRpmPitchBoost: 0.35
+  minRepeatInterval: 0.25
+  overlapFactor: 0.6
   masterGain: 1
   force2DForTesting: 1
-  minRepeatInterval: 0.25
+--- !u!114 &867645365631951836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1047952856737852628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b27d7e59eb39c479cebb1ccefe2e59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleRPM: 1000
+  maxRPM: 8000
+  fuelCutRPM: 7500
+  rpmWarningThreshold: 7000
+  lowRpmTorqueEndRPM: 2000
+  lowRpmTorqueMultiplier: 0.45
+  finalDrive: 3.5
+  reverseGearRatio: 2.8
+  forwardGearRatios:
+  - 4
+  - 2.8
+  - 1.9
+  - 1.4
+  - 1
+  gearMaxSpeeds:
+  - 50
+  - 85
+  - 130
+  - 160
+  - 200
+  defaultDrivenWheelRadius: 0.35
+  engineAudio: {fileID: 0}
+  rpmDisplay: {fileID: 0}
+  updateAudio: 1
+  updateRpmDisplay: 1
 --- !u!1 &4027797708340876540 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8605410210992407882, guid: de4d60cef052cf44599a5d782e4a011e, type: 3}

@@ -7,7 +7,6 @@ public class CarController : MonoBehaviour
     
     [Header("HUD")]
     public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
-    public CarRpmDisplay rpmDisplay; // assign the existing RPM display UI
     public CarEngineSystem engineSystem; // new engine simulation component
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
