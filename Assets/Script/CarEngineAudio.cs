@@ -130,31 +130,35 @@ public class CarEngineAudio : MonoBehaviour
             nextBand = GetBand(rpmNorm);
         }
 
+        // Band 4 is only a redline accent. Keep sustained playback on band 3 so
+        // high RPM never falls silent when maxRpmClip is missing or short.
+        int sustainBand = nextBand == 4 ? 3 : nextBand;
+
         // If band changed, play the corresponding on/off clip
-        if (nextBand != currentBand)
+        if (sustainBand != currentBand)
         {
-            PlayBandTransition(currentBand, nextBand);
-            currentBand = nextBand;
+            PlayBandTransition(currentBand, sustainBand);
+            currentBand = sustainBand;
         }
 
         // While in low/med/high bands, if throttle is held play the "On" clip repeatedly;
         // if throttle not held play the "Off" clip repeatedly. This simulates continuous
         // on/off behavior without layered loop sources.
-        if (nextBand >= 1 && nextBand <= 3)
+        if (sustainBand >= 1 && sustainBand <= 3)
         {
-            AudioClip desired = GetBandClipWithFallback(nextBand, currentThrottleInput > 0f);
+            AudioClip desired = GetBandClipWithFallback(sustainBand, currentThrottleInput > 0f);
             if (desired != null)
             {
-                float last = lastPlayTime[nextBand];
+                float last = lastPlayTime[sustainBand];
                 float interval = Mathf.Max(desired.length * (1f - overlapFactor), minRepeatInterval);
                 if (Time.time - last > interval)
                 {
                     PlayOneShotClip(desired);
-                    lastPlayTime[nextBand] = Time.time;
+                    lastPlayTime[sustainBand] = Time.time;
                 }
             }
         }
-        else if (nextBand == 0)
+        else if (sustainBand == 0)
         {
             // idle repetition to avoid gaps while stopped
             if (idleClip != null)
