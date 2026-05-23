@@ -7,6 +7,9 @@ public class PauseMenuController : MonoBehaviour
     [Tooltip("Scene name for the main menu to return to")]
     public string mainMenuSceneName = "MainMenu";
 
+    [Tooltip("Scene name for the leaderboard")]
+    public string leaderboardSceneName = "Leaderboard";
+
     [Tooltip("If true, show the Key Guide automatically when pausing")]
     public bool showKeyGuideOnPause = false;
 
@@ -162,7 +165,18 @@ public class PauseMenuController : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         LoadingScreenManager.LoadScene(mainMenuSceneName);
+    }
+
+    public void ReturnToLeaderboard()
+    {
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        LoadingScreenManager.LoadScene(leaderboardSceneName);
     }
 
     /// <summary>
