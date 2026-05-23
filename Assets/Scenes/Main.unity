@@ -2480,10 +2480,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9f97a8df2290da46a2225ea4dc2b55c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  engineAudio: {fileID: 6862501324769161063}
-  rpmText: {fileID: 1094183311}
+  engineAudio: {fileID: 0}
+  engineSystem: {fileID: 0}
+  rpmText: {fileID: 0}
   rpmTextLegacy: {fileID: 0}
+  rpmGaugeImage: {fileID: 0}
   format: '{0:F0} RPM'
+  maxRPM: 8000
+  normalColor: {r: 0, g: 1, b: 0, a: 1}
+  warningColor: {r: 1, g: 1, b: 0, a: 1}
+  redlineColor: {r: 1, g: 0, b: 0, a: 1}
+  warningThreshold: 5500
+  redlineThreshold: 7000
+  blinkSpeed: 5
 --- !u!4 &1113036417 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8736022052560050535, guid: 2b742cea3010f98448c0976eb0724a22, type: 3}
@@ -2783,6 +2792,7 @@ MonoBehaviour:
   bestLabel: Best 3
   emptyLapText: --:--:---
   notificationColor: {r: 1, g: 0.87, b: 0.45, a: 1}
+  lockedStateColor: {r: 1, g: 0.35, b: 0.35, a: 1}
 --- !u!1001 &1237591013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5243,6 +5253,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 867645365631951836, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: rpmDisplay
+      value: 
+      objectReference: {fileID: 1094183313}
+    - target: {fileID: 867645365631951836, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: engineAudio
+      value: 
+      objectReference: {fileID: 6862501324769161063}
     - target: {fileID: 1047952856737852628, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: m_Name
       value: SportCar_1
@@ -5312,6 +5330,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+      propertyPath: engineSystem
+      value: 
+      objectReference: {fileID: 6862501324769161064}
+    - target: {fileID: 9093661413442517184, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
       propertyPath: EnableSpeedLogs
       value: 0
       objectReference: {fileID: 0}
@@ -5352,6 +5374,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a33a39477dacf5a45a5496647a053ae4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6862501324769161064 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 867645365631951836, guid: a5e7b2a182dc70745a5ebcc657e9cd1e, type: 3}
+  m_PrefabInstance: {fileID: 6862501324769161061}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16b27d7e59eb39c479cebb1ccefe2e59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &7388757692960018452

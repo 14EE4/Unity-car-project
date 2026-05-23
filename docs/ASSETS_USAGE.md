@@ -31,6 +31,7 @@
 ## 오디오 에셋 및 사용
 
 - 엔진 음원(원샷 기반, 루프 없음): `Assets/Script/CarEngineAudio.cs` 컴포넌트에서 관리합니다. 오디오 클립(Idle / Low On/Off / Med On/Off / High On/Off / MaxRpm)을 인스펙터에 할당하세요.
+- 엔진 RPM과 기어 매핑의 단일 기준은 `Assets/Script/CarEngineSystem.cs` 입니다. 차량 오브젝트에는 `CarController`, `CarEngineSystem`, `CarEngineAudio`를 함께 두고, RPM 표시는 `Assets/Script/UI/CarRpmDisplay.cs`가 담당합니다.
 - 권장 에셋:
   - Skril Studio - i6 German - Free Engine Sound Pack — 엔진 온/오프 원샷 클립으로 사용하기 적합합니다.
   - Juggernaut Realm - Car and transportation sounds collection — 보조 효과음(핸드브레이크 등)으로 사용합니다.

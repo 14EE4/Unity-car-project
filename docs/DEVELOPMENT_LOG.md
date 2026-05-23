@@ -34,6 +34,106 @@
 
 이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
 
+### 2026-05-23 — RPM 단일 출처 정리 및 오디오 fallback 제거
+
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — RPM 추정 fallback을 제거하고, 엔진 시스템에서 전달받은 RPM만 사용하도록 정리했습니다.
+	- `Assets/Script/UI/CarRpmDisplay.cs` — RPM 표시는 엔진 시스템만 읽도록 정리해 오디오 경로 의존을 제거했습니다.
+	- `README.md` — 최근 엔진/RPM 작업 상태를 요약 항목으로 추가했습니다.
+
+- 변경 사항:
+	- 엔진 RPM의 단일 출처를 `CarEngineSystem.CurrentRPM`으로 고정했습니다.
+	- 오디오는 더 이상 RPM을 추정하거나 계산하지 않고, 전달받은 RPM을 이용해 사운드 연출만 담당합니다.
+	- RPM UI도 엔진 시스템만 읽도록 정리해, 오디오와 RPM 표시의 책임 분리를 명확히 했습니다.
+
+- 확인 포인트:
+	1. `CarEngineAudio`에 RPM fallback 경로가 남아 있지 않은지 확인합니다.
+	2. `CarRpmDisplay`가 `CarEngineSystem`을 우선 읽는지 확인합니다.
+	3. 씬에서 `CarEngineSystem`이 차량 오브젝트에 1개만 붙어 있는지 확인합니다.
+
+### 2026-05-23 — 컨트롤러 중복 정리 및 6단 프리팹 직렬화 복구
+
+- 변경 파일:
+	- `Assets/Script/CarController.cs` — 엔진 RPM/기어 튜닝 중복 필드를 정리하고, 기어비/최고속 조회를 `CarEngineSystem` 기준으로 통합했습니다.
+	- `Assets/Script/CarEngineSystem.cs` — `GetGearMaxSpeed()`를 공개해 컨트롤러가 엔진 시스템의 6단 설정을 직접 참조하도록 조정했습니다.
+	- `Assets/Prefabs/SportCar_1 Variant.prefab` — 6단 기어비와 최고속 직렬화 값이 빠져 있던 부분을 복구했습니다.
+
+- 변경 사항:
+	- 컨트롤러에 남아 있던 엔진 관련 튜닝 필드를 제거해, 기어/속도 설정의 기준점을 엔진 시스템 하나로 맞췄습니다.
+	- 프리팹에 저장된 배열 값이 5개로 남아 있던 문제를 고쳐, 실제 씬에서도 6단 설정이 적용되도록 했습니다.
+	- 코드 기본값과 프리팹 직렬화 값이 어긋날 때 생기던 혼선을 줄였습니다.
+
+- 확인 포인트:
+	1. `SportCar_1 Variant.prefab`의 `forwardGearRatios`와 `gearMaxSpeeds`가 각각 6개 값인지 확인합니다.
+	2. `CarController`에 엔진 튜닝 배열이 더 남아 있지 않은지 확인합니다.
+	3. 플레이 모드에서 6단 진입 후 RPM이 프리팹 기준으로 정상 동작하는지 확인합니다.
+
+### 2026-05-23 — 6단 변속 RPM 유지 및 RPM 게이지 색상 업데이트
+
+- 변경 파일:
+	- `Assets/Script/CarEngineSystem.cs` — 기어 변경 시 RPM을 즉시 전달하는 `NotifyGearChanged()`를 추가해, 5단 고RPM에서 6단으로 바꿀 때 RPM이 idle로 꺼지는 현상을 줄였습니다.
+	- `Assets/Script/CarController.cs` — `ShiftUp()` / `ShiftDown()`에서 엔진 시스템에 변속 이벤트를 직접 전달하도록 변경했습니다.
+	- `Assets/Script/UI/CarRpmDisplay.cs` — RPM 상태에 따라 게이지 색상을 바꾸고, 레드존에서 블링크하는 표시 로직을 유지합니다.
+
+- 변경 사항:
+	- 변속 직후 RPM 유지 값을 즉시 엔진 시스템에 전달해, 기어 전환 타이밍에서 값이 1000RPM으로 떨어지는 문제를 완화했습니다.
+	- RPM 게이지는 5500RPM 미만 초록, 5500~7000RPM 노랑, 7000RPM 이상 빨강으로 표시합니다.
+	- 7000RPM 이상에서는 빨간 경고가 초당 약 5회 깜빡입니다.
+
+- 확인 포인트:
+	1. 6단 변속 직후 RPM이 idle(1000)로 즉시 떨어지지 않는지 확인합니다.
+	2. RPM 게이지 색상과 블링크가 경계값에 맞게 바뀌는지 확인합니다.
+	3. `CarRpmDisplay`에 `Image` 컴포넌트 참조가 올바르게 연결되어 있는지 확인합니다.
+
+### 2026-05-23 — RPM 게이지 색상 상태 및 레드존 블링크 추가
+
+- 변경 파일:
+	- `Assets/Script/UI/CarRpmDisplay.cs` — RPM에 따라 게이지 Image 색상을 변경하고, 레드존에서 깜빡임 효과를 추가했습니다.
+
+- 변경 사항:
+	- 5500RPM 미만은 초록색, 5500~7000RPM은 노란색, 7000RPM 이상은 빨간색 계열로 표시합니다.
+	- 7000RPM 이상에서는 `Mathf.PingPong` 기반 블링크를 적용해 레드존 경고를 강화했습니다.
+	- `Awake()`에서 `Image` / TMP 텍스트를 캐싱해 프레임마다 `GetComponent`를 호출하지 않도록 정리했습니다.
+
+- 확인 포인트:
+	1. RPM 게이지 오브젝트에 `Image` 컴포넌트가 있는지 확인합니다.
+	2. 5500 / 7000RPM 경계에서 색상이 각각 초록 / 노랑 / 빨강으로 바뀌는지 확인합니다.
+	3. 7000RPM 이상에서 게이지가 초당 약 5회 깜빡이는지 확인합니다.
+
+### 2026-05-23 — 기어 6단 확장
+
+- 변경 파일:
+	- `Assets/Script/CarController.cs` — 전진 기어비와 기어별 최고 속도 배열을 6단으로 확장했습니다.
+	- `Assets/Script/CarEngineSystem.cs` — 엔진 RPM/토크 계산용 기어 매핑을 6단으로 확장했습니다.
+	- `Assets/Script/CarEngineAudio.cs` — 오디오용 기어 최고속도 매핑을 배열 기반 6단 설정으로 정리했습니다.
+
+- 변경 사항:
+	- 전진 기어를 5단에서 6단으로 늘렸습니다.
+	- 6단은 더 높은 최고속과 더 낮은 기어비를 갖도록 기본값을 추가했습니다.
+	- 기존 `ShiftUp()` 로직은 배열 길이를 기준으로 동작하므로 별도 수정을 최소화했습니다.
+
+- 확인 포인트:
+	1. 인게임에서 `2` 키로 6단까지 올라가는지 확인합니다.
+	2. 6단 주행 시 RPM과 속도 표시가 자연스럽게 이어지는지 확인합니다.
+	3. 오디오가 6단에서도 끊기지 않는지 확인합니다.
+
+### 2026-05-23 — RPM 계산 안정화 및 고RPM 오디오 fallback 추가
+
+- 변경 파일:
+	- `Assets/Script/CarEngineSystem.cs` — 기어 주행 시 RPM이 차량 속도 기반으로 따라가도록 유지하고, 저속 보정만 제한적으로 적용하도록 조정했습니다.
+	- `Assets/Script/CarEngineAudio.cs` — 6300RPM 이상 구간에서 high band 클립이 비어 있어도 소리가 끊기지 않도록 band fallback을 추가했습니다.
+
+- 변경 사항:
+	- 기어가 들어간 상태에서는 바퀴 슬립에 의해 RPM이 급격히 치솟지 않도록 속도 기반 RPM을 우선 사용합니다.
+	- 고RPM에서 `highOnClip` 또는 `maxRpmClip`이 할당되지 않아도 `medOnClip` / `medOffClip` / `idleClip` 순으로 대체 재생되도록 수정했습니다.
+	- 결과적으로 6300RPM 이상에서 엔진음이 갑자기 사라지는 현상을 줄였습니다.
+
+- 확인 포인트:
+	1. 1단 주행 중 14km/h 부근에서 RPM이 비정상적으로 빨리 8000에 붙지 않는지 확인합니다.
+	2. 6300RPM 이상에서 high band 클립이 비어 있어도 무음 구간이 생기지 않는지 확인합니다.
+	3. 인스펙터에서 `highOnClip`, `highOffClip`, `maxRpmClip` 할당 여부를 점검합니다.
+
+
 ## Revision History (latest first)
 
 ### 2026-05-23 — 랩 완료 후 잠금 문구 및 재시작 규칙 정리

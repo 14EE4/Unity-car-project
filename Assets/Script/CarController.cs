@@ -7,6 +7,7 @@ public class CarController : MonoBehaviour
     
     [Header("HUD")]
     public SpeedAndGearUI hud; // assign HUD component to receive speed/gear updates
+    public CarEngineSystem engineSystem; // new engine simulation component
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
@@ -49,16 +50,16 @@ public class CarController : MonoBehaviour
 
     // 기어 상태: -1 = R, 0 = N, 1 이상 = 전진 기어
     public int currentGear = 0;
-    private readonly float reverseGearRatio = 2.8f;
-    private readonly float[] forwardGearRatios = { 4.0f, 2.8f, 1.9f, 1.4f, 1.0f };
-    // 각 기어별 최고 속도 (km/h)
-    private readonly float[] gearMaxSpeeds = { 50f, 85f, 130f, 160f, 200f };
 
     // 최종 감속비 (디퍼렌셜 등): 문서 기본값은 3.5 권장
     // 전체 전달비: overallRatio = gearRatio * finalDrive
     public float finalDrive = 3.5f;
 
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
+
+    public float CurrentRPM => engineSystem != null ? engineSystem.CurrentRPM : 0f;
+    public bool IsFuelCutActive => engineSystem != null && engineSystem.IsFuelCutActive;
+    public bool IsRpmWarning => engineSystem != null && engineSystem.IsRpmWarning;
 
     // 게임 초기화를 위한 초기 위치/회전 저장
     private Vector3 initialPosition;
@@ -90,10 +91,10 @@ public class CarController : MonoBehaviour
         initialPosition = carRigidbody.position;
         initialRotation = carRigidbody.rotation;
 
-        engineAudio = GetComponent<CarEngineAudio>();
-        if (engineAudio == null)
+        engineSystem = GetComponent<CarEngineSystem>();
+        if (engineSystem == null)
         {
-            Debug.LogWarning("[CarController] CarEngineAudio component is missing. Add it to this car object to enable engine sounds.");
+            Debug.LogWarning("[CarController] CarEngineSystem component is missing. Add it to this car object to enable engine simulation.");
         }
 
         // capture base wheel friction curves to avoid multiplicative stacking
@@ -145,11 +146,6 @@ public class CarController : MonoBehaviour
                 Debug.Log("[CarController] Drive input lock released after reset.");
             }
 
-            if (engineAudio != null)
-            {
-                engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear);
-            }
-
             return;
         }
 
@@ -183,19 +179,6 @@ public class CarController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             ShiftDown();
-        }
-
-        if (engineAudio != null)
-        {
-            engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear);
-        }
-
-        debugLogTimer += Time.deltaTime;
-        if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
-        {
-            debugLogTimer = 0f;
-            string hb = handbrakeActive ? " | Handbrake: ON" : "";
-            Debug.Log(string.Format("Speed: {0:F1} km/h | Accel: {1:F2} m/s^2 | Throttle: {2} | Brake: {3} | Gear: {4} | Motor: {5:F1} | BrakeTorque: {6:F1} | Slope: {7:F1} deg{8}", GetCurrentSpeedKmh(), longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
         }
     }
 
@@ -265,8 +248,14 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // apply speed-dependent grip and downforce before physics forces
         float speedKmh = GetCurrentSpeedKmh();
+
+        if (engineSystem != null)
+        {
+            engineSystem.Step(speedKmh, throttleInput, handbrakeActive, currentGear, maxTorque, backLeft, backRight, Time.fixedDeltaTime);
+        }
+
+        // apply speed-dependent grip and downforce before physics forces
         UpdateGripBySpeed(speedKmh);
         ApplyDownforce();
 
@@ -297,13 +286,9 @@ public class CarController : MonoBehaviour
         }
         else if (throttleInput > 0f)
         {
-            // 기어별 최고 속도 제한 적용: 속도 도달 시 토크 감소
-            float currentSpeedKmh = GetCurrentSpeedKmh();
-            float gearMaxSpeed = GetGearMaxSpeed();
-            float speedRatio = Mathf.Clamp01(1f - (currentSpeedKmh / (gearMaxSpeed + 1f)));
-            // overallRatio = gearRatio * finalDrive
-            float overallRatio = GetCurrentGearRatio() * finalDrive;
-            float motor = maxTorque * throttleInput * overallRatio * speedRatio;
+            float motor = engineSystem != null
+                ? engineSystem.CurrentMotorTorque
+                : ComputeLegacyMotorTorque(speedKmh);
             frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
             backLeft.motorTorque = backRight.motorTorque = motor;
             frontLeft.brakeTorque = frontRight.brakeTorque = 0f;
@@ -339,6 +324,28 @@ public class CarController : MonoBehaviour
             hud.SetSpeed(GetCurrentSpeedKmh());
             hud.SetGear(currentGear);
         }
+
+        debugLogTimer += Time.deltaTime;
+        if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
+        {
+            debugLogTimer = 0f;
+            string hb = handbrakeActive ? " | Handbrake: ON" : "";
+            Debug.Log(string.Format("Speed: {0:F1} km/h | RPM: {1:F0} | Accel: {2:F2} m/s^2 | Throttle: {3} | Brake: {4} | Gear: {5} | Motor: {6:F1} | BrakeTorque: {7:F1} | FuelCut: {8} | Slope: {9:F1} deg{10}", GetCurrentSpeedKmh(), CurrentRPM, longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, IsFuelCutActive ? "ON" : "OFF", GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
+        }
+    }
+
+    private float ComputeLegacyMotorTorque(float speedKmh)
+    {
+        float gearMaxSpeed = engineSystem != null ? engineSystem.GetGearMaxSpeed(currentGear) : GetGearMaxSpeed();
+        float speedRatio = Mathf.Clamp01(1f - (speedKmh / (gearMaxSpeed + 1f)));
+        float overallRatio = Mathf.Abs(GetCurrentGearRatio()) * finalDrive;
+        float idleRpm = engineSystem != null ? engineSystem.idleRPM : 1000f;
+        float lowRpmTorqueEndRpm = engineSystem != null ? engineSystem.lowRpmTorqueEndRPM : 2000f;
+        float lowRpmTorqueMultiplier = engineSystem != null ? engineSystem.lowRpmTorqueMultiplier : 0.45f;
+        float currentRpm = engineSystem != null ? engineSystem.CurrentRPM : 1000f;
+        float rpmTorqueMultiplier = Mathf.InverseLerp(idleRpm, lowRpmTorqueEndRpm, currentRpm);
+        rpmTorqueMultiplier = Mathf.Lerp(lowRpmTorqueMultiplier, 1f, rpmTorqueMultiplier);
+        return maxTorque * throttleInput * overallRatio * speedRatio * rpmTorqueMultiplier;
     }
 
     
@@ -404,9 +411,14 @@ public class CarController : MonoBehaviour
 
     private float GetCurrentGearRatio()
     {
+        if (engineSystem != null)
+        {
+            return engineSystem.GetGearRatio(currentGear);
+        }
+
         if (currentGear < 0)
         {
-            return -reverseGearRatio;
+            return -2.8f;
         }
 
         if (currentGear == 0)
@@ -414,28 +426,44 @@ public class CarController : MonoBehaviour
             return 0f;
         }
 
-        int forwardGearIndex = currentGear - 1;
-        if (forwardGearIndex < 0 || forwardGearIndex >= forwardGearRatios.Length)
+        switch (currentGear)
         {
-            return 0f;
+            case 1: return 4.0f;
+            case 2: return 2.8f;
+            case 3: return 1.9f;
+            case 4: return 1.4f;
+            case 5: return 1.0f;
+            case 6: return 0.85f;
+            default: return 0f;
         }
-
-        return forwardGearRatios[forwardGearIndex];
     }
 
     private void ShiftUp()
     {
-        if (currentGear < forwardGearRatios.Length)
+        int previousGear = currentGear;
+        int maxForwardGear = engineSystem != null ? engineSystem.forwardGearRatios.Length : 6;
+        if (currentGear < maxForwardGear)
         {
             currentGear++;
+        }
+
+        if (engineSystem != null && currentGear != previousGear)
+        {
+            engineSystem.NotifyGearChanged(previousGear, currentGear);
         }
     }
 
     private void ShiftDown()
     {
+        int previousGear = currentGear;
         if (currentGear > -1)
         {
             currentGear--;
+        }
+
+        if (engineSystem != null && currentGear != previousGear)
+        {
+            engineSystem.NotifyGearChanged(previousGear, currentGear);
         }
     }
 
@@ -447,6 +475,54 @@ public class CarController : MonoBehaviour
         }
 
         return carRigidbody.linearVelocity.magnitude * 3.6f;
+    }
+
+    private float GetDrivenWheelAverageRPM()
+    {
+        float sum = 0f;
+        int count = 0;
+
+        if (backLeft != null)
+        {
+            sum += Mathf.Abs(backLeft.rpm);
+            count++;
+        }
+
+        if (backRight != null)
+        {
+            sum += Mathf.Abs(backRight.rpm);
+            count++;
+        }
+
+        if (count == 0)
+        {
+            return 0f;
+        }
+
+        return sum / count;
+    }
+
+    private float GetDrivenWheelRPMFromSpeed(float speedKmh)
+    {
+        float radius = GetDrivenWheelRadius();
+        float circumference = Mathf.Max(0.01f, 2f * Mathf.PI * radius);
+        float speedMps = Mathf.Abs(speedKmh) / 3.6f;
+        return speedMps / circumference * 60f;
+    }
+
+    private float GetDrivenWheelRadius()
+    {
+        if (backLeft != null)
+        {
+            return backLeft.radius;
+        }
+
+        if (backRight != null)
+        {
+            return backRight.radius;
+        }
+
+        return 0.35f;
     }
 
     private float GetForwardSpeedMps()
@@ -508,6 +584,11 @@ public class CarController : MonoBehaviour
 
     private float GetGearMaxSpeed()
     {
+        if (engineSystem != null)
+        {
+            return engineSystem.GetGearMaxSpeed(currentGear);
+        }
+
         if (currentGear < 0)
         {
             return 40f; // 후진 최고 속도
@@ -518,13 +599,16 @@ public class CarController : MonoBehaviour
             return 0f; // 중립
         }
 
-        int forwardGearIndex = currentGear - 1;
-        if (forwardGearIndex < 0 || forwardGearIndex >= gearMaxSpeeds.Length)
+        switch (currentGear)
         {
-            return 0f;
+            case 1: return 50f;
+            case 2: return 85f;
+            case 3: return 130f;
+            case 4: return 160f;
+            case 5: return 200f;
+            case 6: return 230f;
+            default: return 0f;
         }
-
-        return gearMaxSpeeds[forwardGearIndex];
     }
 
     private string GetWheelSlipText(WheelCollider wheel)

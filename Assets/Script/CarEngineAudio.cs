@@ -28,12 +28,11 @@ public class CarEngineAudio : MonoBehaviour
     [Header("RPM Settings")]
     public float rpmIdle = 800f;
     public float rpmRedline = 7000f;
-    public float gear1MaxSpeedKmh = 50f;
-    public float gear2MaxSpeedKmh = 85f;
-    public float gear3MaxSpeedKmh = 130f;
-    public float gear4MaxSpeedKmh = 160f;
-    public float gear5MaxSpeedKmh = 200f;
+    public float[] gearMaxSpeedsKmh = { 50f, 85f, 130f, 160f, 200f, 230f };
     public float reverseMaxSpeedKmh = 40f;
+    [Header("Sound Response")]
+    public float highRpmVolumeBoost = 0.9f;
+    public float highRpmPitchBoost = 0.35f;
     private AudioSource engineAudioSource;
     
     private float currentSpeedKmh;
@@ -80,7 +79,7 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
-    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear)
+    public void SetDriveState(float speedKmh, float throttleInput, bool handbrakeActive, int gear, float engineRpm)
     {
         // store previous values first
         previousThrottleInput = currentThrottleInput;
@@ -90,7 +89,7 @@ public class CarEngineAudio : MonoBehaviour
         currentThrottleInput = throttleInput;
         currentHandbrakeActive = handbrakeActive;
         currentGear = gear;
-        currentEngineRpm = EstimateEngineRpm(currentSpeedKmh, currentThrottleInput, currentGear);
+        currentEngineRpm = engineRpm;
 
         UpdateEngineAudio();
         HandleHandbrakeTransition();
@@ -127,31 +126,35 @@ public class CarEngineAudio : MonoBehaviour
             nextBand = GetBand(rpmNorm);
         }
 
+        // Band 4 is only a redline accent. Keep sustained playback on band 3 so
+        // high RPM never falls silent when maxRpmClip is missing or short.
+        int sustainBand = nextBand == 4 ? 3 : nextBand;
+
         // If band changed, play the corresponding on/off clip
-        if (nextBand != currentBand)
+        if (sustainBand != currentBand)
         {
-            PlayBandTransition(currentBand, nextBand);
-            currentBand = nextBand;
+            PlayBandTransition(currentBand, sustainBand);
+            currentBand = sustainBand;
         }
 
         // While in low/med/high bands, if throttle is held play the "On" clip repeatedly;
         // if throttle not held play the "Off" clip repeatedly. This simulates continuous
         // on/off behavior without layered loop sources.
-        if (nextBand >= 1 && nextBand <= 3)
+        if (sustainBand >= 1 && sustainBand <= 3)
         {
-            AudioClip desired = currentThrottleInput > 0f ? GetOnClipForBand(nextBand) : GetOffClipForBand(nextBand);
+            AudioClip desired = GetBandClipWithFallback(sustainBand, currentThrottleInput > 0f);
             if (desired != null)
             {
-                float last = lastPlayTime[nextBand];
+                float last = lastPlayTime[sustainBand];
                 float interval = Mathf.Max(desired.length * (1f - overlapFactor), minRepeatInterval);
                 if (Time.time - last > interval)
                 {
                     PlayOneShotClip(desired);
-                    lastPlayTime[nextBand] = Time.time;
+                    lastPlayTime[sustainBand] = Time.time;
                 }
             }
         }
-        else if (nextBand == 0)
+        else if (sustainBand == 0)
         {
             // idle repetition to avoid gaps while stopped
             if (idleClip != null)
@@ -166,6 +169,7 @@ public class CarEngineAudio : MonoBehaviour
             }
         }
         float pitch = Mathf.Lerp(engineMinPitch, engineMaxPitch, rpmNorm);
+        pitch += rpmNorm * highRpmPitchBoost;
         engineAudioSource.pitch = pitch;
 
 
@@ -183,23 +187,6 @@ public class CarEngineAudio : MonoBehaviour
         previousMaxRpmState = atRedlineAndStalled;
     }
 
-    private float EstimateEngineRpm(float speedKmh, float throttleInput, int gear)
-    {
-        if (gear == 0 || speedKmh < 1f)
-        {
-            return 0f;
-        }
-
-        float maxSpeedKmh = GetGearMaxSpeedKmh(gear);
-        if (maxSpeedKmh <= 0f)
-        {
-            return 0f;
-        }
-
-        float speedRatio = Mathf.Clamp01(speedKmh / maxSpeedKmh);
-        return Mathf.Lerp(rpmIdle, rpmRedline, speedRatio);
-    }
-
     private float GetGearMaxSpeedKmh(int gear)
     {
         if (gear < 0)
@@ -207,15 +194,18 @@ public class CarEngineAudio : MonoBehaviour
             return reverseMaxSpeedKmh;
         }
 
-        switch (gear)
+        if (gear == 0)
         {
-            case 1: return gear1MaxSpeedKmh;
-            case 2: return gear2MaxSpeedKmh;
-            case 3: return gear3MaxSpeedKmh;
-            case 4: return gear4MaxSpeedKmh;
-            case 5: return gear5MaxSpeedKmh;
-            default: return 0f;
+            return 0f;
         }
+
+        int index = gear - 1;
+        if (index < 0 || index >= gearMaxSpeedsKmh.Length)
+        {
+            return 0f;
+        }
+
+        return gearMaxSpeedsKmh[index];
     }
 
 
@@ -227,13 +217,7 @@ public class CarEngineAudio : MonoBehaviour
             return false;
         }
 
-        float maxSpeedKmh = GetGearMaxSpeedKmh(currentGear);
-        if (maxSpeedKmh <= 0f)
-        {
-            return false;
-        }
-
-        return currentSpeedKmh >= maxSpeedKmh * 0.99f;
+        return currentEngineRpm >= rpmRedline * 0.99f;
     }
 
     private int GetBand(float loadBlend)
@@ -311,6 +295,50 @@ public class CarEngineAudio : MonoBehaviour
         }
     }
 
+    private AudioClip GetBandClipWithFallback(int band, bool throttleOn)
+    {
+        AudioClip clip = throttleOn ? GetOnClipForBand(band) : GetOffClipForBand(band);
+        if (clip != null)
+        {
+            return clip;
+        }
+
+        if (band == 3)
+        {
+            clip = throttleOn ? maxRpmClip : maxRpmClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+
+            clip = throttleOn ? medOnClip : medOffClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+        }
+
+        if (band == 2)
+        {
+            clip = throttleOn ? highOnClip : highOffClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+        }
+
+        if (band == 1)
+        {
+            clip = throttleOn ? medOnClip : medOffClip;
+            if (clip != null)
+            {
+                return clip;
+            }
+        }
+
+        return throttleOn ? idleClip : idleClip;
+    }
+
     private AudioClip GetOffClipForBand(int band)
     {
         switch (band)
@@ -342,6 +370,13 @@ public class CarEngineAudio : MonoBehaviour
             return;
         }
 
-        engineAudioSource.PlayOneShot(clip, masterGain);
+        float rpmNorm = Mathf.InverseLerp(rpmIdle, rpmRedline, currentEngineRpm);
+        float volumeScale = masterGain * Mathf.Lerp(0.7f, 1f + highRpmVolumeBoost, rpmNorm);
+        if (currentThrottleInput <= 0f)
+        {
+            volumeScale *= 0.85f;
+        }
+
+        engineAudioSource.PlayOneShot(clip, volumeScale);
     }
 }
