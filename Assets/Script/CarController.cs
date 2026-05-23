@@ -139,6 +139,8 @@ public class CarController : MonoBehaviour
 
     void Update()
     {
+        CalculateRPM();
+
         if (suppressDriveInputUntilRelease)
         {
             throttleInput = 0f;
@@ -204,8 +206,6 @@ public class CarController : MonoBehaviour
         {
             engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear, currentRPM);
         }
-
-        CalculateRPM();
 
         debugLogTimer += Time.deltaTime;
         if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
@@ -316,6 +316,8 @@ public class CarController : MonoBehaviour
 
     void FixedUpdate()
     {
+        CalculateRPM();
+
         // apply speed-dependent grip and downforce before physics forces
         float speedKmh = GetCurrentSpeedKmh();
         UpdateGripBySpeed(speedKmh);

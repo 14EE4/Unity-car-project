@@ -231,13 +231,7 @@ public class CarEngineAudio : MonoBehaviour
             return false;
         }
 
-        float maxSpeedKmh = GetGearMaxSpeedKmh(currentGear);
-        if (maxSpeedKmh <= 0f)
-        {
-            return false;
-        }
-
-        return currentSpeedKmh >= maxSpeedKmh * 0.99f;
+        return currentEngineRpm >= rpmRedline * 0.99f;
     }
 
     private int GetBand(float loadBlend)
