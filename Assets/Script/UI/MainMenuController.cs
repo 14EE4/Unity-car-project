@@ -51,7 +51,7 @@ public class MainMenuController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        WireSubmitButton();
+        // Removed legacy name-input wiring
 
         // 설정 패널이 에디터에서 연결되어 있으면 초기 상태로 숨깁니다.
         if (settingsPanel != null)
@@ -93,8 +93,7 @@ public class MainMenuController : MonoBehaviour
         // editor-time wiring. Use the inspector to assign button onClick handlers
         // to call `ShowKeyGuide()` and `ShowSettings()` for clearer ownership.
 
-        if (nameInputPanel != null)
-            nameInputPanel.SetActive(false);
+        // legacy name input panel removed from main menu
     }
 
     
