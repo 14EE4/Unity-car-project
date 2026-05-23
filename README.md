@@ -43,16 +43,17 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 - [문제 해결 기록(Troubleshooting)](docs/TROUBLESHOOTING.md)
 - [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md)
 - [전송 및 셋업 가이드](docs/GUIDE.md)
- - [체크포인트 시스템 상세](docs/CHECKPOINTS.md)
- - [기술 스펙 및 튜닝 값](docs/SPEC.md)
- - [로드맵 (진행 계획)](docs/ROADMAP.md)
+- [서버 백엔드 문서](docs/SERVER.md)
+- [체크포인트 시스템 상세](docs/CHECKPOINTS.md)
+- [기술 스펙 및 튜닝 값](docs/SPEC.md)
+- [로드맵 (진행 계획)](docs/ROADMAP.md)
 
 ## Progress
 
-- 전체 진행률: **약 40%** (완료된 개발 항목 대비 전체 로드맵 항목 비율)
-- 완료된 주요 항목: 카메라 보정, 랩 타임 시스템, 체크포인트, HUD, 로딩/메뉴 흐름 등 (상세: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md))
- - 남은 주요 항목: 랩 타임 영속성 저장, 설정 창 상세 구현, 다중 차량 선택, 레이스 플로우 고도화 등 (상세: [로드맵](docs/ROADMAP.md))
- - 음향 적용: Loopless on/off 엔진 사운드 구현 완료 — 자세한 변경과 테스트는 [개발 로그](docs/DEVELOPMENT_LOG.md) 참조
+- 전체 진행률: **약 45%**
+- 완료된 주요 항목: 카메라 보정, 랩 타임 시스템, 체크포인트, HUD, 로딩/메뉴 흐름, 리더보드 서버 연동 및 개인 최고기록 전송 검증 등 (상세: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md))
+- 남은 주요 항목: 설정 창 세부 구현, 다중 차량 선택, 레이스 플로우 고도화, 배포용 서버 템플릿 정리 등 (상세: [로드맵](docs/ROADMAP.md))
+- 음향 적용: Loopless on/off 엔진 사운드 구현 완료 — 자세한 변경과 테스트는 [개발 로그](docs/DEVELOPMENT_LOG.md) 참조
 - 최근 주행/엔진 작업: RPM 단일 출처 정리, 6단 변속 확장, 컨트롤러 엔진 중복 정리, RPM 게이지 색상/레드존 블링크 적용 — 상세는 [개발 로그](docs/DEVELOPMENT_LOG.md)와 [기술 스펙](docs/SPEC.md)
 
 ## 프로젝트 요약
@@ -61,3 +62,15 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 
 - 완료된 작업 및 남은 과제: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md)
 - 전송/백업 및 빠른 시작 가이드: [전송 및 셋업 가이드](docs/GUIDE.md)
+
+## Acknowledgements
+
+이 프로젝트는 GitHub Copilot과 Gemini의 도움을 받아 개발되었습니다.
+
+## Leaderboard Rule
+
+리더보드는 사용자별 개인 최고기록(Personal Best) 1개만 표시합니다. 서버의 `/leaderboard` 응답은 이 규칙에 맞게 정렬되어야 하며, Unity 클라이언트는 서버 결과를 그대로 렌더링합니다.
+
+## Online Leaderboard
+
+리더보드 씬에서 이름을 등록하고, 앱데이터의 개인 최고기록을 우선 전송하는 현재 흐름은 [docs/LEADERBOARD.md](docs/LEADERBOARD.md)에서 확인하세요.

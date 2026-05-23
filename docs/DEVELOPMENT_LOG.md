@@ -1,4 +1,70 @@
-# 2026-05-23 — 루프 없는 On/Off 엔진 사운드 (구현 완료)
+
+
+[Back to README](../README.md)
+
+# Development Log
+
+### 2026-05-23 — 리더보드 직접 전송 경로 검증 완료
+
+- 확인 내용:
+	- 리더보드 씬에서 `LeaderboardManager`가 없어도 `UserRegistrationUI`가 `lap_times.json`의 개인 최고기록을 직접 읽어 `/score`로 전송하는 경로를 검증했습니다.
+	- 이름 등록 직후 `POST /register`와 `POST /score`가 정상 응답했고, 서버 `/leaderboard`가 사용자별 개인 최고기록 1건을 반환했습니다.
+	- 주행 중 랩 완료 시 `ScoreSubmitter`가 `Prepared payload`와 `POST` 로그를 남기며 직접 전송하는 것도 확인했습니다.
+
+- 현재 상태:
+	- 이름 입력, 등록, 개인 최고기록 전송, 서버 랭킹 갱신이 모두 정상 동작합니다.
+	- 리더보드에는 사용자별 PB 1개만 표시되며, Unity 클라이언트는 서버 응답을 그대로 렌더링합니다.
+
+---
+
+### 2026-05-23 — 리더보드 서버 연동 상태 정리 및 앱데이터 최고기록 전송 흐름 반영
+
+- 변경 파일:
+	- `Assets/Script/UI/LeaderboardController.cs` — 서버 응답 raw JSON과 파싱 실패 로그를 추가해 비어 있는 리더보드 원인을 구분할 수 있도록 정리했습니다.
+	- `Assets/Script/UI/UserRegistrationUI.cs` — 이름 등록 후 보류된 기록 또는 앱데이터의 최고기록을 자동 제출하는 흐름으로 정리했습니다.
+	- `Assets/Script/UI/ScoreSubmitter.cs` — 랩타임과 `lap_time_text`를 함께 서버로 보내고, 이름이 없을 때는 점수를 보류할 수 있도록 확장했습니다.
+	- `Assets/Script/LapTimer.cs` — 앱데이터에 저장된 개인 최고기록을 다시 읽어 제출할 수 있는 헬퍼를 추가했습니다.
+
+- 현재 동작 요약:
+	- 이름이 없으면 이름 입력 패널을 띄우고, 이름 등록 후 보류된 랩 기록 또는 저장된 최고기록을 서버에 전송합니다.
+	- 이름이 있으면 결승선 통과 시 바로 `POST /score`를 수행합니다.
+	- 리더보드는 서버의 `/leaderboard` 응답을 그대로 렌더링하므로, 서버가 개인 최고기록 1개만 반환해야 합니다.
+
+- 확인 포인트:
+	1. 리더보드 씬 진입 시 `UserRegistrationUI.ShowIfNoUserName()`가 호출되는지 확인합니다.
+	2. 랩 완주 후 `ScoreSubmitter` 로그가 찍히는지 확인합니다.
+	3. 이름 등록 후 `/register` 다음에 `/score`가 자동으로 호출되는지 확인합니다.
+	4. `LeaderboardController`의 raw response가 빈 배열인지, 실제 기록인지 로그로 구분합니다.
+
+---
+
+### 2026-05-23 — 온라인 리더보드: 이름 입력, 등록, 랭킹 조회, 기록 전송 기능 추가
+
+- 변경 파일:
+	- `Assets/Script/UI/LeaderboardManager.cs` (새파일) — API 기본 URL과 `DeviceId` 제공 싱글턴
+	- `Assets/Script/UI/LeaderboardController.cs` (새파일) — 랭킹 조회 및 UI 생성 로직
+	- `Assets/Script/UI/UserRegistrationUI.cs` (새파일) — 이름 입력, PlayerPrefs 저장, `/register` POST
+	- `Assets/Script/UI/ScoreSubmitter.cs` (새파일) — `/score` POST 전송 유틸
+	- `Assets/Editor/ClearUserNamePref.cs` (새파일) — 에디터에서 `UserName` 초기화 도구
+	- `docs/LEADERBOARD.md` (새파일) — 리더보드 설정 및 사용법 문서
+
+- 변경 요약:
+	- 리더보드 씬에서 `UserRegistrationUI`를 통해 사용자 이름을 입력/저장하고 서버에 등록할 수 있게 구현했습니다.
+	- `LeaderboardController`는 서버의 `/leaderboard` 엔드포인트에서 목록을 받아 `Item_LeaderboardEntry` 프리팹으로 `Scroll_RankList/Content`를 채웁니다.
+	- 랩 완료 시 `ScoreSubmitter`를 통해 `POST /score`를 전송하면 서버 저장 후 리더보드를 갱신합니다.
+	- 에디터 메뉴에 `Dev -> Clear UserName Pref`를 추가해 테스트용으로 저장된 이름을 지울 수 있습니다.
+
+- 빠른 테스트:
+	1. `LeaderboardManager` GameObject를 리더보드 씬에 추가하고 `baseUrl` 확인(기본: `https://api.pyeong.p-e.kr/api`).
+	2. `UserRegistrationUI` 및 `LeaderboardController`의 인스펙터 필드를 할당.
+	3. 플레이 모드에서 리더보드 씬 진입 시 PlayerPrefs에 `UserName`이 없으면 입력 패널이 표시됩니다.
+	4. 이름 제출 후 콘솔 로그를 확인해 `/register` 요청/응답을 검증하고, `LoadLeaderboard()`로 목록이 갱신되는지 확인합니다.
+
+---
+
+이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
+
+### 2026-05-23 — 루프 없는 On/Off 엔진 사운드 (구현 완료)
 
 - 변경 파일:
 	- `Assets/Script/CarEngineAudio.cs` — 이전에 잘 동작하던 루프리스 구현으로 복원하고, 들리는 끊김을 줄이도록 튜닝했습니다.
@@ -26,13 +92,45 @@
 	- 여전히 끊김이 느껴지면 `overlapFactor`를 0.7~0.9로 올리거나 `minRepeatInterval`을 조금 더 줄여보세요.
 	- 사용자 요청에 따라 루프 파일은 재도입하지 않습니다. 필요 시 DSP 예약(PlayScheduled) 방식으로 보완하는 방안을 검토할 수 있습니다.
 
+### 2026-05-23 — 엔진 사운드 중첩 방지 (핫픽스)
+
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — 동일 오디오 클립이 짧은 시간 내 중복 재생되는 문제를 방지하도록 수정했습니다.
+
+- 변경 사항:
+	- 클립별 마지막 재생 시각을 기록하는 `Dictionary<AudioClip, float> lastClipPlayTime`를 추가했습니다.
+	- `PlayOneShotClip()`에서 동일 클립이 재생 간격보다 빠르게 재생 요청되면 무시하도록 하여 중첩을 방지합니다.
+	- 재생 간격은 `Mathf.Max(clip.length * (1f - overlapFactor), minRepeatInterval)`로 계산하며, 인스펙터의 `overlapFactor`/`minRepeatInterval`로 튜닝 가능합니다.
+
+- 테스트 방법:
+	1. 에디터에서 씬을 재생합니다.
+	2. 차량에 탑승 후 스로틀을 반복 입력하여 이전에 발생하던 오디오 중첩 상황을 재현합니다.
+	3. 동일 클립이 바로 중복 재생되지 않는지 확인합니다.
+	4. 문제가 지속되면 씬에 중복 `AudioSource`나 복제된 차량 오브젝트가 없는지, `AudioListener`가 여러 개 존재하지 않는지 확인하세요.
+
+- 권장 후속:
+	- 자연스러운 연속음을 위해 `overlapFactor`를 0.4~0.7 범위로 조정해 보세요.
+	- 더 정밀한 처리가 필요하면 루프형 `AudioSource` 2개를 이용한 크로스페이드 방식 전환을 고려하세요.
+
 ---
 
-[Back to README](../README.md)
 
-# Development Log
+### 2026-05-23 — RPM 단일 출처 정리 및 오디오 fallback 제거
 
-이 문서는 프로젝트의 수정 기록과 완료 작업, 주행 디버그 메모를 보관합니다. 자세한 문제 해결 기록은 [Troubleshooting](TROUBLESHOOTING.md)을 참고하세요.
+- 변경 파일:
+	- `Assets/Script/CarEngineAudio.cs` — RPM 추정 fallback을 제거하고, 엔진 시스템에서 전달받은 RPM만 사용하도록 정리했습니다.
+	- `Assets/Script/UI/CarRpmDisplay.cs` — RPM 표시는 엔진 시스템만 읽도록 정리해 오디오 경로 의존을 제거했습니다.
+	- `README.md` — 최근 엔진/RPM 작업 상태를 요약 항목으로 추가했습니다.
+
+- 변경 사항:
+	- 엔진 RPM의 단일 출처를 `CarEngineSystem.CurrentRPM`으로 고정했습니다.
+	- 오디오는 더 이상 RPM을 추정하거나 계산하지 않고, 전달받은 RPM을 이용해 사운드 연출만 담당합니다.
+	- RPM UI도 엔진 시스템만 읽도록 정리해, 오디오와 RPM 표시의 책임 분리를 명확히 했습니다.
+
+- 확인 포인트:
+	1. `CarEngineAudio`에 RPM fallback 경로가 남아 있지 않은지 확인합니다.
+	2. `CarRpmDisplay`가 `CarEngineSystem`을 우선 읽는지 확인합니다.
+	3. 씬에서 `CarEngineSystem`이 차량 오브젝트에 1개만 붙어 있는지 확인합니다.
 
 ### 2026-05-23 — RPM 단일 출처 정리 및 오디오 fallback 제거
 
@@ -256,6 +354,16 @@
 - [x] 주행 안내 화살표(주황: 금지 / 초록: 주행 방향) 적용
 - 체크포인트 프리펩 녹색 v자 모델로 보이게 만듦
 - 바퀴 모델과 콜라이더가 안맞던 문제 수정
+
+### 최근 추가된 완료 항목 (로드맵 반영)
+
+- [x] 엔진 오디오: 중첩 재생 방지 핫픽스 및 루프리스 원샷 재생 방식 적용 (`Assets/Script/CarEngineAudio.cs`)
+- [x] 엔진 RPM 단일 출처 통일: `CarEngineSystem.CurrentRPM`을 오디오·UI의 단일 출처로 고정 (`Assets/Script/CarEngineSystem.cs`, `Assets/Script/UI/CarRpmDisplay.cs`)
+- [x] 컨트롤러·엔진 중복 필드 정리 및 기어 설정 통합 (`Assets/Script/CarController.cs`, `Assets/Script/CarEngineSystem.cs`)
+- [x] 6단 변속 확장 및 프리팹 직렬화 복구 (`Assets/Prefabs/SportCar_1 Variant.prefab`)
+- [x] 변속 시 RPM 유지 개선 및 RPM 게이지 색상/레드존 블링크 추가 (`Assets/Script/CarEngineSystem.cs`, `Assets/Script/UI/CarRpmDisplay.cs`)
+- [x] 랩 타임 영속성 저장 및 복원 (세션 Recent/Best 유지) (`Assets/Script/LapTimer.cs`)
+- [x] 체크포인트 통과 시 오브젝트 비활성화 처리 및 리셋 동작 정리 (`Assets/Script/Checkpoint.cs`, `Assets/Script/CheckpointManager.cs`)
 
 ---
 
