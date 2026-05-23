@@ -43,7 +43,7 @@ public class PersistentGameCamera : MonoBehaviour
         // If configured to persist across scenes, ensure we don't create duplicates.
         if (dontDestroyOnLoad)
         {
-            var others = Object.FindObjectsByType<PersistentGameCamera>(FindObjectsSortMode.None);
+            var others = UnityEngine.Object.FindObjectsByType<PersistentGameCamera>(FindObjectsSortMode.None);
             foreach (var o in others)
             {
                 if (o != this && o.dontDestroyOnLoad)
