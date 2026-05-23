@@ -3,19 +3,10 @@ using UnityEngine;
 public class Checkpoint : MonoBehaviour
 {
     public bool IsVisited { get; private set; } = false;
-
-    private Renderer checkpointRenderer;
-    private Color originalColor;
     private CheckpointManager checkpointManager;
 
     private void Awake()
     {
-        checkpointRenderer = GetComponent<Renderer>();
-        if (checkpointRenderer != null)
-        {
-            originalColor = checkpointRenderer.material.color;
-        }
-
         checkpointManager = FindObjectOfType<CheckpointManager>();
         if (checkpointManager == null)
         {
@@ -32,10 +23,7 @@ public class Checkpoint : MonoBehaviour
                 IsVisited = true;
                 Debug.Log($"Checkpoint {gameObject.name} validated and visited.");
 
-                if (checkpointRenderer != null)
-                {
-                    checkpointRenderer.material.color = Color.green;
-                }
+                gameObject.SetActive(false);
             }
             else
             {
@@ -47,9 +35,6 @@ public class Checkpoint : MonoBehaviour
     public void ResetCheckpoint()
     {
         IsVisited = false;
-        if (checkpointRenderer != null)
-        {
-            checkpointRenderer.material.color = originalColor;
-        }
+        gameObject.SetActive(true);
     }
 }

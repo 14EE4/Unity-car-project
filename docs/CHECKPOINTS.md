@@ -7,7 +7,7 @@
 ## 구성 요소
 
 - `Checkpoint` (스크립트)
-  - 역할: 개별 체크포인트의 트리거 감지 및 시각적 피드백 처리
+  - 역할: 개별 체크포인트의 트리거 감지 및 활성/비활성 상태 처리
   - 주요 콜백: `OnTriggerEnter(Collider other)` → `CheckpointManager.ValidateCheckpoint(this)` 호출
 
 - `CheckpointManager` (스크립트)
@@ -28,6 +28,8 @@
 
 1. 플레이어가 `Checkpoint` 트리거를 통과하면 `CheckpointManager.ValidateCheckpoint(this)` 호출
 2. `CheckpointManager`는 현재 기대 인덱스와 비교해 일치하면 해당 체크포인트를 `IsVisited=true`로 변경하고 로그 출력
+3. 정상 순서로 통과한 체크포인트는 `SetActive(false)`로 비활성화되어 시야에서 사라짐
+4. `ResetCheckpoints()` 호출 시 모든 체크포인트를 다시 `SetActive(true)`로 복구
 3. 모든 체크포인트 방문 후 플레이어가 `FinishLine`을 통과하면 `LapTimer`에 랩 완료 이벤트 전달
 
 ## 디버깅 체크리스트
