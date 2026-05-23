@@ -49,10 +49,10 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 
 ## Progress
 
-- 전체 진행률: **약 40%** (완료된 개발 항목 대비 전체 로드맵 항목 비율)
-- 완료된 주요 항목: 카메라 보정, 랩 타임 시스템, 체크포인트, HUD, 로딩/메뉴 흐름 등 (상세: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md))
- - 남은 주요 항목: 랩 타임 영속성 저장, 설정 창 상세 구현, 다중 차량 선택, 레이스 플로우 고도화 등 (상세: [로드맵](docs/ROADMAP.md))
- - 음향 적용: Loopless on/off 엔진 사운드 구현 완료 — 자세한 변경과 테스트는 [개발 로그](docs/DEVELOPMENT_LOG.md) 참조
+- 전체 진행률: **약 45%**
+- 완료된 주요 항목: 카메라 보정, 랩 타임 시스템, 체크포인트, HUD, 로딩/메뉴 흐름, 리더보드 서버 연동 및 개인 최고기록 전송 검증 등 (상세: [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md))
+- 남은 주요 항목: 설정 창 세부 구현, 다중 차량 선택, 레이스 플로우 고도화, 배포용 서버 템플릿 정리 등 (상세: [로드맵](docs/ROADMAP.md))
+- 음향 적용: Loopless on/off 엔진 사운드 구현 완료 — 자세한 변경과 테스트는 [개발 로그](docs/DEVELOPMENT_LOG.md) 참조
 - 최근 주행/엔진 작업: RPM 단일 출처 정리, 6단 변속 확장, 컨트롤러 엔진 중복 정리, RPM 게이지 색상/레드존 블링크 적용 — 상세는 [개발 로그](docs/DEVELOPMENT_LOG.md)와 [기술 스펙](docs/SPEC.md)
 
 ## 프로젝트 요약
@@ -72,4 +72,4 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 
 ## Online Leaderboard
 
-간단한 설명과 설정/사용법은 [docs/LEADERBOARD.md](docs/LEADERBOARD.md)에서 확인하세요.
+리더보드 씬에서 이름을 등록하고, 앱데이터의 개인 최고기록을 우선 전송하는 현재 흐름은 [docs/LEADERBOARD.md](docs/LEADERBOARD.md)에서 확인하세요.

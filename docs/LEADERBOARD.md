@@ -34,12 +34,14 @@
    - `ScoreSubmitter` 컴포넌트를 적당한 GameObject에 추가합니다.
   - 랩/경기 종료 콜백에서 `SubmitScoreOrAskName(lapSeconds, lapTimeText, trackId)`를 호출하도록 연결하면 자동 제출됩니다.
   - 이름이 없는 경우에는 이름 입력 패널을 띄우고, 이름이 있으면 즉시 전송합니다.
+  - `LeaderboardManager`가 없더라도 기본 API URL(`https://api.pyeong.p-e.kr/api`)과 `SystemInfo.deviceUniqueIdentifier`를 사용해 직접 전송할 수 있습니다.
 
 ## 런타임 흐름
 - 리더보드 씬 입장 → `LeaderboardController`가 `UserRegistrationUI.ShowIfNoUserName()` 호출 → 이름 없으면 입력 패널 표시
 - 이름 제출 → `UserRegistrationUI`가 `POST /register` 호출 → 성공 시 `LeaderboardController.LoadLeaderboard()`로 목록 갱신
 - 랩 제출 → `ScoreSubmitter`가 `POST /score` 호출 → 성공 시 리더보드 갱신
 - 이름이 없는 상태에서 랩을 완료한 경우 → 앱데이터(`lap_times.json`)에 저장된 개인 최고기록 1개를 보류 → 이름 등록 후 자동 전송
+- `LeaderboardManager`가 씬에 없어도 `UserRegistrationUI`와 `ScoreSubmitter`가 기본 URL로 직접 전송합니다.
 
 ## 리더보드 표시 규칙
 - 리더보드에는 사용자별 개인 최고기록(Personal Best) 1개만 표시합니다.
@@ -50,12 +52,14 @@
 - 리더보드 씬 진입 시 `LeaderboardController`가 `UserRegistrationUI.ShowIfNoUserName()`를 호출해 이름 입력 패널 표시 여부를 결정합니다.
 - 이름이 없을 때 랩 기록이 발생하면, `ScoreSubmitter`가 앱데이터에 저장된 최고기록을 우선 읽어서 보류합니다.
 - 이름 등록이 완료되면 보류된 최고기록을 `POST /score`로 전송합니다.
+- 리더보드 씬에 `LeaderboardManager`가 없어도 `UserRegistrationUI`가 기본 URL로 직접 `POST /register` / `POST /score`를 수행합니다.
 - `LeaderboardController`는 씬 진입 시와 성공적인 제출 후 리더보드를 다시 가져옵니다.
 
 ## 테스트 팁
 - 에디터에서 저장된 이름을 지우려면 상단 메뉴 `Dev → Clear UserName Pref` 클릭
 - 로컬 테스트: `LeaderboardManager.baseUrl`를 `http://localhost:<port>/api`로 변경하고 로컬 API 실행
 - 콘솔 로그를 통해 요청/응답 및 에러를 확인하세요
+- 주행 중 자동 제출이 안 보이면 `ScoreSubmitter` 로그에서 `Prepared payload`와 `POST`가 찍히는지 먼저 확인하세요.
 
 ## API 예시
 - POST `/api/register`
