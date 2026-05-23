@@ -28,7 +28,7 @@ public class ScoreSubmitter : MonoBehaviour
             return;
         }
 
-        var reg = Object.FindObjectOfType<UserRegistrationUI>();
+        var reg = Object.FindFirstObjectByType<UserRegistrationUI>();
         if (reg == null)
         {
             Debug.LogWarning("[ScoreSubmitter] UserRegistrationUI not found; cannot prompt for name.");
@@ -41,7 +41,7 @@ public class ScoreSubmitter : MonoBehaviour
 
     public bool HoldBestLapFromTimer()
     {
-        var lapTimer = Object.FindObjectOfType<LapTimer>();
+        var lapTimer = Object.FindFirstObjectByType<LapTimer>();
         if (lapTimer == null)
         {
             Debug.LogWarning("[ScoreSubmitter] LapTimer not found; falling back to persistent lap data file.");
@@ -163,7 +163,7 @@ public class ScoreSubmitter : MonoBehaviour
             {
                 Debug.Log($"[ScoreSubmitter] Submit success: {req.downloadHandler.text}");
                 // Refresh leaderboard after successful submit
-                var lb = Object.FindObjectOfType<LeaderboardController>();
+                var lb = Object.FindFirstObjectByType<LeaderboardController>();
                 if (lb != null) lb.LoadLeaderboard();
             }
         }

@@ -11,6 +11,9 @@ public class PersistentGameCamera : MonoBehaviour
     [Tooltip("If true the camera GameObject will be preserved across scene loads.")]
     public bool dontDestroyOnLoad = true;
 
+    [Tooltip("If true, the script skips runtime RenderTexture creation and stays disabled for static background usage.")]
+    public bool useStaticImageBackground = true;
+
     [Header("RenderTexture Settings (0 = use screen size)")]
     public int textureWidth = 0;
     public int textureHeight = 0;
@@ -22,10 +25,13 @@ public class PersistentGameCamera : MonoBehaviour
 
     void Awake()
     {
-        // Disable this script to use static image backgrounds instead of RenderTexture
-        enabled = false;
-        return;
-        
+        if (useStaticImageBackground)
+        {
+            // Disable this script to use static image backgrounds instead of RenderTexture.
+            enabled = false;
+            return;
+        }
+
         cam = GetComponent<Camera>();
         if (cam == null)
         {
@@ -37,7 +43,7 @@ public class PersistentGameCamera : MonoBehaviour
         // If configured to persist across scenes, ensure we don't create duplicates.
         if (dontDestroyOnLoad)
         {
-            var others = FindObjectsOfType<PersistentGameCamera>();
+            var others = Object.FindObjectsByType<PersistentGameCamera>(FindObjectsSortMode.None);
             foreach (var o in others)
             {
                 if (o != this && o.dontDestroyOnLoad)

@@ -141,7 +141,7 @@ public class UserRegistrationUI : MonoBehaviour
 
         if (hasPendingScore)
         {
-            var submitter = Object.FindObjectOfType<ScoreSubmitter>();
+            var submitter = Object.FindFirstObjectByType<ScoreSubmitter>();
             if (submitter != null)
             {
                 Debug.Log("[UserRegistrationUI] Auto-submitting held score after registration.");
@@ -161,7 +161,7 @@ public class UserRegistrationUI : MonoBehaviour
         }
         else
         {
-            var submitter = Object.FindObjectOfType<ScoreSubmitter>();
+            var submitter = Object.FindFirstObjectByType<ScoreSubmitter>();
             if (submitter != null && submitter.HoldBestLapFromTimer())
             {
                 Debug.Log("[UserRegistrationUI] No pending score. Submitting best lap stored in app data.");
@@ -178,7 +178,7 @@ public class UserRegistrationUI : MonoBehaviour
             else
             {
                 Debug.Log("[UserRegistrationUI] No pending score and no best lap to submit. Refreshing leaderboard only.");
-                var lb = Object.FindObjectOfType<LeaderboardController>();
+                var lb = Object.FindFirstObjectByType<LeaderboardController>();
                 if (lb != null)
                 {
                     lb.LoadLeaderboard();
@@ -284,7 +284,7 @@ public class UserRegistrationUI : MonoBehaviour
             }
 
             Debug.Log($"[UserRegistrationUI] Direct score submit success: {req.downloadHandler.text}");
-            var lb = Object.FindObjectOfType<LeaderboardController>();
+            var lb = Object.FindFirstObjectByType<LeaderboardController>();
             if (lb != null)
             {
                 lb.LoadLeaderboard();
