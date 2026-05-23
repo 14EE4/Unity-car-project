@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CarController : MonoBehaviour
 {
@@ -11,18 +12,27 @@ public class CarController : MonoBehaviour
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
-    public float maxSteerAngle = 45f; 
+    public float maxSteerAngle = 35f;
+    public float minSteerAngleAtHighSpeed = 12f;
+    public float steerAngleHighSpeedKmh = 200f;
     public float steerSensitivity = 1f;
     public float steerInputMultiplier = 2f;
     [Header("Grip / Downforce")]
     public bool enableDownforce = true;
-    public float downforceCoeff = 0.5f; // multiplier for downforce (tune)
+    [FormerlySerializedAs("downforceCoeff")]
+    public float downforceCoefficient = 0.5f; // multiplier for downforce (tune)
     public float tireGripBase = 1.0f; // base multiplier for tire friction
     public float tireGripMax = 1.4f; // max multiplier at high speed
     public float speedGripStartKmh = 50f; // when grip boost begins
     public float speedGripEndKmh = 200f; // when grip boost caps
     public float brakeTorque = 3000f; 
     public float handbrakeTorque = 2000f;
+    public float frontBrakeBias = 0.6f;
+    public float rearBrakeBias = 0.4f;
+    public float virtualAbsBrakePressureThreshold = 0.75f;
+    public float virtualAbsMinWheelSpinFactor = 0.12f;
+    public float virtualAbsBrakeTorqueMinMultiplier = 0.55f;
+    public float virtualAbsFrictionStiffnessMultiplier = 0.7f;
     public float rollingResistanceBrake = 10f;
     public float engineBrakeTorque = 10f;
     public float throttleDrag = 0.03f;
@@ -150,17 +160,22 @@ public class CarController : MonoBehaviour
         }
 
         // 1. 조향 (마우스 X축: 움직일 때만 각도 변경 — 멈추면 현재 각도 유지)
+        float speedKmh = GetCurrentSpeedKmh();
+        float speedSensitiveSteerAngle = GetSpeedSensitiveSteerAngle(speedKmh);
+
         float mouseX = Input.GetAxis("Mouse X");
         if (Mathf.Abs(mouseX) > 0.0001f)
         {
             currentSteer += mouseX * steerSensitivity * steerInputMultiplier;
-            currentSteer = Mathf.Clamp(currentSteer, -maxSteerAngle, maxSteerAngle);
+            currentSteer = Mathf.Clamp(currentSteer, -speedSensitiveSteerAngle, speedSensitiveSteerAngle);
         }
+
+        currentSteer = Mathf.Clamp(currentSteer, -speedSensitiveSteerAngle, speedSensitiveSteerAngle);
 
         // Update steering indicator UI (normalized -1..1)
         if (steeringUi != null)
         {
-            float normalized = maxSteerAngle != 0f ? currentSteer / maxSteerAngle : 0f;
+            float normalized = speedSensitiveSteerAngle != 0f ? currentSteer / speedSensitiveSteerAngle : 0f;
             steeringUi.SetSteer(normalized);
         }
 
@@ -249,6 +264,8 @@ public class CarController : MonoBehaviour
     void FixedUpdate()
     {
         float speedKmh = GetCurrentSpeedKmh();
+        float speedSensitiveSteerAngle = GetSpeedSensitiveSteerAngle(speedKmh);
+        currentSteer = Mathf.Clamp(currentSteer, -speedSensitiveSteerAngle, speedSensitiveSteerAngle);
 
         if (engineSystem != null)
         {
@@ -256,7 +273,7 @@ public class CarController : MonoBehaviour
         }
 
         // apply speed-dependent grip and downforce before physics forces
-        UpdateGripBySpeed(speedKmh);
+        UpdateGripBySpeed(speedKmh, brakeInput);
         ApplyDownforce();
 
         if (throttleInput > 0f)
@@ -276,7 +293,7 @@ public class CarController : MonoBehaviour
         // Handbrake has highest priority when active: apply strong brake on rear wheels
         if (handbrakeActive)
         {
-            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            ApplySteeringAngle(currentSteer);
             backLeft.motorTorque = backRight.motorTorque = 0f;
             // keep a small front brake so front doesn't lock immediately
             frontLeft.brakeTorque = frontRight.brakeTorque = engineBrakeTorque;
@@ -289,7 +306,7 @@ public class CarController : MonoBehaviour
             float motor = engineSystem != null
                 ? engineSystem.CurrentMotorTorque
                 : ComputeLegacyMotorTorque(speedKmh);
-            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            ApplySteeringAngle(currentSteer);
             backLeft.motorTorque = backRight.motorTorque = motor;
             frontLeft.brakeTorque = frontRight.brakeTorque = 0f;
             backLeft.brakeTorque = backRight.brakeTorque = 0f;
@@ -298,17 +315,23 @@ public class CarController : MonoBehaviour
         }
         else if (brakeInput > 0f)
         {
-            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            ApplySteeringAngle(currentSteer);
             backLeft.motorTorque = backRight.motorTorque = 0f;
-            frontLeft.brakeTorque = frontRight.brakeTorque = brakeTorque;
-            backLeft.brakeTorque = backRight.brakeTorque = brakeTorque;
+            float normalizedBias = Mathf.Max(0.0001f, frontBrakeBias + rearBrakeBias);
+            float frontWheelBrakeTorque = brakeTorque * (frontBrakeBias / normalizedBias);
+            float rearWheelBrakeTorque = brakeTorque * (rearBrakeBias / normalizedBias);
+
+            frontLeft.brakeTorque = GetVirtualAbsBrakeTorque(frontLeft, frontWheelBrakeTorque, speedKmh, brakeInput);
+            frontRight.brakeTorque = GetVirtualAbsBrakeTorque(frontRight, frontWheelBrakeTorque, speedKmh, brakeInput);
+            backLeft.brakeTorque = GetVirtualAbsBrakeTorque(backLeft, rearWheelBrakeTorque, speedKmh, brakeInput);
+            backRight.brakeTorque = GetVirtualAbsBrakeTorque(backRight, rearWheelBrakeTorque, speedKmh, brakeInput);
             appliedMotorTorque = 0f;
-            appliedBrakeTorque = brakeTorque;
+            appliedBrakeTorque = (frontLeft.brakeTorque + frontRight.brakeTorque + backLeft.brakeTorque + backRight.brakeTorque) * 0.25f;
         }
         else
         {
             // 엑셀과 브레이크 모두 떼면: 중립은 구름 저항, 전진/후진 기어는 엔진 브레이크
-            frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
+            ApplySteeringAngle(currentSteer);
             backLeft.motorTorque = backRight.motorTorque = 0f;
             float brakeTq = currentGear == 0 ? rollingResistanceBrake : engineBrakeTorque;
             frontLeft.brakeTorque = frontRight.brakeTorque = brakeTq;
@@ -358,15 +381,19 @@ public class CarController : MonoBehaviour
         }
 
         float speedMps = carRigidbody.linearVelocity.magnitude;
-        float downforce = downforceCoeff * speedMps * speedMps;
+        float downforce = downforceCoefficient * speedMps * speedMps;
         carRigidbody.AddForce(-transform.up * downforce);
     }
 
-    private void UpdateGripBySpeed(float speedKmh)
+    private void UpdateGripBySpeed(float speedKmh, float brakePressure)
     {
         float t = Mathf.InverseLerp(speedGripStartKmh, speedGripEndKmh, speedKmh);
-        float gripMultiplier = Mathf.Lerp(1f, tireGripMax, t) * tireGripBase;
-        ApplyTireGripToAllWheels(gripMultiplier);
+        float gripMultiplier = Mathf.Lerp(tireGripBase, tireGripMax, t);
+
+        float absBlend = Mathf.InverseLerp(virtualAbsBrakePressureThreshold, 1f, Mathf.Clamp01(brakePressure));
+        float absMultiplier = Mathf.Lerp(gripMultiplier, virtualAbsFrictionStiffnessMultiplier, absBlend);
+
+        ApplyTireGripToAllWheels(absMultiplier);
     }
 
     private void ApplyTireGripToAllWheels(float multiplier)
@@ -399,13 +426,49 @@ public class CarController : MonoBehaviour
     private WheelFrictionCurve ScaleFrictionCurve(WheelFrictionCurve baseCurve, float multiplier)
     {
         WheelFrictionCurve c = baseCurve;
-        c.extremumValue = baseCurve.extremumValue * multiplier;
-        c.asymptoteValue = baseCurve.asymptoteValue * multiplier;
         c.stiffness = baseCurve.stiffness * multiplier;
-        // keep slip thresholds similar but slightly reduced to delay slip onset
-        c.extremumSlip = Mathf.Max(0.01f, baseCurve.extremumSlip * 0.9f);
-        c.asymptoteSlip = Mathf.Max(0.05f, baseCurve.asymptoteSlip * 0.95f);
         return c;
+    }
+
+    private void ApplySteeringAngle(float steerAngle)
+    {
+        if (frontLeft != null)
+        {
+            frontLeft.steerAngle = steerAngle;
+        }
+
+        if (frontRight != null)
+        {
+            frontRight.steerAngle = steerAngle;
+        }
+    }
+
+    private float GetSpeedSensitiveSteerAngle(float speedKmh)
+    {
+        float t = Mathf.InverseLerp(0f, steerAngleHighSpeedKmh, Mathf.Max(0f, speedKmh));
+        return Mathf.Lerp(maxSteerAngle, minSteerAngleAtHighSpeed, t);
+    }
+
+    private float GetVirtualAbsBrakeTorque(WheelCollider wheel, float baseBrakeTorque, float speedKmh, float brakePressure)
+    {
+        if (wheel == null)
+        {
+            return 0f;
+        }
+
+        float hardBrakeBlend = Mathf.InverseLerp(virtualAbsBrakePressureThreshold, 1f, Mathf.Clamp01(brakePressure));
+        if (hardBrakeBlend <= 0f)
+        {
+            return baseBrakeTorque * brakePressure;
+        }
+
+        float expectedWheelRpm = Mathf.Max(1f, GetDrivenWheelRPMFromSpeed(speedKmh));
+        float targetWheelRpm = expectedWheelRpm * Mathf.Lerp(1f, virtualAbsMinWheelSpinFactor, hardBrakeBlend);
+        float currentWheelRpm = Mathf.Abs(wheel.rpm);
+        float spinRatio = Mathf.Clamp01(currentWheelRpm / Mathf.Max(1f, targetWheelRpm));
+        float torqueMultiplier = Mathf.Lerp(virtualAbsBrakeTorqueMinMultiplier, 1f, spinRatio);
+
+        return baseBrakeTorque * brakePressure * torqueMultiplier;
     }
 
 
