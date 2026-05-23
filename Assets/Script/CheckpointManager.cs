@@ -6,6 +6,7 @@ public class CheckpointManager : MonoBehaviour
 {
     public List<Checkpoint> Checkpoints { get; private set; } = new List<Checkpoint>();
     private int currentCheckpointIndex = 0;
+    private bool checkpointsLocked = false;
 
     private void Start()
     {
@@ -25,6 +26,12 @@ public class CheckpointManager : MonoBehaviour
 
     public bool ValidateCheckpoint(Checkpoint checkpoint)
     {
+        if (checkpointsLocked)
+        {
+            Debug.LogWarning($"[CheckpointManager] Ignored checkpoint '{checkpoint.gameObject.name}' because the run is locked. Reset is required before checkpoints work again.");
+            return false;
+        }
+
         string expectedName = currentCheckpointIndex < Checkpoints.Count
             ? Checkpoints[currentCheckpointIndex].gameObject.name
             : "<none - all visited>";
@@ -41,7 +48,10 @@ public class CheckpointManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Checkpoint {checkpoint.gameObject.name} validation failed. Expected: {Checkpoints[currentCheckpointIndex].gameObject.name}");
+            string expectedCheckpoint = currentCheckpointIndex < Checkpoints.Count
+                ? Checkpoints[currentCheckpointIndex].gameObject.name
+                : "<none - all visited>";
+            Debug.LogWarning($"Checkpoint {checkpoint.gameObject.name} validation failed. Expected: {expectedCheckpoint}");
             return false;
         }
     }
@@ -61,6 +71,7 @@ public class CheckpointManager : MonoBehaviour
     public void ResetCheckpoints()
     {
         Debug.Log($"[CheckpointManager] ResetCheckpoints called. Clearing {Checkpoints.Count} checkpoint visited states.");
+        checkpointsLocked = false;
         currentCheckpointIndex = 0;
         foreach (var checkpoint in Checkpoints)
         {
@@ -68,6 +79,18 @@ public class CheckpointManager : MonoBehaviour
         }
 
         Debug.Log("[CheckpointManager] ResetCheckpoints complete. currentCheckpointIndex=0");
+    }
+
+    public void LockCheckpoints()
+    {
+        checkpointsLocked = true;
+        currentCheckpointIndex = Checkpoints.Count;
+        Debug.Log("[CheckpointManager] LockCheckpoints called. Checkpoints are now disabled until reset.");
+    }
+
+    public bool AreCheckpointsLocked()
+    {
+        return checkpointsLocked;
     }
 
     private class NaturalComparer : IComparer<string>

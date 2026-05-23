@@ -41,6 +41,9 @@ public class CarEngineAudio : MonoBehaviour
     private bool currentHandbrakeActive;
     private int currentGear;
     private float currentEngineRpm;
+
+    // Public getter for other systems (UI, gauges) to read current engine RPM
+    public float CurrentEngineRpm { get { return currentEngineRpm; } }
     private int currentBand = 0;
     private bool previousHandbrakeActive;
     private int previousGear = 0;

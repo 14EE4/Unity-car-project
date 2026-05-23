@@ -61,6 +61,13 @@ public class FinishLine : MonoBehaviour
             return;
         }
 
+        var checkpointManager = Object.FindFirstObjectByType<CheckpointManager>();
+        if (checkpointManager != null && checkpointManager.AreCheckpointsLocked())
+        {
+            Debug.Log("[FinishLine] Checkpoints are locked. Ignoring finish trigger until the run is reset.");
+            return;
+        }
+
         Debug.Log($"[FinishLine] Player reached finish line. TimerRunning={lapTimer.isTimerRunning}, RunFinished={lapTimer.isRunFinished}");
         bool completed = lapTimer.TryCompleteLap();
         Debug.Log($"[FinishLine] TryCompleteLap result={completed}");
