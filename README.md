@@ -43,9 +43,10 @@ Unity 6로 제작한 3D 차량 주행 프로젝트입니다. 메인 문서는 �
 - [문제 해결 기록(Troubleshooting)](docs/TROUBLESHOOTING.md)
 - [개발 로그 및 주행 디버그](docs/DEVELOPMENT_LOG.md)
 - [전송 및 셋업 가이드](docs/GUIDE.md)
- - [체크포인트 시스템 상세](docs/CHECKPOINTS.md)
- - [기술 스펙 및 튜닝 값](docs/SPEC.md)
- - [로드맵 (진행 계획)](docs/ROADMAP.md)
+- [서버 백엔드 문서](docs/SERVER.md)
+- [체크포인트 시스템 상세](docs/CHECKPOINTS.md)
+- [기술 스펙 및 튜닝 값](docs/SPEC.md)
+- [로드맵 (진행 계획)](docs/ROADMAP.md)
 
 ## Progress
 

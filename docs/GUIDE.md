@@ -25,7 +25,8 @@
 - [Feature list and asset notes](FEATURES.md)
 - [Troubleshooting and fix records](TROUBLESHOOTING.md)
 - [Development log and driving debug notes](DEVELOPMENT_LOG.md)
- - [Leaderboard setup and server integration](LEADERBOARD.md)
+- [Leaderboard setup and server integration](LEADERBOARD.md)
+- [Server backend notes](SERVER.md)
 
 ## Quick Start (from README)
 

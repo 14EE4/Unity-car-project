@@ -91,6 +91,7 @@
 - 서버 샘플(Express/FastAPI) 템플릿 제공
 - `FinishLine`/`LapTimer`에 자동 제출 연결
 - 리더보드 UI 개선(토스트, 실패 처리 UI)
+- 서버 운영 및 배포 메모는 [docs/SERVER.md](SERVER.md)에서 확인하세요.
 
 ***
 문제가 발생하면 콘솔 로그 메시지와 함께 알려주세요. 제가 이어서 디버깅 도와드리겠습니다.
