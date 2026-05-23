@@ -10,6 +10,13 @@ public class CarController : MonoBehaviour
     public SteeringIndicatorUI steeringUi; // optional: assign steering indicator UI
 
     public float maxTorque = 500f;   // 엔진 기본 토크 (N·m)
+    [Header("Engine / RPM")]
+    public float idleRPM = 1000f;
+    public float maxRPM = 8000f;
+    public float fuelCutRPM = 7500f;
+    public float rpmWarningThreshold = 7000f;
+    public float lowRpmTorqueEndRPM = 2000f;
+    [Range(0.1f, 1f)] public float lowRpmTorqueMultiplier = 0.45f;
     public float maxSteerAngle = 45f; 
     public float steerSensitivity = 1f;
     public float steerInputMultiplier = 2f;
@@ -39,6 +46,9 @@ public class CarController : MonoBehaviour
     private bool handbrakeActive = false;
     private float appliedMotorTorque = 0f;
     private float appliedBrakeTorque = 0f;
+    private float currentRPM = 1000f;
+    private bool isFuelCutActive = false;
+    private bool rpmWarningActive = false;
     private float previousForwardSpeed = 0f;
     private float longitudinalAcceleration = 0f;
     private bool suppressDriveInputUntilRelease = false;
@@ -59,6 +69,10 @@ public class CarController : MonoBehaviour
     public float finalDrive = 3.5f;
 
     public bool EnableSpeedLogs = true; // Allows enabling/disabling logs in the Unity editor
+
+    public float CurrentRPM => currentRPM;
+    public bool IsFuelCutActive => isFuelCutActive;
+    public bool IsRpmWarning => rpmWarningActive;
 
     // 게임 초기화를 위한 초기 위치/회전 저장
     private Vector3 initialPosition;
@@ -190,12 +204,48 @@ public class CarController : MonoBehaviour
             engineAudio.SetDriveState(GetCurrentSpeedKmh(), throttleInput, handbrakeActive, currentGear);
         }
 
+        CalculateRPM();
+
         debugLogTimer += Time.deltaTime;
         if (debugLogTimer >= debugLogInterval && EnableSpeedLogs)
         {
             debugLogTimer = 0f;
             string hb = handbrakeActive ? " | Handbrake: ON" : "";
-            Debug.Log(string.Format("Speed: {0:F1} km/h | Accel: {1:F2} m/s^2 | Throttle: {2} | Brake: {3} | Gear: {4} | Motor: {5:F1} | BrakeTorque: {6:F1} | Slope: {7:F1} deg{8}", GetCurrentSpeedKmh(), longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
+            Debug.Log(string.Format("Speed: {0:F1} km/h | RPM: {1:F0} | Accel: {2:F2} m/s^2 | Throttle: {3} | Brake: {4} | Gear: {5} | Motor: {6:F1} | BrakeTorque: {7:F1} | FuelCut: {8} | Slope: {9:F1} deg{10}", GetCurrentSpeedKmh(), currentRPM, longitudinalAcceleration, throttleInput > 0f ? "ON" : "OFF", brakeInput > 0f ? "ON" : "OFF", GetGearLabel(), appliedMotorTorque, appliedBrakeTorque, isFuelCutActive ? "ON" : "OFF", GetGroundSlopeAngle(), GetWheelDebugSuffix()) + hb);
+        }
+    }
+
+    private void CalculateRPM()
+    {
+        float targetRPM = idleRPM;
+
+        if (currentGear != 0)
+        {
+            float gearRatio = Mathf.Abs(GetCurrentGearRatio());
+            float wheelRPMFromSpeed = GetDrivenWheelRPMFromSpeed(GetCurrentSpeedKmh());
+            float wheelRPMFromCollider = GetDrivenWheelAverageRPM();
+            float blendedWheelRPM = wheelRPMFromSpeed;
+
+            if (wheelRPMFromCollider > 0f)
+            {
+                blendedWheelRPM = Mathf.Lerp(wheelRPMFromSpeed, wheelRPMFromCollider, 0.7f);
+            }
+
+            float motionRPM = blendedWheelRPM * gearRatio * finalDrive;
+            float throttleRPMBoost = throttleInput > 0f
+                ? throttleInput * Mathf.Lerp(0f, 2500f, Mathf.Clamp01(1f - (GetCurrentSpeedKmh() / 30f)))
+                : 0f;
+
+            targetRPM = Mathf.Max(motionRPM, idleRPM + throttleRPMBoost);
+        }
+
+        currentRPM = Mathf.Clamp(targetRPM, idleRPM, maxRPM);
+        rpmWarningActive = currentRPM >= rpmWarningThreshold;
+        isFuelCutActive = currentRPM >= fuelCutRPM;
+
+        if (hud != null)
+        {
+            hud.SetRPM(currentRPM, rpmWarningActive);
         }
     }
 
@@ -303,7 +353,9 @@ public class CarController : MonoBehaviour
             float speedRatio = Mathf.Clamp01(1f - (currentSpeedKmh / (gearMaxSpeed + 1f)));
             // overallRatio = gearRatio * finalDrive
             float overallRatio = GetCurrentGearRatio() * finalDrive;
-            float motor = maxTorque * throttleInput * overallRatio * speedRatio;
+            float rpmTorqueMultiplier = Mathf.InverseLerp(idleRPM, lowRpmTorqueEndRPM, currentRPM);
+            rpmTorqueMultiplier = Mathf.Lerp(lowRpmTorqueMultiplier, 1f, rpmTorqueMultiplier);
+            float motor = isFuelCutActive ? 0f : maxTorque * throttleInput * overallRatio * speedRatio * rpmTorqueMultiplier;
             frontLeft.steerAngle = frontRight.steerAngle = currentSteer;
             backLeft.motorTorque = backRight.motorTorque = motor;
             frontLeft.brakeTorque = frontRight.brakeTorque = 0f;
@@ -338,6 +390,7 @@ public class CarController : MonoBehaviour
         {
             hud.SetSpeed(GetCurrentSpeedKmh());
             hud.SetGear(currentGear);
+            hud.SetRPM(currentRPM, rpmWarningActive);
         }
     }
 
@@ -447,6 +500,54 @@ public class CarController : MonoBehaviour
         }
 
         return carRigidbody.linearVelocity.magnitude * 3.6f;
+    }
+
+    private float GetDrivenWheelAverageRPM()
+    {
+        float sum = 0f;
+        int count = 0;
+
+        if (backLeft != null)
+        {
+            sum += Mathf.Abs(backLeft.rpm);
+            count++;
+        }
+
+        if (backRight != null)
+        {
+            sum += Mathf.Abs(backRight.rpm);
+            count++;
+        }
+
+        if (count == 0)
+        {
+            return 0f;
+        }
+
+        return sum / count;
+    }
+
+    private float GetDrivenWheelRPMFromSpeed(float speedKmh)
+    {
+        float radius = GetDrivenWheelRadius();
+        float circumference = Mathf.Max(0.01f, 2f * Mathf.PI * radius);
+        float speedMps = Mathf.Abs(speedKmh) / 3.6f;
+        return speedMps / circumference * 60f;
+    }
+
+    private float GetDrivenWheelRadius()
+    {
+        if (backLeft != null)
+        {
+            return backLeft.radius;
+        }
+
+        if (backRight != null)
+        {
+            return backRight.radius;
+        }
+
+        return 0.35f;
     }
 
     private float GetForwardSpeedMps()
