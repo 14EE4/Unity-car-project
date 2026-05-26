@@ -149,11 +149,20 @@ public class LeaderboardController : MonoBehaviour
             {
                 rt.localScale = Vector3.one;
                 rt.localRotation = Quaternion.identity;
+
+                // Ensure anchors/pivot place the item relative to the top of the content
+                rt.anchorMin = new Vector2(0f, 1f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.anchoredPosition = new Vector2(0f, rt.anchoredPosition.y);
+                // If no layout group, stack manually from top with spacing and padding
                 if (!hasLayoutGroup)
                 {
-                    // Stack manually if no layout group: place each item below the previous
-                    float height = rt.sizeDelta.y + spacing;
-                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, -paddingTop - index * height);
+                    float height = (rt.sizeDelta.y > 0f) ? rt.sizeDelta.y : rt.rect.height;
+                    height += spacing;
+                    rt.anchoredPosition = new Vector2(0f, -paddingTop - index * height);
+                    // make width stretch to content
+                    rt.sizeDelta = new Vector2(0f, rt.sizeDelta.y);
                 }
             }
             else
