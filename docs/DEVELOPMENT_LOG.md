@@ -234,6 +234,21 @@
 
 ## Revision History (latest first)
 
+### 2026-05-26 — 리더보드 UI: 항목 중첩 해결 및 Content/Viewport 스트레치 정리
+
+- 변경 파일:
+	- `Assets/Script/UI/LeaderboardController.cs` — 항목 생성 로직 보강: 인스턴스화 후 `RectTransform`의 anchor/pivot을 상단-스트레치로 고정하고, `VerticalLayoutGroup`이 있을 때는 레이아웃에 위임, 없을 때는 수동으로 위→아래로 쌓도록 수정했습니다. 또한 레이아웃 리빌드 호출을 추가해 즉시 반영되도록 했습니다.
+- 수정 요약:
+	- 첫 항목이 중앙에 위치하던 문제 해결: Content의 `pivot`을 상단(1.0)으로 설정하고, 각 항목의 `anchorMin`/`anchorMax`/`pivot`을 상단-스트레치로 강제했습니다.
+	- `VerticalLayoutGroup`가 없으면 코드에서 Y 오프셋을 계산해 항목을 위에서부터 순차적으로 배치하도록 처리했습니다.
+	- 레이아웃 시스템이 있는 경우에는 `childAlignment`를 `UpperCenter`로 설정해 상단 정렬을 보장합니다.
+	- `LayoutRebuilder.ForceRebuildLayoutImmediate` 호출로 컨텐츠 갱신 직후 UI가 올바르게 재배치되도록 했습니다.
+
+- 권장 사항:
+	- `ScrollRect -> Viewport -> Content`에 `VerticalLayoutGroup` + `ContentSizeFitter(Vertical = Preferred Size)`를 적용하고, `Item_LeaderboardEntry` 프리팹에는 `LayoutElement(preferredHeight)`를 설정하면 Unity 레이아웃이 안정적으로 항목을 쌓습니다.
+	- 헤더(제목)와 상단 버튼은 ScrollRect 바깥에 고정 위치로 두거나, `VerticalLayoutGroup.padding.top` 값을 헤더 높이만큼 설정해 겹치지 않도록 합니다.
+
+
 ### 2026-05-23 — 랩 완료 후 잠금 문구 및 재시작 규칙 정리
 
 - 변경 파일:

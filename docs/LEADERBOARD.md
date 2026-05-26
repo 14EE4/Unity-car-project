@@ -55,6 +55,25 @@
 - 리더보드 씬에 `LeaderboardManager`가 없어도 `UserRegistrationUI`가 기본 URL로 직접 `POST /register` / `POST /score`를 수행합니다.
 - `LeaderboardController`는 씬 진입 시와 성공적인 제출 후 리더보드를 다시 가져옵니다.
 
+## UI 레이아웃 및 최신 수정사항
+
+- 2026-05-26: 리더보드 항목이 겹쳐 보이던 문제를 수정했습니다.
+  - 변경 사항 요약:
+    - `LeaderboardController`에 항목 인스턴스화 후 `RectTransform`을 상단-스트레치(anchorMin=(0,1), anchorMax=(1,1), pivot=(0.5,1))로 강제하는 로직을 추가했습니다.
+    - `Content`의 `RectTransform.pivot`을 상단으로 고정하여 항목이 위에서부터 쌓이도록 변경했습니다.
+    - `VerticalLayoutGroup`이 있는 경우에는 `childAlignment = UpperCenter`로 설정해 레이아웃에 배치 작업을 위임합니다.
+    - `VerticalLayoutGroup`이 없는 경우에는 코드에서 항목 높이와 spacing/padding을 고려해 수동으로 Y 오프셋을 계산해 위→아래로 쌓도록 처리합니다.
+    - 레이아웃 강제 갱신(`LayoutRebuilder.ForceRebuildLayoutImmediate`)을 호출해 즉시 UI가 올바르게 배치되도록 보장합니다.
+
+  - 에디터 권장 설정:
+    - `ScrollRect -> Viewport -> Content`:
+      - `Vertical Layout Group` 추가 (Child Alignment: `Upper Center`, Padding.top: 헤더 높이)
+      - `Content Size Fitter` 추가 (Vertical Fit: `Preferred Size`)
+    - `Item_LeaderboardEntry` 프리팹:
+      - `Layout Element` 추가 (Preferred Height: 프로젝트에 맞게 설정)
+    - 헤더와 상단 버튼은 ScrollRect 바깥에 고정하거나 Content의 padding.top을 사용해 겹침을 방지하세요.
+
+
 ## 테스트 팁
 - 에디터에서 저장된 이름을 지우려면 상단 메뉴 `Dev → Clear UserName Pref` 클릭
 - 로컬 테스트: `LeaderboardManager.baseUrl`를 `http://localhost:<port>/api`로 변경하고 로컬 API 실행

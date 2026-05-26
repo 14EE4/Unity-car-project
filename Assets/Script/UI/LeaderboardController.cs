@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using TMPro;
+using UnityEngine.UI;
 
 public class LeaderboardController : MonoBehaviour
 {
@@ -113,11 +114,70 @@ public class LeaderboardController : MonoBehaviour
             Debug.Log("[LeaderboardController] No leaderboard entries returned.");
             return;
         }
+        // Cache RectTransform of content for layout rebuilds
+        var contentRect = contentParent as RectTransform;
+
+        // Ensure content pivot is top so items stack from the top
+        if (contentRect != null)
+        {
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0f);
+        }
+
+        var layoutGroup = contentParent.GetComponent<LayoutGroup>();
+        var vlg = layoutGroup as VerticalLayoutGroup;
+        bool hasLayoutGroup = layoutGroup != null;
+        float spacing = 6f;
+        int paddingTop = 0;
+        if (vlg != null)
+        {
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            spacing = vlg.spacing;
+            paddingTop = vlg.padding.top;
+        }
+
+        int index = 0;
 
         foreach (var item in items)
         {
             var go = Instantiate(entryPrefab, contentParent, false);
             go.name = "Entry_" + item.rank;
+
+            // Normalize scale/rotation. Position handling depends on whether a LayoutGroup is present.
+            var rt = go.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.localScale = Vector3.one;
+                rt.localRotation = Quaternion.identity;
+
+                // Ensure anchors/pivot place the item relative to the top of the content
+                rt.anchorMin = new Vector2(0f, 1f);
+                rt.anchorMax = new Vector2(1f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.anchoredPosition = new Vector2(0f, rt.anchoredPosition.y);
+                // If no layout group, stack manually from top with spacing and padding
+                if (!hasLayoutGroup)
+                {
+                    float height = (rt.sizeDelta.y > 0f) ? rt.sizeDelta.y : rt.rect.height;
+                    height += spacing;
+                    rt.anchoredPosition = new Vector2(0f, -paddingTop - index * height);
+                    // make width stretch to content
+                    rt.sizeDelta = new Vector2(0f, rt.sizeDelta.y);
+                }
+            }
+            else
+            {
+                go.transform.localScale = Vector3.one;
+                go.transform.localRotation = Quaternion.identity;
+                if (!hasLayoutGroup)
+                {
+                    go.transform.localPosition = new Vector3(0, -paddingTop - index * (50f + spacing), 0);
+                }
+            }
+
+            // Ensure ordering in content
+            go.transform.SetAsLastSibling();
+            index++;
 
             var rankText = FindChildTMP(go.transform, "Text_Rank");
             var playerText = FindChildTMP(go.transform, "Text_PlayerName");
@@ -129,6 +189,12 @@ public class LeaderboardController : MonoBehaviour
                 playerText.text = item.player_name;
             if (lapText != null)
                 lapText.text = item.lap_time_text;
+        }
+
+        // Force layout rebuild to ensure layout groups (if present) reposition items
+        if (contentRect != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
         }
     }
 
@@ -156,6 +222,11 @@ public class LeaderboardController : MonoBehaviour
             var c = contentParent.GetChild(i);
             Destroy(c.gameObject);
         }
+
+        // Force layout rebuild after clearing
+        var contentRect = contentParent as RectTransform;
+        if (contentRect != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
     }
 
     [System.Serializable]
