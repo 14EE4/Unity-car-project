@@ -48,3 +48,9 @@ Compress-Archive -Path "ProjectSettings","Packages","Assets/MyLargeAssetFolder" 
 ```
 
 팁: Unity 버전이 동일한지 확인하고, 대용량 에셋은 `Git LFS` 또는 Unity Plastic SCM 사용을 고려하세요.
+
+## 개발 환경 셋업
+
+클론 후 다음을 실행하세요:
+git config core.autocrlf false
+git config core.safecrlf true

@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 using TMPro;
+using UnityEngine.UI;
 
 public class LeaderboardController : MonoBehaviour
 {
@@ -113,11 +114,31 @@ public class LeaderboardController : MonoBehaviour
             Debug.Log("[LeaderboardController] No leaderboard entries returned.");
             return;
         }
+        // Cache RectTransform of content for layout rebuilds
+        var contentRect = contentParent as RectTransform;
 
         foreach (var item in items)
         {
             var go = Instantiate(entryPrefab, contentParent, false);
             go.name = "Entry_" + item.rank;
+
+            // Ensure transform is normalized to avoid prefab offsets/scale causing overlap
+            var rt = go.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                rt.localScale = Vector3.one;
+                rt.anchoredPosition = Vector2.zero;
+                rt.localRotation = Quaternion.identity;
+            }
+            else
+            {
+                go.transform.localScale = Vector3.one;
+                go.transform.localPosition = Vector3.zero;
+                go.transform.localRotation = Quaternion.identity;
+            }
+
+            // Ensure ordering in content
+            go.transform.SetAsLastSibling();
 
             var rankText = FindChildTMP(go.transform, "Text_Rank");
             var playerText = FindChildTMP(go.transform, "Text_PlayerName");
@@ -129,6 +150,12 @@ public class LeaderboardController : MonoBehaviour
                 playerText.text = item.player_name;
             if (lapText != null)
                 lapText.text = item.lap_time_text;
+        }
+
+        // Force layout rebuild to ensure layout groups (if present) reposition items
+        if (contentRect != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
         }
     }
 
@@ -156,6 +183,11 @@ public class LeaderboardController : MonoBehaviour
             var c = contentParent.GetChild(i);
             Destroy(c.gameObject);
         }
+
+        // Force layout rebuild after clearing
+        var contentRect = contentParent as RectTransform;
+        if (contentRect != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
     }
 
     [System.Serializable]
