@@ -117,7 +117,25 @@ public class LeaderboardController : MonoBehaviour
         // Cache RectTransform of content for layout rebuilds
         var contentRect = contentParent as RectTransform;
 
-        bool hasLayoutGroup = contentParent.GetComponent<LayoutGroup>() != null;
+        // Ensure content pivot is top so items stack from the top
+        if (contentRect != null)
+        {
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0f);
+        }
+
+        var layoutGroup = contentParent.GetComponent<LayoutGroup>();
+        var vlg = layoutGroup as VerticalLayoutGroup;
+        bool hasLayoutGroup = layoutGroup != null;
+        float spacing = 6f;
+        int paddingTop = 0;
+        if (vlg != null)
+        {
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            spacing = vlg.spacing;
+            paddingTop = vlg.padding.top;
+        }
+
         int index = 0;
 
         foreach (var item in items)
@@ -134,8 +152,8 @@ public class LeaderboardController : MonoBehaviour
                 if (!hasLayoutGroup)
                 {
                     // Stack manually if no layout group: place each item below the previous
-                    float height = rt.sizeDelta.y;
-                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, -index * height);
+                    float height = rt.sizeDelta.y + spacing;
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, -paddingTop - index * height);
                 }
             }
             else
@@ -144,7 +162,7 @@ public class LeaderboardController : MonoBehaviour
                 go.transform.localRotation = Quaternion.identity;
                 if (!hasLayoutGroup)
                 {
-                    go.transform.localPosition = new Vector3(0, -index * 50f, 0);
+                    go.transform.localPosition = new Vector3(0, -paddingTop - index * (50f + spacing), 0);
                 }
             }
 
