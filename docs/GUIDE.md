@@ -54,3 +54,27 @@ Compress-Archive -Path "ProjectSettings","Packages","Assets/MyLargeAssetFolder" 
 클론 후 다음을 실행하세요:
 git config core.autocrlf false
 git config core.safecrlf true
+
+## 라인 엔딩 통일 (LF)
+
+이 프로젝트는 텍스트 파일의 라인 엔딩을 LF로 통일합니다. 저장소의 일관성을 유지하려면 아래 절차를 따라주세요.
+
+- 1) 저장소 루트에 `.gitattributes`가 포함되어 있는지 확인하세요. (프로젝트에 이미 추가되어 있습니다.)
+- 2) 로컬에서 파일을 정규화하려면 다음을 실행합니다:
+
+```powershell
+git add .gitattributes
+git add --renormalize .
+git commit -m "Normalize line endings and add .gitattributes"
+```
+
+- 3) Windows 환경 권장 로컬 Git 설정:
+
+```powershell
+git config --global core.autocrlf false
+git config --global core.safecrlf false
+```
+
+이 설정은 Git이 체크아웃/커밋 시 자동으로 라인 엔딩을 변환하지 않도록 하며, `.gitattributes`가 엔딩 정책을 제어하도록 합니다.
+
+문제가 발생하면 나에게 알려주세요. 필요한 경우 제가 정규화 및 커밋을 대신 수행해 드릴 수 있습니다.
