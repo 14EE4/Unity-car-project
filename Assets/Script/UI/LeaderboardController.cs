@@ -117,28 +117,40 @@ public class LeaderboardController : MonoBehaviour
         // Cache RectTransform of content for layout rebuilds
         var contentRect = contentParent as RectTransform;
 
+        bool hasLayoutGroup = contentParent.GetComponent<LayoutGroup>() != null;
+        int index = 0;
+
         foreach (var item in items)
         {
             var go = Instantiate(entryPrefab, contentParent, false);
             go.name = "Entry_" + item.rank;
 
-            // Ensure transform is normalized to avoid prefab offsets/scale causing overlap
+            // Normalize scale/rotation. Position handling depends on whether a LayoutGroup is present.
             var rt = go.GetComponent<RectTransform>();
             if (rt != null)
             {
                 rt.localScale = Vector3.one;
-                rt.anchoredPosition = Vector2.zero;
                 rt.localRotation = Quaternion.identity;
+                if (!hasLayoutGroup)
+                {
+                    // Stack manually if no layout group: place each item below the previous
+                    float height = rt.sizeDelta.y;
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, -index * height);
+                }
             }
             else
             {
                 go.transform.localScale = Vector3.one;
-                go.transform.localPosition = Vector3.zero;
                 go.transform.localRotation = Quaternion.identity;
+                if (!hasLayoutGroup)
+                {
+                    go.transform.localPosition = new Vector3(0, -index * 50f, 0);
+                }
             }
 
             // Ensure ordering in content
             go.transform.SetAsLastSibling();
+            index++;
 
             var rankText = FindChildTMP(go.transform, "Text_Rank");
             var playerText = FindChildTMP(go.transform, "Text_PlayerName");
